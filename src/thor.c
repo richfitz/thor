@@ -8,7 +8,8 @@ void thor_cleanup() {
 }
 
 static void r_mdb_env_finalize(SEXP r_env);
-static void r_mdb_txn_finalize(SEXP r_env);
+static void r_mdb_txn_finalize(SEXP r_txn);
+static void r_mdb_dbi_finalize(SEXP r_dbi);
 
 SEXP r_mdb_env_create() {
   MDB_env *env;
@@ -50,7 +51,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
 
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  MDB_txn *parent =
+  MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
   const int flags = scalar_int(r_flags, "flags");
 
@@ -65,9 +66,34 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   // - add the txn to something in the environment so that when the
   //   environment is *forceably* closed we can abort all
   //   transactions - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, r_env));
+  SEXP ret = PROTECT(R_MakeExternalPtr(txn, R_NilValue, r_env));
   R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
+  UNPROTECT(1);
+
+  return ret;
+}
+
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  const char * name =
+    r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
+  const int flags = scalar_int(r_flags, "flags");
+
+  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
+  no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
+
+  // The options here for getting the GC right are we can
+  //
+  // - add the txn to the tag of the dbi - this takes care of keeping
+  //   the transaction alive in the case of accidental deletion of the
+  //   handle, so we'll do that.
+  // - add the dbi to something in the txn so that when the
+  //   transaction is *forceably* closed we can abort all
+  //   connections - this is not done yet.
+  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, r_txn));
+  R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
   UNPROTECT(1);
 
   return ret;
@@ -96,6 +122,17 @@ MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error) {
   return (MDB_txn*) txn;
 }
 
+MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error) {
+  if (TYPEOF(r_dbi) != EXTPTRSXP) {
+    Rf_error("Expected an external pointer");
+  }
+  MDB_dbi* dbi = (MDB_dbi*) R_ExternalPtrAddr(r_dbi);
+  if (!dbi && closed_error) {
+    Rf_error("mdb dbi is not open; can't connect");
+  }
+  return (MDB_dbi*) dbi;
+}
+
 // --- finalizers ---
 
 static void r_mdb_env_finalize(SEXP r_env) {
@@ -113,5 +150,15 @@ static void r_mdb_txn_finalize(SEXP r_txn) {
     Rprintf("Cleaning transaction\n");
     // mdb_txn_abort(txn);
     R_ClearExternalPtr(r_txn);
+  }
+}
+
+static void r_mdb_dbi_finalize(SEXP r_dbi) {
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, false);
+  if (dbi != NULL) {
+    Rprintf("Cleaning handle\n");
+    // mdb_dbi_close(dbi); --- needed?  Docs suggest not really
+    // Free(dbi);
+    R_ClearExternalPtr(r_dbi);
   }
 }
