@@ -1,0 +1,13 @@
+Package: thor
+Title: Interface to 'LMDB'
+Version: 0.0.1
+Author: Rich FitzJohn
+Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
+Description: This is Thor, god of lightning.
+License: MIT + file LICENSE
+LazyData: true
+URL: https://github.com/richfitz/thor
+BugReports: https://github.com/richfitz/thor/issues
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
