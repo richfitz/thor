@@ -22,3 +22,9 @@ void R_init_thor(DllInfo *info) {
   R_forceSymbols(info, TRUE);
 #endif
 }
+
+// # nocov start
+void R_unload_thor(DllInfo *info) {
+  thor_cleanup();
+}
+// # nocov end
