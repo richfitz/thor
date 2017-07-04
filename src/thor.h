@@ -7,7 +7,9 @@ void thor_init();
 void thor_cleanup();
 
 SEXP r_mdb_env_create();
-MDB_env * r_mdb_get_env(SEXP r_env, bool use_default, bool closed_error);
+SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
+
+MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
 
 /*
 
