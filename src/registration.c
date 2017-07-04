@@ -12,6 +12,7 @@ SEXP thor_test_cleanup() {
 static const R_CallMethodDef call_methods[] = {
   {"Cmdb_env_create",              (DL_FUNC) &r_mdb_env_create,            0},
   {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,              3},
+  {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             3},
   {NULL,                           NULL,                                   0}
 };
 

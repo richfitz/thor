@@ -8,9 +8,10 @@ void thor_cleanup();
 
 SEXP r_mdb_env_create();
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
+SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags);
 
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
-
+MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 /*
 
 typedef struct {

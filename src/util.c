@@ -2,7 +2,7 @@
 
 void no_error(int x, const char* str) {
   if (x != MDB_SUCCESS) {
-    Rf_error("Error in mdb: %d: %s", x, str);
+    Rf_error("Error in mdb: %s: %s", mdb_strerror(x), str);
   }
 }
 
