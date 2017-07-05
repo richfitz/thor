@@ -37,6 +37,14 @@ mdb_txn_abort <- function(txn) {
   .Call(Cmdb_txn_abort, txn)
 }
 
+mdb_txn_reset <- function(txn) {
+  .Call(Cmdb_txn_reset, txn)
+}
+
+mdb_txn_renew <- function(txn) {
+  .Call(Cmdb_txn_renew, txn)
+}
+
 mdb_put <- function(txn, dbi, key, data, flags) {
   .Call(Cmdb_put, txn, dbi, key, data, flags)
 }

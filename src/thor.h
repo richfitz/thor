@@ -19,6 +19,8 @@ SEXP r_mdb_txn_env(SEXP r_txn);
 SEXP r_mdb_txn_id(SEXP r_txn);
 SEXP r_mdb_txn_commit(SEXP r_txn);
 SEXP r_mdb_txn_abort(SEXP r_txn);
+SEXP r_mdb_txn_reset(SEXP r_txn);
+SEXP r_mdb_txn_renew(SEXP r_txn);
 
 SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags);
 

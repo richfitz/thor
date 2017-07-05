@@ -148,6 +148,20 @@ SEXP r_mdb_txn_abort(SEXP r_txn) {
   return R_NilValue;
 }
 
+SEXP r_mdb_txn_reset(SEXP r_txn) {
+  // TODO: there is some serious work that might need to be done here
+  // about cleaning up the txn cursor - see the docs
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  mdb_txn_reset(txn);
+  return R_NilValue;
+}
+
+SEXP r_mdb_txn_renew(SEXP r_txn) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  no_error(mdb_txn_renew(txn), "mdb_txn_renew");
+  return R_NilValue;
+}
+
 SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
