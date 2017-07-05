@@ -1,9 +1,11 @@
 mdb_env_create <- function() {
   .Call(Cmdb_env_create)
 }
-
 mdb_env_open <- function(env, path, flags) {
   .Call(Cmdb_env_open, env, path, flags)
+}
+mdb_env_close <- function(env) {
+  .Call(Cmdb_env_close, env)
 }
 
 mdb_dbi_open <- function(txn, name, flags) {
@@ -36,5 +38,5 @@ mdb_put <- function(txn, dbi, key, data, flags) {
 }
 
 mdb_get <- function(txn, dbi, key) {
-  .Call(Cmdb_get, txn)
+  .Call(Cmdb_get, txn, dbi, key)
 }

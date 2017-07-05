@@ -55,29 +55,18 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   return r_env;
 }
 
-SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  const char * name =
-    r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const int flags = scalar_int(r_flags, "flags");
+SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  bool force = scalar_logical(r_force, "force");
+  no_error(mdb_env_sync(env, force), "mdb_env_sync");
+  return R_NilValue;
+}
 
-  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
-  no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
-
-  // The options here for getting the GC right are we can
-  //
-  // - add the txn to the tag of the dbi - this takes care of keeping
-  //   the transaction alive in the case of accidental deletion of the
-  //   handle, so we'll do that.
-  // - add the dbi to something in the txn so that when the
-  //   transaction is *forceably* closed we can abort all
-  //   connections - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, r_txn));
-  R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
-  UNPROTECT(1);
-
-  return ret;
+SEXP r_mdb_env_close(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  mdb_env_close(env);
+  R_ClearExternalPtr(r_env);
+  return R_NilValue;
 }
 
 // Transactions:
@@ -145,6 +134,31 @@ SEXP r_mdb_txn_abort(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   mdb_txn_abort(txn);
   return R_NilValue;
+}
+
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  const char * name =
+    r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
+  const int flags = scalar_int(r_flags, "flags");
+
+  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
+  no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
+
+  // The options here for getting the GC right are we can
+  //
+  // - add the txn to the tag of the dbi - this takes care of keeping
+  //   the transaction alive in the case of accidental deletion of the
+  //   handle, so we'll do that.
+  // - add the dbi to something in the txn so that when the
+  //   transaction is *forceably* closed we can abort all
+  //   connections - this is not done yet.
+  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, r_txn));
+  R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
+  UNPROTECT(1);
+
+  return ret;
 }
 
 // --- use the database ---

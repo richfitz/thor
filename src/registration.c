@@ -12,13 +12,16 @@ SEXP thor_test_cleanup() {
 static const R_CallMethodDef call_methods[] = {
   {"Cmdb_env_create",              (DL_FUNC) &r_mdb_env_create,            0},
   {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,              3},
-  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              3},
+  {"Cmdb_env_close",               (DL_FUNC) &r_mdb_env_close,             1},
+  {"Cmdb_env_sync",                (DL_FUNC) &r_mdb_env_sync,              2},
 
   {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             3},
   {"Cmdb_txn_id",                  (DL_FUNC) &r_mdb_txn_id,                1},
   {"Cmdb_txn_env",                 (DL_FUNC) &r_mdb_txn_env,               1},
   {"Cmdb_txn_commit",              (DL_FUNC) &r_mdb_txn_commit,            1},
   {"Cmdb_txn_abort",               (DL_FUNC) &r_mdb_txn_abort,             1},
+
+  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              3},
 
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   5},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   3},
@@ -30,8 +33,8 @@ void R_init_thor(DllInfo *info) {
   thor_init();
   R_registerRoutines(info, NULL, call_methods, NULL, NULL);
 #if defined(R_VERSION) && R_VERSION >= R_Version(3, 3, 0)
-  R_useDynamicSymbols(info, FALSE);
-  R_forceSymbols(info, TRUE);
+  /* R_useDynamicSymbols(info, FALSE); */
+  /* R_forceSymbols(info, TRUE); */
 #endif
 }
 
