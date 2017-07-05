@@ -17,6 +17,18 @@ static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
 static void r_mdb_dbi_finalize(SEXP r_dbi);
 
+SEXP r_mdb_version() {
+  SEXP ret = PROTECT(allocVector(VECSXP, 1));
+  setAttrib(ret, R_ClassSymbol, mkString("numeric_version"));
+  SET_VECTOR_ELT(ret, 0, allocVector(INTSXP, 3));
+  int *d = INTEGER(VECTOR_ELT(ret, 0));
+
+  mdb_version(d, d + 1, d + 2);
+
+  UNPROTECT(1);
+  return ret;
+}
+
 SEXP r_mdb_env_create() {
   MDB_env *env;
   no_error(mdb_env_create(&env), "mdb_env_create");

@@ -7,6 +7,8 @@ void thor_init();
 void thor_cleanup();
 
 // LMDB API:
+SEXP r_mdb_version();
+
 SEXP r_mdb_env_create();
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force);

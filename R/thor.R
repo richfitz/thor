@@ -1,3 +1,7 @@
+mdb_version <- function() {
+  .Call(Cmdb_version)
+}
+
 mdb_env_create <- function() {
   .Call(Cmdb_env_create)
 }
