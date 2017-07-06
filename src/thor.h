@@ -11,6 +11,7 @@ SEXP r_mdb_version();
 
 SEXP r_mdb_env_create();
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
+SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path);
 SEXP r_mdb_env_stat(SEXP r_env);
 SEXP r_mdb_env_info(SEXP r_env);
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force);

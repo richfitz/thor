@@ -10,6 +10,10 @@ mdb_env_open <- function(env, path, flags) {
   .Call(Cmdb_env_open, env, path, flags)
 }
 
+mdb_env_copy <- function(env, path) {
+  .Call(Cmdb_env_copy, env, path)
+}
+
 mdb_env_stat <- function(env) {
   .Call(Cmdb_env_stat, env)
 }
