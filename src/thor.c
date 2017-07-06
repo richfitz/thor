@@ -13,6 +13,10 @@ void thor_init() {
 void thor_cleanup() {
 }
 
+static SEXP r_mdb_env_wrap(MDB_env *env);
+static SEXP r_mdb_txn_wrap(MDB_txn *txn);
+static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi);
+static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor);
 static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
 static void r_mdb_dbi_finalize(SEXP r_dbi);
@@ -33,12 +37,7 @@ SEXP r_mdb_version() {
 SEXP r_mdb_env_create() {
   MDB_env *env;
   no_error(mdb_env_create(&env), "mdb_env_create");
-
-  SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, R_NilValue));
-  R_RegisterCFinalizer(ret, r_mdb_env_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_env"));
-  UNPROTECT(1);
-  return ret;
+  return r_mdb_env_wrap(env);
 }
 
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
@@ -91,38 +90,13 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
-
-  // The options here for getting the GC right are we can
-  //
-  // - add the env to the tag of the txn - this takes care of keeping
-  //   the transaction alive in the case of accidental deletion of the
-  //   handle, so we'll do that.
-  // - add the txn to something in the environment so that when the
-  //   environment is *forceably* closed we can abort all
-  //   transactions - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(txn, R_NilValue, r_env));
-  R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
-  UNPROTECT(1);
-
-  return ret;
+  return r_mdb_txn_wrap(txn);
 }
 
 SEXP r_mdb_txn_env(SEXP r_txn) {
-  // Here, we need to be able to wrap up an existing env object which
-  // means wrapping up an existing env - it also raises questions
-  // about how we deal with the reporting back of who is looking after
-  // whom, so I don't know that this is a necessarily sensible thing
-  // to finish off until we have a better understanding of all the
-  // memory management issues.
-  //
-  //   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  //   MDB_env * env = mdb_txn_env(txn);
-  //   return wrap_env(env);
-  //
-  // so for now we just error:
-  Rf_error("not yet implemented");
-  return R_NilValue;
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_env * env = mdb_txn_env(txn);
+  return r_mdb_env_wrap(env);
 }
 
 SEXP r_mdb_txn_id(SEXP r_txn) {
@@ -172,20 +146,7 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
   no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
 
-  // The options here for getting the GC right are we can
-  //
-  // - add the txn to the tag of the dbi - this takes care of keeping
-  //   the transaction alive in the case of accidental deletion of the
-  //   handle, so we'll do that.
-  // - add the dbi to something in the txn so that when the
-  //   transaction is *forceably* closed we can abort all
-  //   connections - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, r_txn));
-  R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
-  UNPROTECT(1);
-
-  return ret;
+  return r_mdb_dbi_wrap(dbi);
 }
 
 // "Normally unnecessary. Use with care"
@@ -238,13 +199,7 @@ SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   MDB_cursor *cursor;
   no_error(mdb_cursor_open(txn, *dbi, &cursor), "mdb_cursor_open");
-
-  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, R_NilValue, R_NilValue));
-  R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
-  UNPROTECT(1);
-
-  return ret;
+  return r_mdb_cursor_wrap(cursor);
 }
 
 SEXP r_mdb_cursor_close(SEXP r_cursor) {
@@ -357,6 +312,55 @@ MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error) {
     Rf_error("mdb dbi is not open; can't connect");
   }
   return (MDB_dbi*) dbi;
+}
+
+// --- wrappers ---
+static SEXP r_mdb_env_wrap(MDB_env *env) {
+  SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, R_NilValue));
+  R_RegisterCFinalizer(ret, r_mdb_env_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_env"));
+  UNPROTECT(1);
+  return ret;
+}
+
+static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
+  // The options here for getting the GC right are we can
+  //
+  // - add the env to the tag of the txn - this takes care of keeping
+  //   the transaction alive in the case of accidental deletion of the
+  //   handle, so we'll do that.
+  // - add the txn to something in the environment so that when the
+  //   environment is *forceably* closed we can abort all
+  //   transactions - this is not done yet.
+  SEXP ret = PROTECT(R_MakeExternalPtr(txn, R_NilValue, R_NilValue));
+  R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
+  UNPROTECT(1);
+  return ret;
+}
+
+static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi) {
+  // The options here for getting the GC right are we can
+  //
+  // - add the txn to the tag of the dbi - this takes care of keeping
+  //   the transaction alive in the case of accidental deletion of the
+  //   handle, so we'll do that.
+  // - add the dbi to something in the txn so that when the
+  //   transaction is *forceably* closed we can abort all
+  //   connections - this is not done yet.
+  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, R_NilValue));
+  R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
+  UNPROTECT(1);
+  return ret;
+}
+
+static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor) {
+  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, R_NilValue, R_NilValue));
+  R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
+  UNPROTECT(1);
+  return ret;
 }
 
 // --- finalizers ---
