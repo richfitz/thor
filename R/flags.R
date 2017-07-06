@@ -60,3 +60,18 @@ c.mdb_flag <- function(...) {
   attr(res, "group") <- group[[1L]]
   res
 }
+
+get_flag <- function(e, name) {
+  .subset2(e, name) %||%
+    stop(sprintf("Unknown flag %s", name), call. = FALSE)
+}
+
+##' @export
+`$.mdb_flags` <- function(x, name) {
+  get_flag(x, name)
+}
+
+##' @export
+`[[.mdb_flags` <- function(x, name) {
+  get_flag(x, name)
+}
