@@ -48,7 +48,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   // TODO: more work here
-  const int flags = scalar_int(r_flags, "flags");
+  const int flags = mdb_flags(r_flags);;
   const mdb_mode_t mode = 0644;
 
   int rc = mdb_env_open(env, path, flags, mode);
@@ -86,7 +86,7 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const int flags = scalar_int(r_flags, "flags");
+  const int flags = mdb_flags(r_flags);;
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -166,7 +166,7 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const int flags = scalar_int(r_flags, "flags");
+  const int flags = mdb_flags(r_flags);;
 
   MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
   no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
@@ -187,13 +187,20 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   return ret;
 }
 
+// "Normally unnecessary. Use with care"
+SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  mdb_dbi_close(env, *dbi);
+  return R_NilValue;
+}
+
 // --- use the database ---
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
-  return R_NilValue;
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   MDB_val key, data;
-  const int flags = scalar_int(r_flags, "flags");
+  const int flags = mdb_flags(r_flags);;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");

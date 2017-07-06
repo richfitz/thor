@@ -26,6 +26,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_txn_renew",               (DL_FUNC) &r_mdb_txn_renew,             1},
 
   {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              3},
+  {"Cmdb_dbi_close",               (DL_FUNC) &r_mdb_dbi_close,             2},
 
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   5},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   3},

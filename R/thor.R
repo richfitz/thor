@@ -12,10 +12,6 @@ mdb_env_close <- function(env) {
   .Call(Cmdb_env_close, env)
 }
 
-mdb_dbi_open <- function(txn, name, flags) {
-  .Call(Cmdb_dbi_open, txn, name, flags)
-}
-
 ## transactions:
 mdb_txn_begin <- function(env, parent, flags) {
   .Call(Cmdb_txn_begin, env, parent, flags)
@@ -43,6 +39,14 @@ mdb_txn_reset <- function(txn) {
 
 mdb_txn_renew <- function(txn) {
   .Call(Cmdb_txn_renew, txn)
+}
+
+mdb_dbi_open <- function(txn, name, flags) {
+  .Call(Cmdb_dbi_open, txn, name, flags)
+}
+
+mdb_dbi_close <- function(env, dbi) {
+  .Call(Cmdb_dbi_close, env, dbi)
 }
 
 mdb_put <- function(txn, dbi, key, data, flags) {

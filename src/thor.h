@@ -23,6 +23,7 @@ SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 
 SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags);
+SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key);
