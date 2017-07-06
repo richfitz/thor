@@ -93,6 +93,31 @@ SEXP r_mdb_env_stat(SEXP r_env) {
   return ret;
 }
 
+SEXP r_mdb_env_info(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  MDB_envinfo info;
+  mdb_env_info(env, &info);
+
+  SEXP ret = PROTECT(allocVector(INTSXP, 5));
+  SEXP nms = PROTECT(allocVector(STRSXP, 5));
+  int *c_ret = INTEGER(ret);
+
+  c_ret[0] = info.me_mapsize;
+  SET_STRING_ELT(nms, 0, mkChar("mapsize"));
+  c_ret[1] = info.me_last_pgno;
+  SET_STRING_ELT(nms, 1, mkChar("last_pgno"));
+  c_ret[2] = info.me_last_txnid;
+  SET_STRING_ELT(nms, 2, mkChar("last_txnid"));
+  c_ret[3] = info.me_maxreaders;
+  SET_STRING_ELT(nms, 3, mkChar("maxreaders"));
+  c_ret[4] = info.me_numreaders;
+  SET_STRING_ELT(nms, 4, mkChar("numreaders"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   bool force = scalar_logical(r_force, "force");

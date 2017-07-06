@@ -15,6 +15,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_env_create",              (DL_FUNC) &r_mdb_env_create,            0},
   {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,              3},
   {"Cmdb_env_stat",                (DL_FUNC) &r_mdb_env_stat,              1},
+  {"Cmdb_env_info",                (DL_FUNC) &r_mdb_env_info,              1},
   {"Cmdb_env_sync",                (DL_FUNC) &r_mdb_env_sync,              2},
   {"Cmdb_env_close",               (DL_FUNC) &r_mdb_env_close,             1},
 

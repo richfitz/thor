@@ -14,6 +14,10 @@ mdb_env_stat <- function(env) {
   .Call(Cmdb_env_stat, env)
 }
 
+mdb_env_info <- function(env) {
+  .Call(Cmdb_env_info, env)
+}
+
 mdb_env_sync <- function(env, force) {
   .Call(Cmdb_env_sync, env, force)
 }
