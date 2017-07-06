@@ -49,10 +49,42 @@ mdb_dbi_close <- function(env, dbi) {
   .Call(Cmdb_dbi_close, env, dbi)
 }
 
+mdb_get <- function(txn, dbi, key) {
+  .Call(Cmdb_get, txn, dbi, key)
+}
+
 mdb_put <- function(txn, dbi, key, data, flags) {
   .Call(Cmdb_put, txn, dbi, key, data, flags)
 }
 
-mdb_get <- function(txn, dbi, key) {
-  .Call(Cmdb_get, txn, dbi, key)
+mdb_del <- function(txn, dbi, key, data) {
+  .Call(Cmdb_del, txn, dbi, key, data)
+}
+
+mdb_cursor_open <- function(txn, dbi) {
+  .Call(Cmdb_cursor_open, txn, dbi)
+}
+
+mdb_cursor_close <- function(cursor) {
+  .Call(Cmdb_cursor_close, cursor)
+}
+
+mdb_cursor_renew <- function(txn, cursor) {
+  .Call(Cmdb_cursor_renew, txn, cursor)
+}
+
+mdb_cursor_get <- function(cursor, key, op) {
+  .Call(Cmdb_cursor_get, cursor, key, op)
+}
+
+mdb_cursor_put <- function(cursor, key, data, flags) {
+  .Call(Cmdb_cursor_put, cursor, key, data, flags)
+}
+
+mdb_cursor_del <- function(cursor, flags) {
+  .Call(Cmdb_cursor_del, cursor, flags)
+}
+
+mdb_cursor_count <- function(cursor) {
+  .Call(Cmdb_cursor_count, cursor)
 }

@@ -30,11 +30,21 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   5},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   3},
+  {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
+
+  {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
+  {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
+  {"Cmdb_cursor_renew",            (DL_FUNC) &r_mdb_cursor_renew,          1},
+  {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            3},
+  {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            4},
+  {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},
 
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
   {"Cmdb_flags_dbi",               (DL_FUNC) &r_mdb_flags_dbi,             0},
   {"Cmdb_flags_write",             (DL_FUNC) &r_mdb_flags_write,           0},
   {"Cmdb_flags_copy",              (DL_FUNC) &r_mdb_flags_copy,            0},
+
+  {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
 
   {NULL,                           NULL,                                   0}
 };

@@ -4,6 +4,7 @@ flags_env <- new.env(parent = emptyenv())
 flags_dbi <- new.env(parent = emptyenv())
 flags_write <- new.env(parent = emptyenv())
 flags_copy <- new.env(parent = emptyenv())
+cursor_op <- new.env(parent = emptyenv())
 NO_FLAGS <- NULL
 
 init_flags <- function() {
@@ -22,11 +23,13 @@ init_flags <- function() {
   init(Cmdb_flags_dbi,   "dbi",   flags_dbi)
   init(Cmdb_flags_write, "write", flags_write)
   init(Cmdb_flags_copy,  "copy",  flags_copy)
+
+  init(Cmdb_cursor_op, "cursor_op", cursor_op)
 }
 
 ##' @export
 print.mdb_flags <- function(x, ...) {
-  cat("<mdb_flags>\n")
+  cat(sprintf("<mdb_flags[%s]>\n", attr(x, "group")))
   cat(sprintf("  - %s\n", ls(x)), sep = "")
 }
 

@@ -27,11 +27,23 @@ SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key);
+SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data);
+
+SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
+SEXP r_mdb_cursor_close(SEXP r_cursor);
+SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor);
+// SEXP r_mdb_cursor_transaction(SEXP r_cursor);
+// SEXP r_mdb_cursor_dbi(SEXP r_cursor);
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op);
+SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
+SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags);
+SEXP r_mdb_cursor_count(SEXP r_cursor);
 
 // Internals:
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error);
+MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP mdb_val_to_sexp(MDB_val *x);
@@ -45,4 +57,8 @@ SEXP r_mdb_flags_write();
 SEXP r_mdb_flags_copy();
 
 // - interface
-int mdb_flags(SEXP r_flags);
+int sexp_to_mdb_flags(SEXP r_flags);
+MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
+
+// cursor_op
+SEXP r_mdb_cursor_op();

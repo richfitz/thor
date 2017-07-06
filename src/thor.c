@@ -16,6 +16,7 @@ void thor_cleanup() {
 static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
 static void r_mdb_dbi_finalize(SEXP r_dbi);
+static void r_mdb_cursor_finalize(SEXP r_cursor);
 
 SEXP r_mdb_version() {
   SEXP ret = PROTECT(allocVector(VECSXP, 1));
@@ -48,7 +49,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   // TODO: more work here
-  const int flags = mdb_flags(r_flags);;
+  const int flags = sexp_to_mdb_flags(r_flags);;
   const mdb_mode_t mode = 0644;
 
   int rc = mdb_env_open(env, path, flags, mode);
@@ -86,7 +87,7 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const int flags = mdb_flags(r_flags);;
+  const int flags = sexp_to_mdb_flags(r_flags);;
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -166,7 +167,7 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const int flags = mdb_flags(r_flags);;
+  const int flags = sexp_to_mdb_flags(r_flags);;
 
   MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
   no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
@@ -196,17 +197,6 @@ SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
 }
 
 // --- use the database ---
-SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
-  MDB_val key, data;
-  const int flags = mdb_flags(r_flags);;
-  sexp_to_mdb_val(r_key, "key", &key);
-  sexp_to_mdb_val(r_data, "data", &data);
-  no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
-  return R_NilValue;
-}
-
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
@@ -214,6 +204,114 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   sexp_to_mdb_val(r_key, "key", &key);
   no_error(mdb_get(txn, *dbi, &key, &data), "mdb_get");
   return mdb_val_to_sexp(&data);
+}
+
+SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_val key, data;
+  const int flags = sexp_to_mdb_flags(r_flags);
+  sexp_to_mdb_val(r_key, "key", &key);
+  sexp_to_mdb_val(r_data, "data", &data);
+  no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
+  return R_NilValue;
+}
+
+SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_val key, data;
+  sexp_to_mdb_val(r_key, "key", &key);
+  if (r_data == NULL) {
+    data.mv_size = 0;
+    data.mv_data = "";
+  } else {
+    sexp_to_mdb_val(r_data, "data", &data);
+  }
+  no_error(mdb_del(txn, *dbi, &key, &data), "mdb_del");
+  return R_NilValue;
+}
+
+// --- cursors ---
+SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_cursor *cursor;
+  no_error(mdb_cursor_open(txn, *dbi, &cursor), "mdb_cursor_open");
+
+  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, R_NilValue, R_NilValue));
+  R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
+  setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
+  UNPROTECT(1);
+
+  return ret;
+}
+
+SEXP r_mdb_cursor_close(SEXP r_cursor) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  mdb_cursor_close(cursor);
+  return R_NilValue;
+}
+
+SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  mdb_cursor_renew(txn, cursor);
+  return R_NilValue;
+}
+
+// SEXP r_mdb_cursor_transaction(SEXP r_cursor);
+// SEXP r_mdb_cursor_dbi(SEXP r_cursor);
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  MDB_val key, data;
+  if (r_key != R_NilValue) {
+    sexp_to_mdb_val(r_key, "key", &key);
+  }
+  MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
+  // MDB_NOTFOUND should not necessarily be an error
+  no_error(mdb_cursor_get(cursor, &key, &data, cursor_op), "mdb_cursor_get");
+  // some trickery here will be useful to send a proxy object back for
+  // the data rather than the full data.  Or we could return something
+  // like a list.  For now, that's what I'm going to do; this would be
+  // the *maximal* return object.
+  SEXP ret = PROTECT(allocVector(VECSXP, 2));
+  // could avoid a key here if we do a quick comparison of the input key
+  // if r_key != R_Nilvalue &&
+  //    key.len == r_key.len &&
+  //    key.data == r_key.data
+  // then
+  //    SET_VECTOR_ELT(ret, 1, r_key);
+  // else
+  //    ...as below
+  SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key));
+  SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data));
+  UNPROTECT(1);
+  return ret;
+}
+
+SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  MDB_val key, data;
+  sexp_to_mdb_val(r_key, "key", &key);
+  sexp_to_mdb_val(r_data, "data", &data);
+  const int flags = sexp_to_mdb_flags(r_flags);
+  no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
+  return R_NilValue;
+}
+
+SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  const int flags = sexp_to_mdb_flags(r_flags);
+  no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
+  return R_NilValue;
+}
+
+SEXP r_mdb_cursor_count(SEXP r_cursor) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  mdb_size_t count;
+  no_error(mdb_cursor_count(cursor, &count), "mdb_cursor_count");
+  return ScalarInteger(count);
 }
 
 // --- wranglers ---
@@ -239,6 +337,17 @@ MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error) {
   return (MDB_txn*) txn;
 }
 
+MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error) {
+  if (TYPEOF(r_cursor) != EXTPTRSXP) {
+    Rf_error("Expected an external pointer");
+  }
+  MDB_cursor* cursor = (MDB_cursor*) R_ExternalPtrAddr(r_cursor);
+  if (!cursor && closed_error) {
+    Rf_error("mdb cursor is not open; can't connect");
+  }
+  return (MDB_cursor*) cursor;
+}
+
 MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error) {
   if (TYPEOF(r_dbi) != EXTPTRSXP) {
     Rf_error("Expected an external pointer");
@@ -256,17 +365,9 @@ static void r_mdb_env_finalize(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, false);
   if (env != NULL) {
     Rprintf("Cleaning environent\n");
-    mdb_env_close(env);
+    // Some care is needed here I think
+    // mdb_env_close(env);
     R_ClearExternalPtr(r_env);
-  }
-}
-
-static void r_mdb_txn_finalize(SEXP r_txn) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, false);
-  if (txn != NULL) {
-    Rprintf("Cleaning transaction\n");
-    // mdb_txn_abort(txn);
-    R_ClearExternalPtr(r_txn);
   }
 }
 
@@ -274,9 +375,32 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, false);
   if (dbi != NULL) {
     Rprintf("Cleaning handle\n");
-    // mdb_dbi_close(dbi); --- needed?  Docs suggest not really
+    // mdb_dbi_close(dbi); --- needed?  Docs suggest not really.  And
+    // if closed then cursors are at risk.
     // Free(dbi);
     R_ClearExternalPtr(r_dbi);
+  }
+}
+
+static void r_mdb_txn_finalize(SEXP r_txn) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, false);
+  if (txn != NULL) {
+    Rprintf("Cleaning transaction\n");
+    // This is not *necessarily* the right thing to do; it would
+    // really depend if there are any live cursors.
+    // mdb_txn_abort(txn);
+    R_ClearExternalPtr(r_txn);
+  }
+}
+
+static void r_mdb_cursor_finalize(SEXP r_cursor) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false);
+  if (cursor != NULL) {
+    Rprintf("Cleaning cursor\n");
+    // These can definitely be garbage collected directly I think;
+    // once they're out of scope we can't get it back.
+    mdb_cursor_close(cursor);
+    R_ClearExternalPtr(r_cursor);
   }
 }
 
@@ -411,7 +535,7 @@ SEXP r_mdb_flags_copy() {
   return ret;
 }
 
-int mdb_flags(SEXP r_flags) {
+int sexp_to_mdb_flags(SEXP r_flags) {
   int ret = 0;
   if (r_flags != R_NilValue) {
     // Here we could look at the class attribute instead but this will
@@ -425,5 +549,65 @@ int mdb_flags(SEXP r_flags) {
       ret = ret | flags[i];
     }
   }
+  return ret;
+}
+
+MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op) {
+  // Here we could look at the class attribute instead but this will
+  // be fine for now
+  if (TYPEOF(r_cursor_op) != INTSXP || length(r_cursor_op) != 1) {
+    // TODO: this is not a great reflection of reality:
+    Rf_error("cursor_op must be an cursor_op object");
+  }
+  return INTEGER(r_cursor_op)[0];
+}
+
+// --- cursor_op ---
+SEXP r_mdb_cursor_op() {
+  int n = 19;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  INTEGER(ret)[0] = MDB_FIRST;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_FIRST"));
+  INTEGER(ret)[1] = MDB_FIRST_DUP;
+  SET_STRING_ELT(nms, 1, mkChar("MDB_FIRST_DUP"));
+  INTEGER(ret)[2] = MDB_GET_BOTH;
+  SET_STRING_ELT(nms, 2, mkChar("MDB_GET_BOTH"));
+  INTEGER(ret)[3] = MDB_GET_BOTH_RANGE;
+  SET_STRING_ELT(nms, 3, mkChar("MDB_GET_BOTH_RANGE"));
+  INTEGER(ret)[4] = MDB_GET_CURRENT;
+  SET_STRING_ELT(nms, 4, mkChar("MDB_GET_CURRENT"));
+  INTEGER(ret)[5] = MDB_GET_MULTIPLE;
+  SET_STRING_ELT(nms, 5, mkChar("MDB_GET_MULTIPLE"));
+  INTEGER(ret)[6] = MDB_LAST;
+  SET_STRING_ELT(nms, 6, mkChar("MDB_LAST"));
+  INTEGER(ret)[7] = MDB_LAST_DUP;
+  SET_STRING_ELT(nms, 7, mkChar("MDB_LAST_DUP"));
+  INTEGER(ret)[8] = MDB_NEXT;
+  SET_STRING_ELT(nms, 8, mkChar("MDB_NEXT"));
+  INTEGER(ret)[9] = MDB_NEXT_DUP;
+  SET_STRING_ELT(nms, 9, mkChar("MDB_NEXT_DUP"));
+  INTEGER(ret)[10] = MDB_NEXT_MULTIPLE;
+  SET_STRING_ELT(nms, 10, mkChar("MDB_NEXT_MULTIPLE"));
+  INTEGER(ret)[11] = MDB_NEXT_NODUP;
+  SET_STRING_ELT(nms, 11, mkChar("MDB_NEXT_NODUP"));
+  INTEGER(ret)[12] = MDB_PREV;
+  SET_STRING_ELT(nms, 12, mkChar("MDB_PREV"));
+  INTEGER(ret)[13] = MDB_PREV_DUP;
+  SET_STRING_ELT(nms, 13, mkChar("MDB_PREV_DUP"));
+  INTEGER(ret)[14] = MDB_PREV_NODUP;
+  SET_STRING_ELT(nms, 14, mkChar("MDB_PREV_NODUP"));
+  INTEGER(ret)[15] = MDB_SET;
+  SET_STRING_ELT(nms, 15, mkChar("MDB_SET"));
+  INTEGER(ret)[16] = MDB_SET_KEY;
+  SET_STRING_ELT(nms, 16, mkChar("MDB_SET_KEY"));
+  INTEGER(ret)[17] = MDB_SET_RANGE;
+  SET_STRING_ELT(nms, 17, mkChar("MDB_SET_RANGE"));
+  INTEGER(ret)[18] = MDB_PREV_MULTIPLE;
+  SET_STRING_ELT(nms, 18, mkChar("MDB_PREV_MULTIPLE"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
   return ret;
 }
