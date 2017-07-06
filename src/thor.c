@@ -67,10 +67,12 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   return r_env;
 }
 
-SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path) {
+SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path, SEXP r_compact) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
-  no_error(mdb_env_copy(env, path), "mdb_env_copy");
+  bool compact = scalar_logical(r_compact, "compact");
+  unsigned int flags = compact ? MDB_CP_COMPACT : 0;
+  no_error(mdb_env_copy2(env, path, flags), "mdb_env_copy");
   return R_NilValue;
 }
 
