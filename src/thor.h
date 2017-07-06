@@ -34,3 +34,14 @@ MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP mdb_val_to_sexp(MDB_val *x);
+
+// Flags
+
+// - export to R
+SEXP r_mdb_flags_env();
+SEXP r_mdb_flags_dbi();
+SEXP r_mdb_flags_write();
+SEXP r_mdb_flags_copy();
+
+// - interface
+int mdb_flags(SEXP r_flags);

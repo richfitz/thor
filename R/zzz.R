@@ -1,2 +1,4 @@
 ##' @useDynLib thor, .registration = TRUE
-NULL
+.onLoad <- function(...) {
+  init_flags()
+}

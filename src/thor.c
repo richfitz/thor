@@ -304,3 +304,119 @@ SEXP mdb_val_to_sexp(MDB_val *x) {
   UNPROTECT(1);
   return ret;
 }
+
+// Flags
+SEXP r_mdb_flags_env() {
+  int n = 11;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  INTEGER(ret)[0] = MDB_FIXEDMAP;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_FIXEDMAP"));
+  INTEGER(ret)[1] = MDB_NOSUBDIR;
+  SET_STRING_ELT(nms, 1, mkChar("MDB_NOSUBDIR"));
+  INTEGER(ret)[2] = MDB_RDONLY;
+  SET_STRING_ELT(nms, 2, mkChar("MDB_RDONLY"));
+  INTEGER(ret)[3] = MDB_WRITEMAP;
+  SET_STRING_ELT(nms, 3, mkChar("MDB_WRITEMAP"));
+  INTEGER(ret)[4] = MDB_NOMETASYNC;
+  SET_STRING_ELT(nms, 4, mkChar("MDB_NOMETASYNC"));
+  INTEGER(ret)[5] = MDB_NOSYNC;
+  SET_STRING_ELT(nms, 5, mkChar("MDB_NOSYNC"));
+  INTEGER(ret)[6] = MDB_MAPASYNC;
+  SET_STRING_ELT(nms, 6, mkChar("MDB_MAPASYNC"));
+  INTEGER(ret)[7] = MDB_NOTLS;
+  SET_STRING_ELT(nms, 7, mkChar("MDB_NOTLS"));
+  INTEGER(ret)[8] = MDB_NOLOCK;
+  SET_STRING_ELT(nms, 8, mkChar("MDB_NOLOCK"));
+  INTEGER(ret)[9] = MDB_NORDAHEAD;
+  SET_STRING_ELT(nms, 9, mkChar("MDB_NORDAHEAD"));
+  INTEGER(ret)[10] = MDB_NOMEMINIT;
+  SET_STRING_ELT(nms, 10, mkChar("MDB_NOMEMINIT"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
+// mdb_dbi_open:
+SEXP r_mdb_flags_dbi() {
+  int n = 7;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  // mdb_dbi_open:
+  INTEGER(ret)[0] = MDB_REVERSEKEY;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_REVERSEKEY"));
+  INTEGER(ret)[1] = MDB_DUPSORT;
+  SET_STRING_ELT(nms, 1, mkChar("MDB_DUPSORT"));
+  INTEGER(ret)[2] = MDB_INTEGERKEY;
+  SET_STRING_ELT(nms, 2, mkChar("MDB_INTEGERKEY"));
+  INTEGER(ret)[3] = MDB_DUPFIXED;
+  SET_STRING_ELT(nms, 3, mkChar("MDB_DUPFIXED"));
+  INTEGER(ret)[4] = MDB_INTEGERDUP;
+  SET_STRING_ELT(nms, 4, mkChar("MDB_INTEGERDUP"));
+  INTEGER(ret)[5] = MDB_REVERSEDUP;
+  SET_STRING_ELT(nms, 5, mkChar("MDB_REVERSEDUP"));
+  INTEGER(ret)[6] = MDB_CREATE;
+  SET_STRING_ELT(nms, 6, mkChar("MDB_CREATE"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
+SEXP r_mdb_flags_write() {
+  int n = 7;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  INTEGER(ret)[0] = MDB_NOOVERWRITE;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_NOOVERWRITE"));
+  INTEGER(ret)[1] = MDB_NODUPDATA;
+  SET_STRING_ELT(nms, 1, mkChar("MDB_NODUPDATA"));
+  INTEGER(ret)[2] = MDB_CURRENT;
+  SET_STRING_ELT(nms, 2, mkChar("MDB_CURRENT"));
+  INTEGER(ret)[3] = MDB_RESERVE;
+  SET_STRING_ELT(nms, 3, mkChar("MDB_RESERVE"));
+  INTEGER(ret)[4] = MDB_APPEND;
+  SET_STRING_ELT(nms, 4, mkChar("MDB_APPEND"));
+  INTEGER(ret)[5] = MDB_APPENDDUP;
+  SET_STRING_ELT(nms, 5, mkChar("MDB_APPENDDUP"));
+  INTEGER(ret)[6] = MDB_MULTIPLE;
+  SET_STRING_ELT(nms, 6, mkChar("MDB_MULTIPLE"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
+SEXP r_mdb_flags_copy() {
+  int n = 1;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  INTEGER(ret)[0] = MDB_CP_COMPACT;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_CP_COMPACT"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
+int mdb_flags(SEXP r_flags) {
+  int ret = 0;
+  if (r_flags != R_NilValue) {
+    // Here we could look at the class attribute instead but this will
+    // be fine for now
+    if (TYPEOF(r_flags) != INTSXP) {
+      Rf_error("mdb flags must be an mdb_flag object");
+    }
+    size_t n_flags = length(r_flags);
+    int *flags = INTEGER(r_flags);
+    for (size_t i = 0; i < n_flags; ++i) {
+      ret = ret | flags[i];
+    }
+  }
+  return ret;
+}
