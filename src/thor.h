@@ -11,6 +11,7 @@ SEXP r_mdb_version();
 
 SEXP r_mdb_env_create();
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
+SEXP r_mdb_env_stat(SEXP r_env);
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force);
 SEXP r_mdb_env_close(SEXP r_env);
 
@@ -32,8 +33,8 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data);
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_cursor_close(SEXP r_cursor);
 SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor);
-// SEXP r_mdb_cursor_transaction(SEXP r_cursor);
-// SEXP r_mdb_cursor_dbi(SEXP r_cursor);
+SEXP r_mdb_cursor_txn(SEXP r_cursor);
+SEXP r_mdb_cursor_dbi(SEXP r_cursor);
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op);
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags);

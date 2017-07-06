@@ -14,8 +14,9 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_env_create",              (DL_FUNC) &r_mdb_env_create,            0},
   {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,              3},
-  {"Cmdb_env_close",               (DL_FUNC) &r_mdb_env_close,             1},
+  {"Cmdb_env_stat",                (DL_FUNC) &r_mdb_env_stat,              1},
   {"Cmdb_env_sync",                (DL_FUNC) &r_mdb_env_sync,              2},
+  {"Cmdb_env_close",               (DL_FUNC) &r_mdb_env_close,             1},
 
   {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             3},
   {"Cmdb_txn_id",                  (DL_FUNC) &r_mdb_txn_id,                1},
@@ -35,6 +36,8 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
   {"Cmdb_cursor_renew",            (DL_FUNC) &r_mdb_cursor_renew,          1},
+  {"Cmdb_cursor_txn",              (DL_FUNC) &r_mdb_cursor_txn,            1},
+  {"Cmdb_cursor_dbi",              (DL_FUNC) &r_mdb_cursor_dbi,            1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            3},
   {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            4},
   {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},

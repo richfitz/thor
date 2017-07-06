@@ -67,6 +67,32 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   return r_env;
 }
 
+SEXP r_mdb_env_stat(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  MDB_stat stat;
+  mdb_env_stat(env, &stat);
+  SEXP ret = PROTECT(allocVector(INTSXP, 6));
+  SEXP nms = PROTECT(allocVector(STRSXP, 6));
+  int *c_ret = INTEGER(ret);
+
+  c_ret[0] = stat.ms_psize;
+  SET_STRING_ELT(nms, 0, mkChar("psize"));
+  c_ret[1] = stat.ms_depth;
+  SET_STRING_ELT(nms, 1, mkChar("depth"));
+  c_ret[2] = stat.ms_branch_pages;
+  SET_STRING_ELT(nms, 2, mkChar("branch_pages"));
+  c_ret[3] = stat.ms_leaf_pages;
+  SET_STRING_ELT(nms, 3, mkChar("leaf_pages"));
+  c_ret[4] = stat.ms_overflow_pages;
+  SET_STRING_ELT(nms, 4, mkChar("overflow_pages"));
+  c_ret[5] = stat.ms_entries;
+  SET_STRING_ELT(nms, 5, mkChar("entries"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
+}
+
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   bool force = scalar_logical(r_force, "force");
@@ -215,8 +241,18 @@ SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor) {
   return R_NilValue;
 }
 
-// SEXP r_mdb_cursor_transaction(SEXP r_cursor);
-// SEXP r_mdb_cursor_dbi(SEXP r_cursor);
+SEXP r_mdb_cursor_txn(SEXP r_cursor) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  return r_mdb_txn_wrap(mdb_cursor_txn(cursor));
+}
+
+SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
+  *dbi = mdb_cursor_dbi(cursor);
+  return r_mdb_dbi_wrap(dbi);
+}
+
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, data;

@@ -5,9 +5,19 @@ mdb_version <- function() {
 mdb_env_create <- function() {
   .Call(Cmdb_env_create)
 }
+
 mdb_env_open <- function(env, path, flags) {
   .Call(Cmdb_env_open, env, path, flags)
 }
+
+mdb_env_stat <- function(env) {
+  .Call(Cmdb_env_stat, env)
+}
+
+mdb_env_sync <- function(env, force) {
+  .Call(Cmdb_env_sync, env, force)
+}
+
 mdb_env_close <- function(env) {
   .Call(Cmdb_env_close, env)
 }
@@ -71,6 +81,14 @@ mdb_cursor_close <- function(cursor) {
 
 mdb_cursor_renew <- function(txn, cursor) {
   .Call(Cmdb_cursor_renew, txn, cursor)
+}
+
+mdb_cursor_txn <- function(cursor) {
+  .Call(Cmdb_cursor_txn, cursor)
+}
+
+mdb_cursor_dbi <- function(cursor) {
+  .Call(Cmdb_cursor_dbi, cursor)
 }
 
 mdb_cursor_get <- function(cursor, key, op) {
