@@ -3,6 +3,14 @@
 #include <stdbool.h>
 #include "lmdb.h"
 
+typedef enum thor_flag_group {
+  THOR_FLAGS_ENV,
+  THOR_FLAGS_DBI,
+  THOR_FLAGS_TXN,
+  THOR_FLAGS_WRITE,
+  THOR_CURSOR_OP
+} thor_flag_group;
+
 void thor_init();
 void thor_cleanup();
 
@@ -50,7 +58,7 @@ SEXP r_mdb_cursor_txn(SEXP r_cursor);
 SEXP r_mdb_cursor_dbi(SEXP r_cursor);
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op);
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
-SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags);
+SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata);
 SEXP r_mdb_cursor_count(SEXP r_cursor);
 
 SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
@@ -73,11 +81,11 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 // - export to R
 SEXP r_mdb_flags_env();
 SEXP r_mdb_flags_dbi();
+SEXP r_mdb_flags_txn();
 SEXP r_mdb_flags_write();
-SEXP r_mdb_flags_copy();
 
 // - interface
-unsigned int sexp_to_mdb_flags(SEXP r_flags);
+unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 
 // cursor_op

@@ -5,9 +5,13 @@
 // some basic type checking.  Options there are a newly allocated
 // (say) integer/enum type with the cost of one allocation.  The other
 // way would be to have some package-level singleton SEXP objects that
-// we can stick in as the tag.
+// we can stick in as the tag.  We'll need to do this with flags too!
+
+SEXP thor_flag_group_id_name;
+SEXP thor_ptr_type_name;
 
 void thor_init() {
+  thor_flag_group_id_name = install("group_id");
 }
 
 void thor_cleanup() {
@@ -48,7 +52,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   // TODO: more work here
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_ENV);
   const mdb_mode_t mode = 0644;
 
   int rc = mdb_env_open(env, path, flags, mode);
@@ -124,7 +128,7 @@ SEXP r_mdb_env_close(SEXP r_env) {
 
 SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_ENV);
   bool set = scalar_logical(r_set, "set");
   no_error(mdb_env_set_flags(env, flags, set), "mdb_env_set_flags");
   return R_NilValue;
@@ -182,7 +186,7 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_TXN);
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -237,7 +241,7 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_DBI);
 
   MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
   no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
@@ -291,7 +295,7 @@ SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   MDB_val key, data;
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_WRITE);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
@@ -380,14 +384,15 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_WRITE);
   no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
   return R_NilValue;
 }
 
-SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags) {
+SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags);
+  const bool nodupdata = scalar_logical(r_nodupdata, "nodupdata");
+  const unsigned int flags = nodupdata ? MDB_NODUPDATA : 0;
   no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
   return R_NilValue;
 }
@@ -660,6 +665,7 @@ SEXP r_mdb_flags_env() {
   SET_STRING_ELT(nms, 10, mkChar("MDB_NOMEMINIT"));
 
   setAttrib(ret, R_NamesSymbol, nms);
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_ENV));
   UNPROTECT(2);
   return ret;
 }
@@ -687,6 +693,26 @@ SEXP r_mdb_flags_dbi() {
   SET_STRING_ELT(nms, 6, mkChar("MDB_CREATE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_DBI));
+  UNPROTECT(2);
+  return ret;
+}
+
+SEXP r_mdb_flags_txn() {
+  int n = 3;
+  SEXP ret = PROTECT(allocVector(INTSXP, n));
+  SEXP nms = PROTECT(allocVector(STRSXP, n));
+
+  // mdb_dbi_open:
+  INTEGER(ret)[0] = MDB_RDONLY;
+  SET_STRING_ELT(nms, 0, mkChar("MDB_RDONLY"));
+  INTEGER(ret)[1] = MDB_NOSYNC;
+  SET_STRING_ELT(nms, 1, mkChar("MDB_NOSYNC"));
+  INTEGER(ret)[2] = MDB_NOMETASYNC;
+  SET_STRING_ELT(nms, 2, mkChar("MDB_NOMETASYNC"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_TXN));
   UNPROTECT(2);
   return ret;
 }
@@ -712,30 +738,24 @@ SEXP r_mdb_flags_write() {
   SET_STRING_ELT(nms, 6, mkChar("MDB_MULTIPLE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_WRITE));
   UNPROTECT(2);
   return ret;
 }
 
-SEXP r_mdb_flags_copy() {
-  int n = 1;
-  SEXP ret = PROTECT(allocVector(INTSXP, n));
-  SEXP nms = PROTECT(allocVector(STRSXP, n));
-
-  INTEGER(ret)[0] = MDB_CP_COMPACT;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_CP_COMPACT"));
-
-  setAttrib(ret, R_NamesSymbol, nms);
-  UNPROTECT(2);
-  return ret;
-}
-
-unsigned int sexp_to_mdb_flags(SEXP r_flags) {
+unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id) {
   int ret = 0;
   if (r_flags != R_NilValue) {
     // Here we could look at the class attribute instead but this will
     // be fine for now
-    if (TYPEOF(r_flags) != INTSXP) {
+    SEXP r_group_id = getAttrib(r_flags, thor_flag_group_id_name);
+    if (r_group_id == R_NilValue) {
       Rf_error("mdb flags must be an mdb_flag object");
+    }
+    if (INTEGER(r_group_id)[0] != group_id) {
+      // TODO: we should give more useful error messages here but that
+      // involves a big boring switch statement.
+      Rf_error("Wrong flag type");
     }
     size_t n_flags = length(r_flags);
     int *flags = INTEGER(r_flags);
@@ -747,10 +767,11 @@ unsigned int sexp_to_mdb_flags(SEXP r_flags) {
 }
 
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op) {
-  // Here we could look at the class attribute instead but this will
-  // be fine for now
-  if (TYPEOF(r_cursor_op) != INTSXP || length(r_cursor_op) != 1) {
-    // TODO: this is not a great reflection of reality:
+  SEXP r_group_id = getAttrib(r_cursor_op, thor_flag_group_id_name);
+  if (r_group_id == R_NilValue) {
+    Rf_error("cursor_op must be an mdb_flag object");
+  }
+  if (INTEGER(r_group_id)[0] != THOR_CURSOR_OP || length(r_cursor_op) != 1) {
     Rf_error("cursor_op must be an cursor_op object");
   }
   return INTEGER(r_cursor_op)[0];
@@ -802,6 +823,7 @@ SEXP r_mdb_cursor_op() {
   SET_STRING_ELT(nms, 18, mkChar("MDB_PREV_MULTIPLE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_CURSOR_OP));
   UNPROTECT(2);
   return ret;
 }

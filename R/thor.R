@@ -152,8 +152,8 @@ mdb_cursor_put <- function(cursor, key, data, flags) {
   .Call(Cmdb_cursor_put, cursor, key, data, flags)
 }
 
-mdb_cursor_del <- function(cursor, flags) {
-  .Call(Cmdb_cursor_del, cursor, flags)
+mdb_cursor_del <- function(cursor, nodupdata) {
+  .Call(Cmdb_cursor_del, cursor, nodupdata)
 }
 
 mdb_cursor_count <- function(cursor) {
