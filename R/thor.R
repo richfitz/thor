@@ -96,8 +96,20 @@ mdb_dbi_open <- function(txn, name, flags) {
   .Call(Cmdb_dbi_open, txn, name, flags)
 }
 
+mdb_stat <- function(txn, dbi) {
+  .Call(Cmdb_dbi_stat, txn, dbi)
+}
+
+mdb_flags <- function(txn, dbi) {
+  .Call(Cmdb_dbi_flags, txn, dbi) # TODO: process
+}
+
 mdb_dbi_close <- function(env, dbi) {
   .Call(Cmdb_dbi_close, env, dbi)
+}
+
+mdb_drop <- function(txn, dbi, del) {
+  .Call(Cmdb_drop, txn, dbi, del)
 }
 
 mdb_get <- function(txn, dbi, key) {

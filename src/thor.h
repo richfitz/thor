@@ -34,7 +34,10 @@ SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 
 SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags);
+SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi);
+SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
+SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key);
@@ -58,6 +61,7 @@ MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP mdb_val_to_sexp(MDB_val *x);
+SEXP mdb_stat_to_sexp(MDB_stat *stat);
 
 // Flags
 

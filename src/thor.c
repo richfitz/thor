@@ -80,26 +80,7 @@ SEXP r_mdb_env_stat(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_stat stat;
   mdb_env_stat(env, &stat);
-  SEXP ret = PROTECT(allocVector(INTSXP, 6));
-  SEXP nms = PROTECT(allocVector(STRSXP, 6));
-  int *c_ret = INTEGER(ret);
-
-  c_ret[0] = stat.ms_psize;
-  SET_STRING_ELT(nms, 0, mkChar("psize"));
-  c_ret[1] = stat.ms_depth;
-  SET_STRING_ELT(nms, 1, mkChar("depth"));
-  c_ret[2] = stat.ms_branch_pages;
-  SET_STRING_ELT(nms, 2, mkChar("branch_pages"));
-  c_ret[3] = stat.ms_leaf_pages;
-  SET_STRING_ELT(nms, 3, mkChar("leaf_pages"));
-  c_ret[4] = stat.ms_overflow_pages;
-  SET_STRING_ELT(nms, 4, mkChar("overflow_pages"));
-  c_ret[5] = stat.ms_entries;
-  SET_STRING_ELT(nms, 5, mkChar("entries"));
-
-  setAttrib(ret, R_NamesSymbol, nms);
-  UNPROTECT(2);
-  return ret;
+  return mdb_stat_to_sexp(&stat);
 }
 
 SEXP r_mdb_env_info(SEXP r_env) {
@@ -264,11 +245,35 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   return r_mdb_dbi_wrap(dbi);
 }
 
+SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_stat stat;
+  mdb_stat(txn, *dbi, &stat);
+  return mdb_stat_to_sexp(&stat);
+}
+
+SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  unsigned int flags = 0;
+  no_error(mdb_dbi_flags(txn, *dbi, &flags), "mdb_dbi_flags");
+  return ScalarInteger(flags);
+}
+
 // "Normally unnecessary. Use with care"
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   mdb_dbi_close(env, *dbi);
+  return R_NilValue;
+}
+
+SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  bool del = scalar_logical(r_del, "del");
+  mdb_drop(txn, *dbi, del);
   return R_NilValue;
 }
 
@@ -562,6 +567,29 @@ SEXP mdb_val_to_sexp(MDB_val *x) {
   SEXP ret = PROTECT(allocVector(STRSXP, 1));
   SET_STRING_ELT(ret, 0, mkCharLen(x->mv_data, x->mv_size));
   UNPROTECT(1);
+  return ret;
+}
+
+SEXP mdb_stat_to_sexp(MDB_stat *stat) {
+  SEXP ret = PROTECT(allocVector(INTSXP, 6));
+  SEXP nms = PROTECT(allocVector(STRSXP, 6));
+  int *c_ret = INTEGER(ret);
+
+  c_ret[0] = stat->ms_psize;
+  SET_STRING_ELT(nms, 0, mkChar("psize"));
+  c_ret[1] = stat->ms_depth;
+  SET_STRING_ELT(nms, 1, mkChar("depth"));
+  c_ret[2] = stat->ms_branch_pages;
+  SET_STRING_ELT(nms, 2, mkChar("branch_pages"));
+  c_ret[3] = stat->ms_leaf_pages;
+  SET_STRING_ELT(nms, 3, mkChar("leaf_pages"));
+  c_ret[4] = stat->ms_overflow_pages;
+  SET_STRING_ELT(nms, 4, mkChar("overflow_pages"));
+  c_ret[5] = stat->ms_entries;
+  SET_STRING_ELT(nms, 5, mkChar("entries"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
   return ret;
 }
 
