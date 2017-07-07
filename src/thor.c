@@ -443,55 +443,47 @@ SEXP r_mdb_reader_check(SEXP r_env) {
 
 // --- wranglers ---
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error) {
-  if (TYPEOF(r_env) != EXTPTRSXP) {
-    Rf_error("Expected an external pointer");
-  }
-  MDB_env* env = (MDB_env*) R_ExternalPtrAddr(r_env);
-  if (!env && closed_error) {
-    Rf_error("mdb env is not open; can't connect");
-  }
-  return (MDB_env*) env;
+  return (MDB_env*) r_pointer_addr(r_env, THOR_ENV, "env", closed_error);
 }
 
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error) {
-  if (TYPEOF(r_txn) != EXTPTRSXP) {
-    Rf_error("Expected an external pointer");
-  }
-  MDB_txn* txn = (MDB_txn*) R_ExternalPtrAddr(r_txn);
-  if (!txn && closed_error) {
-    Rf_error("mdb txn is not open; can't connect");
-  }
-  return (MDB_txn*) txn;
-}
-
-MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error) {
-  if (TYPEOF(r_cursor) != EXTPTRSXP) {
-    Rf_error("Expected an external pointer");
-  }
-  MDB_cursor* cursor = (MDB_cursor*) R_ExternalPtrAddr(r_cursor);
-  if (!cursor && closed_error) {
-    Rf_error("mdb cursor is not open; can't connect");
-  }
-  return (MDB_cursor*) cursor;
+  return (MDB_txn*) r_pointer_addr(r_txn, THOR_TXN, "txn", closed_error);
 }
 
 MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error) {
-  if (TYPEOF(r_dbi) != EXTPTRSXP) {
+  return (MDB_dbi*) r_pointer_addr(r_dbi, THOR_DBI, "txn", closed_error);
+}
+
+MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error) {
+  return (MDB_cursor*) r_pointer_addr(r_cursor, THOR_CURSOR, "cursor",
+                                      closed_error);
+}
+
+void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
+                     bool closed_error) {
+  if (TYPEOF(r_ptr) != EXTPTRSXP) {
     Rf_error("Expected an external pointer");
   }
-  MDB_dbi* dbi = (MDB_dbi*) R_ExternalPtrAddr(r_dbi);
-  if (!dbi && closed_error) {
-    Rf_error("mdb dbi is not open; can't connect");
+  SEXP ptr_type = R_ExternalPtrTag(r_ptr);
+  if (TYPEOF(ptr_type) != INTSXP ||
+      length(ptr_type) != 1 ||
+      INTEGER(ptr_type)[0] != expected) {
+    Rf_error("Invalid pointer type recieved for %s", name);
   }
-  return (MDB_dbi*) dbi;
+  void * contents = R_ExternalPtrAddr(r_ptr);
+  if (closed_error && contents == NULL) {
+    Rf_error("%s has been freed; can't use!", name);
+  }
+  return contents;
 }
 
 // --- wrappers ---
 static SEXP r_mdb_env_wrap(MDB_env *env) {
-  SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, R_NilValue));
+  SEXP ptr_type = PROTECT(ScalarInteger(THOR_ENV));
+  SEXP ret = PROTECT(R_MakeExternalPtr(env, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_env_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_env"));
-  UNPROTECT(1);
+  UNPROTECT(2);
   return ret;
 }
 
@@ -504,10 +496,11 @@ static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
   // - add the txn to something in the environment so that when the
   //   environment is *forceably* closed we can abort all
   //   transactions - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(txn, R_NilValue, R_NilValue));
+  SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
+  SEXP ret = PROTECT(R_MakeExternalPtr(txn, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
-  UNPROTECT(1);
+  UNPROTECT(2);
   return ret;
 }
 
@@ -520,18 +513,20 @@ static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi) {
   // - add the dbi to something in the txn so that when the
   //   transaction is *forceably* closed we can abort all
   //   connections - this is not done yet.
-  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, R_NilValue, R_NilValue));
+  SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
+  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
-  UNPROTECT(1);
+  UNPROTECT(2);
   return ret;
 }
 
 static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor) {
-  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, R_NilValue, R_NilValue));
+  SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
+  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
-  UNPROTECT(1);
+  UNPROTECT(2);
   return ret;
 }
 
