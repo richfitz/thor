@@ -16,6 +16,14 @@ SEXP r_mdb_env_stat(SEXP r_env);
 SEXP r_mdb_env_info(SEXP r_env);
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force);
 SEXP r_mdb_env_close(SEXP r_env);
+SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set);
+SEXP r_mdb_env_get_flags(SEXP r_env);
+SEXP r_mdb_env_get_path(SEXP r_env);
+SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size);
+SEXP r_mdb_env_set_maxreaders(SEXP r_env, SEXP r_readers);
+SEXP r_mdb_env_get_maxreaders(SEXP r_env);
+SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs);
+SEXP r_mdb_env_get_maxkeysize(SEXP r_env);
 
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags);
 SEXP r_mdb_txn_env(SEXP r_txn);
@@ -60,7 +68,7 @@ SEXP r_mdb_flags_write();
 SEXP r_mdb_flags_copy();
 
 // - interface
-int sexp_to_mdb_flags(SEXP r_flags);
+unsigned int sexp_to_mdb_flags(SEXP r_flags);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 
 // cursor_op

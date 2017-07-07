@@ -48,7 +48,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   // TODO: more work here
-  const int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
   const mdb_mode_t mode = 0644;
 
   int rc = mdb_env_open(env, path, flags, mode);
@@ -141,12 +141,67 @@ SEXP r_mdb_env_close(SEXP r_env) {
   return R_NilValue;
 }
 
+SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);
+  bool set = scalar_logical(r_set, "set");
+  no_error(mdb_env_set_flags(env, flags, set), "mdb_env_set_flags");
+  return R_NilValue;
+}
+
+SEXP r_mdb_env_get_flags(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  unsigned int flags = 0;
+  no_error(mdb_env_get_flags(env, &flags), "mdb_env_get_flags");
+  return ScalarInteger(flags);
+}
+
+SEXP r_mdb_env_get_path(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  const char *path;
+  no_error(mdb_env_get_path(env, &path), "mdb_env_get_path");
+  return mkString(path);
+}
+
+SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  size_t size = scalar_size(r_size, "size");
+  no_error(mdb_env_set_mapsize(env, size), "mdb_env_set_mapsize");
+  return R_NilValue;
+}
+
+SEXP r_mdb_env_set_maxreaders(SEXP r_env, SEXP r_readers) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  size_t readers = scalar_size(r_readers, "readers");
+  no_error(mdb_env_set_maxreaders(env, readers), "mdb_env_set_maxreaders");
+  return R_NilValue;
+}
+
+SEXP r_mdb_env_get_maxreaders(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  unsigned int readers = 0;
+  no_error(mdb_env_get_maxreaders(env, &readers), "mdb_env_get_maxreaders");
+  return ScalarInteger(readers);
+}
+
+SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  size_t dbs = scalar_size(r_dbs, "dbs");
+  no_error(mdb_env_set_maxdbs(env, dbs), "mdb_env_set_maxdbs");
+  return R_NilValue;
+}
+
+SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  return ScalarInteger(mdb_env_get_maxkeysize(env));
+}
+
 // Transactions:
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -201,7 +256,7 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const int flags = sexp_to_mdb_flags(r_flags);;
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);;
 
   MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
   no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
@@ -231,7 +286,7 @@ SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   MDB_val key, data;
-  const int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
@@ -320,14 +375,14 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
-  const int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);
   no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
   return R_NilValue;
 }
 
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  const int flags = sexp_to_mdb_flags(r_flags);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags);
   no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
   return R_NilValue;
 }
@@ -609,7 +664,7 @@ SEXP r_mdb_flags_copy() {
   return ret;
 }
 
-int sexp_to_mdb_flags(SEXP r_flags) {
+unsigned int sexp_to_mdb_flags(SEXP r_flags) {
   int ret = 0;
   if (r_flags != R_NilValue) {
     // Here we could look at the class attribute instead but this will
