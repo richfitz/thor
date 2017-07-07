@@ -399,6 +399,24 @@ SEXP r_mdb_cursor_count(SEXP r_cursor) {
   return ScalarInteger(count);
 }
 
+SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_val a, b;
+  sexp_to_mdb_val(r_a, "a", &a);
+  sexp_to_mdb_val(r_b, "b", &b);
+  return ScalarInteger(mdb_cmp(txn, *dbi, &a, &b));
+}
+
+SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_val a, b;
+  sexp_to_mdb_val(r_a, "a", &a);
+  sexp_to_mdb_val(r_b, "b", &b);
+  return ScalarInteger(mdb_dcmp(txn, *dbi, &a, &b));
+}
+
 // --- wranglers ---
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error) {
   if (TYPEOF(r_env) != EXTPTRSXP) {

@@ -159,3 +159,11 @@ mdb_cursor_del <- function(cursor, flags) {
 mdb_cursor_count <- function(cursor) {
   .Call(Cmdb_cursor_count, cursor)
 }
+
+mdb_cmp <- function(txn, dbi, a, b) {
+  .Call(Cmdb_cmp, txn, dbi, a, b)
+}
+
+mdb_dcmp <- function(txn, dbi, a, b) {
+  .Call(Cmdb_dcmp, txn, dbi, a, b)
+}

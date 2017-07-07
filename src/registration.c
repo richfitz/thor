@@ -54,6 +54,10 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            3},
   {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            4},
   {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},
+  {"Cmdb_cursor_count",            (DL_FUNC) &r_mdb_cursor_count,          1},
+
+  {"Cmdb_cmp",                     (DL_FUNC) &r_mdb_cmp,                   4},
+  {"Cmdb_dcmp",                    (DL_FUNC) &r_mdb_dcmp,                  4},
 
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
   {"Cmdb_flags_dbi",               (DL_FUNC) &r_mdb_flags_dbi,             0},

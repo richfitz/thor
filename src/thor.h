@@ -53,6 +53,9 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_flags);
 SEXP r_mdb_cursor_count(SEXP r_cursor);
 
+SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
+SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
+
 // Internals:
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
