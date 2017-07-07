@@ -167,3 +167,11 @@ mdb_cmp <- function(txn, dbi, a, b) {
 mdb_dcmp <- function(txn, dbi, a, b) {
   .Call(Cmdb_dcmp, txn, dbi, a, b)
 }
+
+mdb_reader_list <- function(env) {
+  .Call(Cmdb_reader_list, env)
+}
+
+mdb_reader_check <- function(env) {
+  .Call(Cmdb_reader_check, env)
+}

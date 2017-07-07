@@ -417,6 +417,25 @@ SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   return ScalarInteger(mdb_dcmp(txn, *dbi, &a, &b));
 }
 
+// TODO: Swap this out for an accumulator
+int mdb_reader_list_callback(const char *msg, void *ctx) {
+  REprintf(msg);
+  return 0;
+}
+
+SEXP r_mdb_reader_list(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  mdb_reader_list(env, &mdb_reader_list_callback, NULL);
+  return R_NilValue;
+}
+
+SEXP r_mdb_reader_check(SEXP r_env) {
+  MDB_env * env = r_mdb_get_env(r_env, true);
+  int dead = 0;
+  no_error(mdb_reader_check(env, &dead), "mdb_reader_check");
+  return ScalarInteger(dead);
+}
+
 // --- wranglers ---
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error) {
   if (TYPEOF(r_env) != EXTPTRSXP) {

@@ -58,6 +58,8 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_cmp",                     (DL_FUNC) &r_mdb_cmp,                   4},
   {"Cmdb_dcmp",                    (DL_FUNC) &r_mdb_dcmp,                  4},
+  {"Cmdb_reader_list",             (DL_FUNC) &r_mdb_reader_list,           1},
+  {"Cmdb_reader_check",            (DL_FUNC) &r_mdb_reader_check,          1},
 
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
   {"Cmdb_flags_dbi",               (DL_FUNC) &r_mdb_flags_dbi,             0},
