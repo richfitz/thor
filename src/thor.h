@@ -18,6 +18,12 @@ typedef enum thor_ptr_type {
   THOR_CURSOR
 } thor_ptr_type;
 
+typedef enum thor_env_state {
+  THOR_ENV_OPEN,
+  THOR_ENV_CLOSED,
+  THOR_ENV_ANY
+} thor_env_state;
+
 void thor_init();
 void thor_cleanup();
 
@@ -74,7 +80,7 @@ SEXP r_mdb_reader_list(SEXP r_env);
 SEXP r_mdb_reader_check(SEXP r_env);
 
 // Internals:
-MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
+MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error, thor_env_state state);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error);
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);

@@ -31,35 +31,35 @@ mdb_env_close <- function(env) {
   .Call(Cmdb_env_close, env)
 }
 
-mdb_env_get_set_flags <- function(env, flags, set = TRUE) {
+mdb_env_set_flags <- function(env, flags, set = TRUE) {
   .Call(Cmdb_env_set_flags, env, flags, set)
 }
 
-mdb_env_get_get_flags <- function(env) {
-  .Call(Cmdb_env_set_flags, env) # then process these!
+mdb_env_get_flags <- function(env) {
+  .Call(Cmdb_env_get_flags, env) # then process these!
 }
 
-mdb_env_get_get_path <- function(env) {
-  .Call(Cmdb_env_set_path, env)
+mdb_env_get_path <- function(env) {
+  .Call(Cmdb_env_get_path, env)
 }
 
-mdb_env_get_set_mapsize <- function(env, mapsize) {
+mdb_env_set_mapsize <- function(env, mapsize) {
   .Call(Cmdb_env_set_mapsize, env, mapsize)
 }
 
-mdb_env_get_set_maxreaders <- function(env, maxreaders) {
+mdb_env_set_maxreaders <- function(env, maxreaders) {
   .Call(Cmdb_env_set_maxreaders, env, maxreaders)
 }
 
-mdb_env_get_get_maxreaders <- function(env) {
+mdb_env_get_maxreaders <- function(env) {
   .Call(Cmdb_env_get_maxreaders, env)
 }
 
-mdb_env_get_set_maxdbs <- function(env, maxdbs) {
-  .Call(Cmdb_env_set_maxdbs, env, maxdbs, set)
+mdb_env_set_maxdbs <- function(env, maxdbs) {
+  .Call(Cmdb_env_set_maxdbs, env, maxdbs)
 }
 
-mdb_env_get_get_maxkeysize <- function(env) {
+mdb_env_get_maxkeysize <- function(env) {
   .Call(Cmdb_env_get_maxkeysize, env)
 }
 
