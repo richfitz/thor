@@ -38,3 +38,10 @@ bool scalar_logical(SEXP x, const char * name) {
   }
   return ret == 1;
 }
+
+SEXP r_is_null_pointer(SEXP x) {
+  if (TYPEOF(x) != EXTPTRSXP) {
+    Rf_error("Expected an external pointer");
+  }
+  return ScalarLogical(R_ExternalPtrAddr(x) == NULL);
+}

@@ -1,4 +1,5 @@
 #include "thor.h"
+#include "util.h"
 #include <R_ext/Rdynload.h>
 #include <Rversion.h>
 
@@ -66,6 +67,9 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_flags_txn",               (DL_FUNC) &r_mdb_flags_txn,             0},
   {"Cmdb_flags_put",               (DL_FUNC) &r_mdb_flags_put,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
+
+  // Testing
+  {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},
 
   {NULL,                           NULL,                                   0}
 };

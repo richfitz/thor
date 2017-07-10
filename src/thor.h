@@ -82,7 +82,7 @@ SEXP r_mdb_reader_check(SEXP r_env);
 // Internals:
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error, thor_env_state state);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
-MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error);
+MDB_dbi r_mdb_get_dbi(SEXP r_dbi);
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);
 void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
                      bool closed_error);

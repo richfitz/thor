@@ -7,18 +7,20 @@
 // no GC to worry about.
 SEXP thor_flag_group_id_name;
 SEXP thor_env_opened_name;
+SEXP thor_env_txn_name;
 
 void thor_init() {
   thor_flag_group_id_name = install("group_id");
   thor_env_opened_name = install("env_opened");
+  thor_env_txn_name = install("transaction");
 }
 
 void thor_cleanup() {
 }
 
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened);
-static SEXP r_mdb_txn_wrap(MDB_txn *txn);
-static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi);
+static SEXP r_mdb_txn_wrap(MDB_txn *txn, SEXP r_env);
+static SEXP r_mdb_dbi_wrap(MDB_dbi dbi);
 static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor);
 static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
@@ -180,7 +182,12 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
-  return r_mdb_txn_wrap(txn);
+  SEXP r_txn = PROTECT(r_mdb_txn_wrap(txn, r_env));
+
+  setAttrib(r_env, thor_env_txn_name, r_txn);
+
+  UNPROTECT(1);
+  return r_txn;
 }
 
 SEXP r_mdb_txn_env(SEXP r_txn) {
@@ -202,6 +209,13 @@ SEXP r_mdb_txn_commit(SEXP r_txn) {
   // we'll be pushing too much onto the user.
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   no_error(mdb_txn_commit(txn), "mdb_txn_commit");
+  R_ClearExternalPtr(r_txn);
+
+  // Then memory management:
+  SEXP r_env = R_ExternalPtrProtected(r_txn);
+  R_SetExternalPtrProtected(r_txn, R_NilValue);
+  setAttrib(r_env, thor_env_txn_name, R_NilValue);
+
   return R_NilValue;
 }
 
@@ -210,6 +224,12 @@ SEXP r_mdb_txn_abort(SEXP r_txn) {
   // about cleaning up the txn cursor - see the docs
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   mdb_txn_abort(txn);
+  R_ClearExternalPtr(r_txn);
+
+  SEXP r_env = R_ExternalPtrProtected(r_txn);
+  R_SetExternalPtrProtected(r_txn, R_NilValue);
+  setAttrib(r_env, thor_env_txn_name, R_NilValue);
+
   return R_NilValue;
 }
 
@@ -233,68 +253,68 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
   const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_DBI);
 
-  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
-  no_error(mdb_dbi_open(txn, name, flags, dbi), "mdb_dbi_open");
+  MDB_dbi dbi;
+  no_error(mdb_dbi_open(txn, name, flags, &dbi), "mdb_dbi_open");
 
   return r_mdb_dbi_wrap(dbi);
 }
 
 SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_stat stat;
-  mdb_stat(txn, *dbi, &stat);
+  mdb_stat(txn, dbi, &stat);
   return mdb_stat_to_sexp(&stat);
 }
 
 SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   unsigned int flags = 0;
-  no_error(mdb_dbi_flags(txn, *dbi, &flags), "mdb_dbi_flags");
+  no_error(mdb_dbi_flags(txn, dbi, &flags), "mdb_dbi_flags");
   return ScalarInteger(flags);
 }
 
 // "Normally unnecessary. Use with care"
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
   MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
-  mdb_dbi_close(env, *dbi);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  mdb_dbi_close(env, dbi);
   return R_NilValue;
 }
 
 SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   bool del = scalar_logical(r_del, "del");
-  mdb_drop(txn, *dbi, del);
+  mdb_drop(txn, dbi, del);
   return R_NilValue;
 }
 
 // --- use the database ---
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
-  no_error(mdb_get(txn, *dbi, &key, &data), "mdb_get");
+  no_error(mdb_get(txn, dbi, &key, &data), "mdb_get");
   return mdb_val_to_sexp(&data);
 }
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_PUT);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
-  no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
+  no_error(mdb_put(txn, dbi, &key, &data, flags), "mdb_put");
   return R_NilValue;
 }
 
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   if (r_data == NULL) {
@@ -303,16 +323,16 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
   } else {
     sexp_to_mdb_val(r_data, "data", &data);
   }
-  no_error(mdb_del(txn, *dbi, &key, &data), "mdb_del");
+  no_error(mdb_del(txn, dbi, &key, &data), "mdb_del");
   return R_NilValue;
 }
 
 // --- cursors ---
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_cursor *cursor;
-  no_error(mdb_cursor_open(txn, *dbi, &cursor), "mdb_cursor_open");
+  no_error(mdb_cursor_open(txn, dbi, &cursor), "mdb_cursor_open");
   return r_mdb_cursor_wrap(cursor);
 }
 
@@ -331,13 +351,14 @@ SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor) {
 
 SEXP r_mdb_cursor_txn(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  return r_mdb_txn_wrap(mdb_cursor_txn(cursor));
+  Rf_error("Needs work"); // (need to get the env, which requires global cache, or we may be able to get there via r_cursor -> r_dbi/r_txn -> r_env)
+  return R_NilValue;
+  //return r_mdb_txn_wrap(mdb_cursor_txn(cursor));
 }
 
 SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  MDB_dbi * dbi = (MDB_dbi *)Calloc(1, MDB_dbi);
-  *dbi = mdb_cursor_dbi(cursor);
+  MDB_dbi dbi = mdb_cursor_dbi(cursor);
   return r_mdb_dbi_wrap(dbi);
 }
 
@@ -396,20 +417,20 @@ SEXP r_mdb_cursor_count(SEXP r_cursor) {
 
 SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val a, b;
   sexp_to_mdb_val(r_a, "a", &a);
   sexp_to_mdb_val(r_b, "b", &b);
-  return ScalarInteger(mdb_cmp(txn, *dbi, &a, &b));
+  return ScalarInteger(mdb_cmp(txn, dbi, &a, &b));
 }
 
 SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val a, b;
   sexp_to_mdb_val(r_a, "a", &a);
   sexp_to_mdb_val(r_b, "b", &b);
-  return ScalarInteger(mdb_dcmp(txn, *dbi, &a, &b));
+  return ScalarInteger(mdb_dcmp(txn, dbi, &a, &b));
 }
 
 // TODO: Swap this out for an accumulator
@@ -453,8 +474,9 @@ MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error) {
   return (MDB_txn*) r_pointer_addr(r_txn, THOR_TXN, "txn", closed_error);
 }
 
-MDB_dbi * r_mdb_get_dbi(SEXP r_dbi, bool closed_error) {
-  return (MDB_dbi*) r_pointer_addr(r_dbi, THOR_DBI, "txn", closed_error);
+MDB_dbi r_mdb_get_dbi(SEXP r_dbi) {
+  MDB_dbi* data = (MDB_dbi*) r_pointer_addr(r_dbi, THOR_DBI, "txn", true);
+  return *data;
 }
 
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error) {
@@ -491,7 +513,7 @@ static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
   return ret;
 }
 
-static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
+static SEXP r_mdb_txn_wrap(MDB_txn *txn, SEXP r_env) {
   // The options here for getting the GC right are we can
   //
   // - add the env to the tag of the txn - this takes care of keeping
@@ -501,14 +523,14 @@ static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
   //   environment is *forceably* closed we can abort all
   //   transactions - this is not done yet.
   SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
-  SEXP ret = PROTECT(R_MakeExternalPtr(txn, ptr_type, R_NilValue));
+  SEXP ret = PROTECT(R_MakeExternalPtr(txn, ptr_type, r_env));
   R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
   UNPROTECT(2);
   return ret;
 }
 
-static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi) {
+static SEXP r_mdb_dbi_wrap(MDB_dbi dbi) {
   // The options here for getting the GC right are we can
   //
   // - add the txn to the tag of the dbi - this takes care of keeping
@@ -517,8 +539,12 @@ static SEXP r_mdb_dbi_wrap(MDB_dbi *dbi) {
   // - add the dbi to something in the txn so that when the
   //   transaction is *forceably* closed we can abort all
   //   connections - this is not done yet.
-  SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
-  SEXP ret = PROTECT(R_MakeExternalPtr(dbi, ptr_type, R_NilValue));
+  SEXP ptr_type = PROTECT(ScalarInteger(THOR_DBI));
+
+  MDB_dbi * data = (MDB_dbi *)Calloc(1, MDB_dbi);
+  *data = dbi;
+
+  SEXP ret = PROTECT(R_MakeExternalPtr(data, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
   UNPROTECT(2);
@@ -542,18 +568,14 @@ static void r_mdb_env_finalize(SEXP r_env) {
     Rprintf("Cleaning environent\n");
     // Some care is needed here I think
     // mdb_env_close(env);
+    SEXP r_txn = getAttrib(r_env, thor_env_txn_name);
+    if (r_txn != R_NilValue) {
+      Rprintf("...first to clean up transaction\n");
+      r_mdb_txn_finalize(r_txn);
+    }
+    Rprintf("...closing environment\n");
+    mdb_env_close(env);
     R_ClearExternalPtr(r_env);
-  }
-}
-
-static void r_mdb_dbi_finalize(SEXP r_dbi) {
-  MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, false);
-  if (dbi != NULL) {
-    Rprintf("Cleaning handle\n");
-    // mdb_dbi_close(dbi); --- needed?  Docs suggest not really.  And
-    // if closed then cursors are at risk.
-    // Free(dbi);
-    R_ClearExternalPtr(r_dbi);
   }
 }
 
@@ -561,10 +583,24 @@ static void r_mdb_txn_finalize(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, false);
   if (txn != NULL) {
     Rprintf("Cleaning transaction\n");
-    // This is not *necessarily* the right thing to do; it would
-    // really depend if there are any live cursors.
-    // mdb_txn_abort(txn);
+    // TODO: deal with live cursors here
+    Rprintf("...aborting live transaction\n");
+    mdb_txn_abort(txn);
+    SEXP r_env = R_ExternalPtrProtected(r_txn);
+    if (getAttrib(r_env, thor_env_txn_name) == r_txn) {
+      Rprintf("...unsetting env/txn link\n");
+      setAttrib(r_env, thor_env_txn_name, R_NilValue);
+    }
     R_ClearExternalPtr(r_txn);
+    R_SetExternalPtrProtected(r_txn, R_NilValue);
+  }
+}
+
+static void r_mdb_dbi_finalize(SEXP r_dbi) {
+  void * data = R_ExternalPtrAddr(r_dbi);
+  if (data) {
+    Free(data);
+    R_ClearExternalPtr(r_dbi);
   }
 }
 

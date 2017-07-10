@@ -13,3 +13,7 @@ vcapply <- function(X, FUN, ...) {
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }
+
+is_null_pointer <- function(x) {
+  .Call(Cis_null_pointer, x)
+}

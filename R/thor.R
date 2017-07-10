@@ -97,10 +97,10 @@ mdb_dbi_open <- function(txn, name, flags) {
 }
 
 mdb_stat <- function(txn, dbi) {
-  .Call(Cmdb_dbi_stat, txn, dbi)
+  .Call(Cmdb_stat, txn, dbi)
 }
 
-mdb_flags <- function(txn, dbi) {
+mdb_dbi_flags <- function(txn, dbi) {
   as_mdb_flag(.Call(Cmdb_dbi_flags, txn, dbi), flags_dbi)
 }
 
