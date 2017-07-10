@@ -33,8 +33,7 @@ test_that("use unopened env", {
   expect_error(mdb_env_info(env), closed_error_msg)
   expect_error(mdb_env_stat(env), closed_error_msg)
 
-  ## proper flags testing later/elsewhere
-  expect_equal(mdb_env_get_flags(env), 0)
+  expect_equal(mdb_env_get_flags(env), NULL)
   expect_null(mdb_env_set_flags(env, NULL))
 
   expect_error(mdb_env_get_path(env), closed_error_msg)

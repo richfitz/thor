@@ -64,8 +64,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
   {"Cmdb_flags_dbi",               (DL_FUNC) &r_mdb_flags_dbi,             0},
   {"Cmdb_flags_txn",               (DL_FUNC) &r_mdb_flags_txn,             0},
-  {"Cmdb_flags_write",             (DL_FUNC) &r_mdb_flags_write,           0},
-
+  {"Cmdb_flags_put",               (DL_FUNC) &r_mdb_flags_put,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
 
   {NULL,                           NULL,                                   0}

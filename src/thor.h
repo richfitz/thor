@@ -7,7 +7,7 @@ typedef enum thor_flag_group {
   THOR_FLAGS_ENV,
   THOR_FLAGS_DBI,
   THOR_FLAGS_TXN,
-  THOR_FLAGS_WRITE,
+  THOR_FLAGS_PUT,
   THOR_CURSOR_OP
 } thor_flag_group;
 
@@ -97,7 +97,7 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 SEXP r_mdb_flags_env();
 SEXP r_mdb_flags_dbi();
 SEXP r_mdb_flags_txn();
-SEXP r_mdb_flags_write();
+SEXP r_mdb_flags_put();
 
 // - interface
 unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);

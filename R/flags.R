@@ -3,7 +3,7 @@
 flags_env <- new.env(parent = emptyenv())
 flags_dbi <- new.env(parent = emptyenv())
 flags_txn <- new.env(parent = emptyenv())
-flags_write <- new.env(parent = emptyenv())
+flags_put <- new.env(parent = emptyenv())
 cursor_op <- new.env(parent = emptyenv())
 NO_FLAGS <- NULL
 
@@ -23,10 +23,10 @@ init_flags <- function() {
     lockEnvironment(e)
     class(e) <- "mdb_flags"
   }
-  init(Cmdb_flags_env,   "env",   flags_env)
-  init(Cmdb_flags_dbi,   "dbi",   flags_dbi)
-  init(Cmdb_flags_txn,   "txn",   flags_txn)
-  init(Cmdb_flags_write, "write", flags_write)
+  init(Cmdb_flags_env, "env", flags_env)
+  init(Cmdb_flags_dbi, "dbi", flags_dbi)
+  init(Cmdb_flags_txn, "txn", flags_txn)
+  init(Cmdb_flags_put, "put", flags_put)
 
   init(Cmdb_cursor_op, "cursor_op", cursor_op)
 }
@@ -45,40 +45,47 @@ print.mdb_flag <- function(x, ...) {
 }
 
 ##' @export
-c.mdb_flag <- function(...) {
-  flags <- list(...)
-  flags <- flags[!vlapply(flags, is.null)]
-  if (length(flags) == 0) {
-    return(NULL)
+`|.mdb_flag` <- function(e1, e2) {
+  ## TODO: consider treating logical(0) as a NULL flag because that's
+  ## what NULL | NULL evaluates to.  c(...) would be nicer but does
+  ## not work unless the *first* argument is the flag.
+  if (missing(e2) || is.null(e2)) {
+    ## Unary +e1
+    return(e1)
   }
-  err <- !vlapply(flags, inherits, "mdb_flag")
-  if (any(err)) {
+  if (is.null(e1)) {
+    return(e2)
+  }
+  if (!inherits(e1, "mdb_flag") || !inherits(e2, "mdb_flag")) {
     stop("Can only combine mdb_flag objects")
   }
-  if (length(flags) == 1L) {
-    return(flags[[1L]])
-  }
 
-  group_name <- attr(flags[[1L]], "group_name")
+  group_name <- attr(e1, "group_name")
   if (group_name == "cursor_op") {
+    ## This is a bit nasty because we let cursor_op | NULL (and v.v.) through
     stop("Can't combine cursor_op flags")
   }
 
-  group_id <- viapply(flags, attr, "group_id", exact = TRUE)
-  if (length(unique(group_id)) != 1L) {
+  group_id <- attr(e1, "group_id")
+  if (!identical(group_id, attr(e2, "group_id"))) {
     stop("Expected a single group type")
   }
 
-  res <- NextMethod("c")
-  class(res) <- "mdb_flag"
-  attr(res, "group_id") <- group_id[[1L]]
-  attr(res, "group_name") <- group_name
+  keep <- !e2 %in% e1
+  if (any(keep)) {
+    res <- c(e1, e2[!e2 %in% e1])
+    class(res) <- "mdb_flag"
+    attr(res, "group_id") <- group_id
+    attr(res, "group_name") <- group_name
+  } else {
+    res <- e1
+  }
   res
 }
 
 get_flag <- function(e, name) {
   .subset2(e, name) %||%
-    stop(sprintf("Unknown flag %s", name), call. = FALSE)
+    stop(sprintf("Unknown flag '%s'", name), call. = FALSE)
 }
 
 ##' @export
@@ -89,4 +96,14 @@ get_flag <- function(e, name) {
 ##' @export
 `[[.mdb_flags` <- function(x, name) {
   get_flag(x, name)
+}
+
+as_mdb_flag <- function(x, flags) {
+  value <- viapply(names(flags), get, flags)
+  used <- names(value)[bitwAnd(x, value) != 0]
+  res <- NULL
+  for (u in used) {
+    res <- res | flags[[u]]
+  }
+  res
 }

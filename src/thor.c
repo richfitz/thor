@@ -1,12 +1,10 @@
 #include "thor.h"
 #include "util.h"
 
-// TODO: consider adding a tag to every ptr type so that we can do
-// some basic type checking.  Options there are a newly allocated
-// (say) integer/enum type with the cost of one allocation.  The other
-// way would be to have some package-level singleton SEXP objects that
-// we can stick in as the tag.  We'll need to do this with flags too!
-
+// These are symbols that we'll use here to avoid having to use
+// `install()` at every use (following R-exts).  This is relatively
+// straightforward here because of the global string cache so there is
+// no GC to worry about.
 SEXP thor_flag_group_id_name;
 SEXP thor_env_opened_name;
 
@@ -287,7 +285,7 @@ SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi * dbi = r_mdb_get_dbi(r_dbi, true);
   MDB_val key, data;
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_WRITE);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_PUT);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   no_error(mdb_put(txn, *dbi, &key, &data, flags), "mdb_put");
@@ -376,7 +374,7 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags) {
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_WRITE);
+  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_PUT);
   no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
   return R_NilValue;
 }
@@ -643,27 +641,27 @@ SEXP r_mdb_flags_env() {
   SEXP nms = PROTECT(allocVector(STRSXP, n));
 
   INTEGER(ret)[0] = MDB_FIXEDMAP;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_FIXEDMAP"));
+  SET_STRING_ELT(nms, 0, mkChar("FIXEDMAP"));
   INTEGER(ret)[1] = MDB_NOSUBDIR;
-  SET_STRING_ELT(nms, 1, mkChar("MDB_NOSUBDIR"));
+  SET_STRING_ELT(nms, 1, mkChar("NOSUBDIR"));
   INTEGER(ret)[2] = MDB_RDONLY;
-  SET_STRING_ELT(nms, 2, mkChar("MDB_RDONLY"));
+  SET_STRING_ELT(nms, 2, mkChar("RDONLY"));
   INTEGER(ret)[3] = MDB_WRITEMAP;
-  SET_STRING_ELT(nms, 3, mkChar("MDB_WRITEMAP"));
+  SET_STRING_ELT(nms, 3, mkChar("WRITEMAP"));
   INTEGER(ret)[4] = MDB_NOMETASYNC;
-  SET_STRING_ELT(nms, 4, mkChar("MDB_NOMETASYNC"));
+  SET_STRING_ELT(nms, 4, mkChar("NOMETASYNC"));
   INTEGER(ret)[5] = MDB_NOSYNC;
-  SET_STRING_ELT(nms, 5, mkChar("MDB_NOSYNC"));
+  SET_STRING_ELT(nms, 5, mkChar("NOSYNC"));
   INTEGER(ret)[6] = MDB_MAPASYNC;
-  SET_STRING_ELT(nms, 6, mkChar("MDB_MAPASYNC"));
+  SET_STRING_ELT(nms, 6, mkChar("MAPASYNC"));
   INTEGER(ret)[7] = MDB_NOTLS;
-  SET_STRING_ELT(nms, 7, mkChar("MDB_NOTLS"));
+  SET_STRING_ELT(nms, 7, mkChar("NOTLS"));
   INTEGER(ret)[8] = MDB_NOLOCK;
-  SET_STRING_ELT(nms, 8, mkChar("MDB_NOLOCK"));
+  SET_STRING_ELT(nms, 8, mkChar("NOLOCK"));
   INTEGER(ret)[9] = MDB_NORDAHEAD;
-  SET_STRING_ELT(nms, 9, mkChar("MDB_NORDAHEAD"));
+  SET_STRING_ELT(nms, 9, mkChar("NORDAHEAD"));
   INTEGER(ret)[10] = MDB_NOMEMINIT;
-  SET_STRING_ELT(nms, 10, mkChar("MDB_NOMEMINIT"));
+  SET_STRING_ELT(nms, 10, mkChar("NOMEMINIT"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_ENV));
@@ -679,19 +677,19 @@ SEXP r_mdb_flags_dbi() {
 
   // mdb_dbi_open:
   INTEGER(ret)[0] = MDB_REVERSEKEY;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_REVERSEKEY"));
+  SET_STRING_ELT(nms, 0, mkChar("REVERSEKEY"));
   INTEGER(ret)[1] = MDB_DUPSORT;
-  SET_STRING_ELT(nms, 1, mkChar("MDB_DUPSORT"));
+  SET_STRING_ELT(nms, 1, mkChar("DUPSORT"));
   INTEGER(ret)[2] = MDB_INTEGERKEY;
-  SET_STRING_ELT(nms, 2, mkChar("MDB_INTEGERKEY"));
+  SET_STRING_ELT(nms, 2, mkChar("INTEGERKEY"));
   INTEGER(ret)[3] = MDB_DUPFIXED;
-  SET_STRING_ELT(nms, 3, mkChar("MDB_DUPFIXED"));
+  SET_STRING_ELT(nms, 3, mkChar("DUPFIXED"));
   INTEGER(ret)[4] = MDB_INTEGERDUP;
-  SET_STRING_ELT(nms, 4, mkChar("MDB_INTEGERDUP"));
+  SET_STRING_ELT(nms, 4, mkChar("INTEGERDUP"));
   INTEGER(ret)[5] = MDB_REVERSEDUP;
-  SET_STRING_ELT(nms, 5, mkChar("MDB_REVERSEDUP"));
+  SET_STRING_ELT(nms, 5, mkChar("REVERSEDUP"));
   INTEGER(ret)[6] = MDB_CREATE;
-  SET_STRING_ELT(nms, 6, mkChar("MDB_CREATE"));
+  SET_STRING_ELT(nms, 6, mkChar("CREATE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_DBI));
@@ -706,11 +704,11 @@ SEXP r_mdb_flags_txn() {
 
   // mdb_dbi_open:
   INTEGER(ret)[0] = MDB_RDONLY;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_RDONLY"));
+  SET_STRING_ELT(nms, 0, mkChar("RDONLY"));
   INTEGER(ret)[1] = MDB_NOSYNC;
-  SET_STRING_ELT(nms, 1, mkChar("MDB_NOSYNC"));
+  SET_STRING_ELT(nms, 1, mkChar("NOSYNC"));
   INTEGER(ret)[2] = MDB_NOMETASYNC;
-  SET_STRING_ELT(nms, 2, mkChar("MDB_NOMETASYNC"));
+  SET_STRING_ELT(nms, 2, mkChar("NOMETASYNC"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_TXN));
@@ -718,28 +716,28 @@ SEXP r_mdb_flags_txn() {
   return ret;
 }
 
-SEXP r_mdb_flags_write() {
+SEXP r_mdb_flags_put() {
   int n = 7;
   SEXP ret = PROTECT(allocVector(INTSXP, n));
   SEXP nms = PROTECT(allocVector(STRSXP, n));
 
   INTEGER(ret)[0] = MDB_NOOVERWRITE;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_NOOVERWRITE"));
+  SET_STRING_ELT(nms, 0, mkChar("NOOVERWRITE"));
   INTEGER(ret)[1] = MDB_NODUPDATA;
-  SET_STRING_ELT(nms, 1, mkChar("MDB_NODUPDATA"));
+  SET_STRING_ELT(nms, 1, mkChar("NODUPDATA"));
   INTEGER(ret)[2] = MDB_CURRENT;
-  SET_STRING_ELT(nms, 2, mkChar("MDB_CURRENT"));
+  SET_STRING_ELT(nms, 2, mkChar("CURRENT"));
   INTEGER(ret)[3] = MDB_RESERVE;
-  SET_STRING_ELT(nms, 3, mkChar("MDB_RESERVE"));
+  SET_STRING_ELT(nms, 3, mkChar("RESERVE"));
   INTEGER(ret)[4] = MDB_APPEND;
-  SET_STRING_ELT(nms, 4, mkChar("MDB_APPEND"));
+  SET_STRING_ELT(nms, 4, mkChar("APPEND"));
   INTEGER(ret)[5] = MDB_APPENDDUP;
-  SET_STRING_ELT(nms, 5, mkChar("MDB_APPENDDUP"));
+  SET_STRING_ELT(nms, 5, mkChar("APPENDDUP"));
   INTEGER(ret)[6] = MDB_MULTIPLE;
-  SET_STRING_ELT(nms, 6, mkChar("MDB_MULTIPLE"));
+  SET_STRING_ELT(nms, 6, mkChar("MULTIPLE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
-  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_WRITE));
+  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_PUT));
   UNPROTECT(2);
   return ret;
 }
@@ -785,43 +783,43 @@ SEXP r_mdb_cursor_op() {
   SEXP nms = PROTECT(allocVector(STRSXP, n));
 
   INTEGER(ret)[0] = MDB_FIRST;
-  SET_STRING_ELT(nms, 0, mkChar("MDB_FIRST"));
+  SET_STRING_ELT(nms, 0, mkChar("FIRST"));
   INTEGER(ret)[1] = MDB_FIRST_DUP;
-  SET_STRING_ELT(nms, 1, mkChar("MDB_FIRST_DUP"));
+  SET_STRING_ELT(nms, 1, mkChar("FIRST_DUP"));
   INTEGER(ret)[2] = MDB_GET_BOTH;
-  SET_STRING_ELT(nms, 2, mkChar("MDB_GET_BOTH"));
+  SET_STRING_ELT(nms, 2, mkChar("GET_BOTH"));
   INTEGER(ret)[3] = MDB_GET_BOTH_RANGE;
-  SET_STRING_ELT(nms, 3, mkChar("MDB_GET_BOTH_RANGE"));
+  SET_STRING_ELT(nms, 3, mkChar("GET_BOTH_RANGE"));
   INTEGER(ret)[4] = MDB_GET_CURRENT;
-  SET_STRING_ELT(nms, 4, mkChar("MDB_GET_CURRENT"));
+  SET_STRING_ELT(nms, 4, mkChar("GET_CURRENT"));
   INTEGER(ret)[5] = MDB_GET_MULTIPLE;
-  SET_STRING_ELT(nms, 5, mkChar("MDB_GET_MULTIPLE"));
+  SET_STRING_ELT(nms, 5, mkChar("GET_MULTIPLE"));
   INTEGER(ret)[6] = MDB_LAST;
-  SET_STRING_ELT(nms, 6, mkChar("MDB_LAST"));
+  SET_STRING_ELT(nms, 6, mkChar("LAST"));
   INTEGER(ret)[7] = MDB_LAST_DUP;
-  SET_STRING_ELT(nms, 7, mkChar("MDB_LAST_DUP"));
+  SET_STRING_ELT(nms, 7, mkChar("LAST_DUP"));
   INTEGER(ret)[8] = MDB_NEXT;
-  SET_STRING_ELT(nms, 8, mkChar("MDB_NEXT"));
+  SET_STRING_ELT(nms, 8, mkChar("NEXT"));
   INTEGER(ret)[9] = MDB_NEXT_DUP;
-  SET_STRING_ELT(nms, 9, mkChar("MDB_NEXT_DUP"));
+  SET_STRING_ELT(nms, 9, mkChar("NEXT_DUP"));
   INTEGER(ret)[10] = MDB_NEXT_MULTIPLE;
-  SET_STRING_ELT(nms, 10, mkChar("MDB_NEXT_MULTIPLE"));
+  SET_STRING_ELT(nms, 10, mkChar("NEXT_MULTIPLE"));
   INTEGER(ret)[11] = MDB_NEXT_NODUP;
-  SET_STRING_ELT(nms, 11, mkChar("MDB_NEXT_NODUP"));
+  SET_STRING_ELT(nms, 11, mkChar("NEXT_NODUP"));
   INTEGER(ret)[12] = MDB_PREV;
-  SET_STRING_ELT(nms, 12, mkChar("MDB_PREV"));
+  SET_STRING_ELT(nms, 12, mkChar("PREV"));
   INTEGER(ret)[13] = MDB_PREV_DUP;
-  SET_STRING_ELT(nms, 13, mkChar("MDB_PREV_DUP"));
+  SET_STRING_ELT(nms, 13, mkChar("PREV_DUP"));
   INTEGER(ret)[14] = MDB_PREV_NODUP;
-  SET_STRING_ELT(nms, 14, mkChar("MDB_PREV_NODUP"));
+  SET_STRING_ELT(nms, 14, mkChar("PREV_NODUP"));
   INTEGER(ret)[15] = MDB_SET;
-  SET_STRING_ELT(nms, 15, mkChar("MDB_SET"));
+  SET_STRING_ELT(nms, 15, mkChar("SET"));
   INTEGER(ret)[16] = MDB_SET_KEY;
-  SET_STRING_ELT(nms, 16, mkChar("MDB_SET_KEY"));
+  SET_STRING_ELT(nms, 16, mkChar("SET_KEY"));
   INTEGER(ret)[17] = MDB_SET_RANGE;
-  SET_STRING_ELT(nms, 17, mkChar("MDB_SET_RANGE"));
+  SET_STRING_ELT(nms, 17, mkChar("SET_RANGE"));
   INTEGER(ret)[18] = MDB_PREV_MULTIPLE;
-  SET_STRING_ELT(nms, 18, mkChar("MDB_PREV_MULTIPLE"));
+  SET_STRING_ELT(nms, 18, mkChar("PREV_MULTIPLE"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_CURSOR_OP));

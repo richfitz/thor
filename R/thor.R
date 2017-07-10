@@ -36,7 +36,7 @@ mdb_env_set_flags <- function(env, flags, set = TRUE) {
 }
 
 mdb_env_get_flags <- function(env) {
-  .Call(Cmdb_env_get_flags, env) # then process these!
+  as_mdb_flag(.Call(Cmdb_env_get_flags, env), flags_env)
 }
 
 mdb_env_get_path <- function(env) {
@@ -64,7 +64,7 @@ mdb_env_get_maxkeysize <- function(env) {
 }
 
 ## transactions:
-mdb_txn_begin <- function(env, parent, flags) {
+mdb_txn_begin <- function(env, parent = NULL, flags = NULL) {
   .Call(Cmdb_txn_begin, env, parent, flags)
 }
 
@@ -101,7 +101,7 @@ mdb_stat <- function(txn, dbi) {
 }
 
 mdb_flags <- function(txn, dbi) {
-  .Call(Cmdb_dbi_flags, txn, dbi) # TODO: process
+  as_mdb_flag(.Call(Cmdb_dbi_flags, txn, dbi), flags_dbi)
 }
 
 mdb_dbi_close <- function(env, dbi) {
