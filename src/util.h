@@ -11,3 +11,6 @@ size_t scalar_size(SEXP x, const char * name);
 bool scalar_logical(SEXP x, const char * name);
 
 SEXP r_is_null_pointer(SEXP x);
+
+SEXP pairlist_create(SEXP x);
+SEXP pairlist_drop(SEXP x, SEXP el);

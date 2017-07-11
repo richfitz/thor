@@ -45,3 +45,28 @@ SEXP r_is_null_pointer(SEXP x) {
   }
   return ScalarLogical(R_ExternalPtrAddr(x) == NULL);
 }
+
+SEXP pairlist_create(SEXP x) {
+  SEXP ret = R_NilValue;
+  size_t n = (size_t) length(x);
+  for (size_t i = 0; i < n; ++i) {
+    ret = PROTECT(CONS(VECTOR_ELT(x, i), ret));
+  }
+  UNPROTECT(n);
+  return ret;
+}
+
+SEXP pairlist_drop(SEXP x, SEXP el) {
+  if (x == R_NilValue) {
+    return R_NilValue;
+  } else {
+    if (CAR(x) == el) {
+      return CDR(x);
+    } else {
+      SEXP tail = PROTECT(pairlist_drop(CDR(x), el));
+      SEXP ret = CONS(CAR(x), tail);
+      UNPROTECT(1);
+      return ret;
+    }
+  }
+}

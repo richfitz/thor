@@ -49,7 +49,7 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
-  {"Cmdb_cursor_renew",            (DL_FUNC) &r_mdb_cursor_renew,          1},
+  {"Cmdb_cursor_renew",            (DL_FUNC) &r_mdb_cursor_renew,          2},
   {"Cmdb_cursor_txn",              (DL_FUNC) &r_mdb_cursor_txn,            1},
   {"Cmdb_cursor_dbi",              (DL_FUNC) &r_mdb_cursor_dbi,            1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            3},
@@ -70,6 +70,8 @@ static const R_CallMethodDef call_methods[] = {
 
   // Testing
   {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},
+  {"Cpairlist_create",             (DL_FUNC) &pairlist_create,             1},
+  {"Cpairlist_drop",               (DL_FUNC) &pairlist_drop,               2},
 
   {NULL,                           NULL,                                   0}
 };

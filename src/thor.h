@@ -83,7 +83,7 @@ SEXP r_mdb_reader_check(SEXP r_env);
 MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error, thor_env_state state);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi r_mdb_get_dbi(SEXP r_dbi);
-MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);
+MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error, bool orphaned);
 void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
                      bool closed_error);
 
@@ -105,3 +105,8 @@ MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 
 // cursor_op
 SEXP r_mdb_cursor_op();
+
+// Some serious tidying up required through here
+void cleanup_txn_cursors(SEXP r_txn);
+void cleanup_cursor(SEXP r_cursor, SEXP r_txn);
+void cleanup_txn(SEXP r_txn);
