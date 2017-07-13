@@ -11,3 +11,19 @@ test_that("pairlist", {
                  as.pairlist(rev(x[-i])))
   }
 })
+
+test_that("stack", {
+  x <- stack()
+  expect_identical(x$get(), list())
+  x$add(1)
+  expect_identical(x$get(), list(1))
+  x$add(1)
+  expect_identical(x$get(), list(1))
+  x$push(1)
+  expect_identical(x$get(), list(1, 1))
+  x$discard(1)
+  expect_identical(x$get(), list(1))
+  expect_identical(x$pop(), 1)
+  expect_identical(x$get(), list())
+  expect_null(x$pop())
+})

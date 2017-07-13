@@ -92,8 +92,8 @@ mdb_txn_renew <- function(txn) {
   .Call(Cmdb_txn_renew, txn)
 }
 
-mdb_dbi_open <- function(txn, name, flags) {
-  .Call(Cmdb_dbi_open, txn, name, flags)
+mdb_dbi_open <- function(txn, name, reverse_key, dupsort, create) {
+  .Call(Cmdb_dbi_open, txn, name, reverse_key, dupsort, create)
 }
 
 mdb_stat <- function(txn, dbi) {
@@ -105,6 +105,7 @@ mdb_dbi_flags <- function(txn, dbi) {
 }
 
 mdb_dbi_close <- function(env, dbi) {
+  stop("Don't call this")
   .Call(Cmdb_dbi_close, env, dbi)
 }
 
@@ -174,4 +175,8 @@ mdb_reader_list <- function(env) {
 
 mdb_reader_check <- function(env) {
   .Call(Cmdb_reader_check, env)
+}
+
+mdb_dbi_id <- function(dbi) {
+  .Call(Cmdb_dbi_id, dbi)
 }

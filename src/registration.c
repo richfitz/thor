@@ -37,7 +37,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_txn_reset",               (DL_FUNC) &r_mdb_txn_reset,             1},
   {"Cmdb_txn_renew",               (DL_FUNC) &r_mdb_txn_renew,             1},
 
-  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              3},
+  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              5},
   {"Cmdb_stat",                    (DL_FUNC) &r_mdb_stat,                  2},
   {"Cmdb_dbi_flags",               (DL_FUNC) &r_mdb_dbi_flags,             2},
   {"Cmdb_dbi_close",               (DL_FUNC) &r_mdb_dbi_close,             2},
@@ -67,6 +67,9 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_flags_txn",               (DL_FUNC) &r_mdb_flags_txn,             0},
   {"Cmdb_flags_put",               (DL_FUNC) &r_mdb_flags_put,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
+
+  // Extensions
+  {"Cmdb_dbi_id",                  (DL_FUNC) &r_mdb_dbi_id,                1},
 
   // Testing
   {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},

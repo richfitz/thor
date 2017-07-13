@@ -6,7 +6,6 @@
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
 SEXP thor_flag_group_id_name;
-SEXP thor_env_opened_name;
 SEXP thor_env_txn_name;
 SEXP thor_txn_cursor_name;
 SEXP thor_txn_readonly_name;
@@ -14,7 +13,6 @@ SEXP thor_cursor_orphan_name;
 
 void thor_init() {
   thor_flag_group_id_name = install("group_id");
-  thor_env_opened_name = install("env_opened");
   thor_env_txn_name = install("transaction");
   thor_txn_cursor_name = install("cursors");
   thor_txn_readonly_name = install("readonly");
@@ -52,7 +50,7 @@ SEXP r_mdb_env_create() {
 }
 
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_CLOSED);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_ENV);
   const mdb_mode_t mode = 0644;
@@ -63,13 +61,11 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
     Rf_error("Error in mdb_env_open: %s", mdb_strerror(rc));
   }
 
-  setAttrib(r_env, thor_env_opened_name, ScalarLogical(true));
-
   return R_NilValue;
 }
 
 SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path, SEXP r_compact) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   bool compact = scalar_logical(r_compact, "compact");
   unsigned int flags = compact ? MDB_CP_COMPACT : 0;
@@ -78,14 +74,14 @@ SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path, SEXP r_compact) {
 }
 
 SEXP r_mdb_env_stat(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_stat stat;
   no_error(mdb_env_stat(env, &stat), "mdb_env_stat");
   return mdb_stat_to_sexp(&stat);
 }
 
 SEXP r_mdb_env_info(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_envinfo info;
   no_error(mdb_env_info(env, &info), "mdb_env_info");
 
@@ -110,22 +106,21 @@ SEXP r_mdb_env_info(SEXP r_env) {
 }
 
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   bool force = scalar_logical(r_force, "force");
   no_error(mdb_env_sync(env, force), "mdb_env_sync");
   return R_NilValue;
 }
 
 SEXP r_mdb_env_close(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   mdb_env_close(env);
-  setAttrib(r_env, thor_env_opened_name, ScalarLogical(false));
-  R_ClearExternalPtr(r_env); // not sure about this
+  R_ClearExternalPtr(r_env);
   return R_NilValue;
 }
 
 SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_ENV);
   bool set = scalar_logical(r_set, "set");
   no_error(mdb_env_set_flags(env, flags, set), "mdb_env_set_flags");
@@ -133,58 +128,59 @@ SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set) {
 }
 
 SEXP r_mdb_env_get_flags(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   unsigned int flags = 0;
   no_error(mdb_env_get_flags(env, &flags), "mdb_env_get_flags");
   return ScalarInteger(flags);
 }
 
 SEXP r_mdb_env_get_path(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   const char *path;
   no_error(mdb_env_get_path(env, &path), "mdb_env_get_path");
   return mkString(path);
 }
 
 SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   size_t size = scalar_size(r_size, "size");
   no_error(mdb_env_set_mapsize(env, size), "mdb_env_set_mapsize");
   return R_NilValue;
 }
 
 SEXP r_mdb_env_set_maxreaders(SEXP r_env, SEXP r_readers) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   size_t readers = scalar_size(r_readers, "readers");
   no_error(mdb_env_set_maxreaders(env, readers), "mdb_env_set_maxreaders");
   return R_NilValue;
 }
 
 SEXP r_mdb_env_get_maxreaders(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   unsigned int readers = 0;
   no_error(mdb_env_get_maxreaders(env, &readers), "mdb_env_get_maxreaders");
   return ScalarInteger(readers);
 }
 
 SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   size_t dbs = scalar_size(r_dbs, "dbs");
   no_error(mdb_env_set_maxdbs(env, dbs), "mdb_env_set_maxdbs");
   return R_NilValue;
 }
 
 SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   return ScalarInteger(mdb_env_get_maxkeysize(env));
 }
 
 // Transactions:
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_TXN);
+  const unsigned int
+    flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_TXN);
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -246,11 +242,16 @@ SEXP r_mdb_txn_renew(SEXP r_txn) {
   return R_NilValue;
 }
 
-SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags) {
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
+                    SEXP r_reversekey, SEXP r_dupsort, SEXP r_create) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_DBI);
+
+  const unsigned int flags =
+    sexp_to_flag(r_reversekey, MDB_REVERSEKEY, "reversekey") |
+    sexp_to_flag(r_dupsort, MDB_DUPSORT, "dupsort") |
+    sexp_to_flag(r_create, MDB_CREATE, "create");
 
   MDB_dbi dbi;
   no_error(mdb_dbi_open(txn, name, flags, &dbi), "mdb_dbi_open");
@@ -276,7 +277,7 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
 
 // "Normally unnecessary. Use with care"
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   mdb_dbi_close(env, dbi);
   return R_NilValue;
@@ -333,7 +334,6 @@ SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_cursor *cursor;
   no_error(mdb_cursor_open(txn, dbi, &cursor), "mdb_cursor_open");
   SEXP r_cursor = PROTECT(r_mdb_cursor_wrap(cursor, r_txn));
-
   setAttrib(r_txn, thor_txn_cursor_name,
             CONS(r_cursor, getAttrib(r_txn, thor_txn_cursor_name)));
   UNPROTECT(1);
@@ -451,33 +451,21 @@ int mdb_reader_list_callback(const char *msg, void *ctx) {
 }
 
 SEXP r_mdb_reader_list(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   mdb_reader_list(env, &mdb_reader_list_callback, NULL);
   return R_NilValue;
 }
 
 SEXP r_mdb_reader_check(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, true, THOR_ENV_OPEN);
+  MDB_env * env = r_mdb_get_env(r_env, true);
   int dead = 0;
   no_error(mdb_reader_check(env, &dead), "mdb_reader_check");
   return ScalarInteger(dead);
 }
 
 // --- wranglers ---
-MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error, thor_env_state state) {
+MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error) {
   void * ret = r_pointer_addr(r_env, THOR_ENV, "env", closed_error);
-  if (ret && state != THOR_ENV_ANY) {
-    const bool
-      is_open = (bool)INTEGER(getAttrib(r_env, thor_env_opened_name))[0],
-      want_open = state == THOR_ENV_OPEN;
-    if (is_open != want_open) {
-      if (want_open) {
-        Rf_error("Expected an opened mdb env, but recieved a closed one");
-      } else {
-        Rf_error("Expected a closed mdb env, but recieved an opened one");
-      }
-    }
-  }
   return (MDB_env*) ret;
 }
 
@@ -527,7 +515,6 @@ static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
   SEXP ret = PROTECT(R_MakeExternalPtr(env, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_env_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_env"));
-  setAttrib(ret, thor_env_opened_name, ScalarLogical(opened));
   UNPROTECT(2);
   return ret;
 }
@@ -582,7 +569,7 @@ static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor, SEXP r_txn) {
 // --- finalizers ---
 
 static void r_mdb_env_finalize(SEXP r_env) {
-  MDB_env * env = r_mdb_get_env(r_env, false, THOR_ENV_ANY);
+  MDB_env * env = r_mdb_get_env(r_env, false);
   if (env != NULL) {
     Rprintf("Cleaning environent\n");
     // Some care is needed here I think
@@ -616,6 +603,10 @@ static void r_mdb_txn_finalize(SEXP r_txn) {
 }
 
 static void r_mdb_dbi_finalize(SEXP r_dbi) {
+  // NOTE: this frees only the pointer to the memory, but not to the
+  // actual database handle; that should be done with caution and
+  // we're not in a great place to deal with that yet.  This is the
+  // same as python interface which simply does not implement it.
   void * data = R_ExternalPtrAddr(r_dbi);
   if (data) {
     Free(data);
@@ -820,6 +811,14 @@ unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id) {
   return ret;
 }
 
+unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name) {
+  if (r_x == R_NilValue) {
+    return 0;
+  } else {
+    return scalar_logical(r_x, name) ? if_set : 0;
+  }
+}
+
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op) {
   SEXP r_group_id = getAttrib(r_cursor_op, thor_flag_group_id_name);
   if (r_group_id == R_NilValue) {
@@ -928,4 +927,9 @@ void cleanup_txn(SEXP r_txn) {
   SEXP r_env = R_ExternalPtrProtected(r_txn);
   R_SetExternalPtrProtected(r_txn, R_NilValue);
   setAttrib(r_env, thor_env_txn_name, R_NilValue);
+}
+
+SEXP  r_mdb_dbi_id(SEXP r_dbi) {
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  return ScalarInteger((int) dbi);
 }

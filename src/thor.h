@@ -18,12 +18,6 @@ typedef enum thor_ptr_type {
   THOR_CURSOR
 } thor_ptr_type;
 
-typedef enum thor_env_state {
-  THOR_ENV_OPEN,
-  THOR_ENV_CLOSED,
-  THOR_ENV_ANY
-} thor_env_state;
-
 void thor_init();
 void thor_cleanup();
 
@@ -54,7 +48,8 @@ SEXP r_mdb_txn_abort(SEXP r_txn);
 SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 
-SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_flags);
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
+                    SEXP r_reversekey, SEXP r_dupsort, SEXP r_create);
 SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
@@ -80,7 +75,7 @@ SEXP r_mdb_reader_list(SEXP r_env);
 SEXP r_mdb_reader_check(SEXP r_env);
 
 // Internals:
-MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error, thor_env_state state);
+MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi r_mdb_get_dbi(SEXP r_dbi);
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error, bool orphaned);
@@ -101,6 +96,7 @@ SEXP r_mdb_flags_put();
 
 // - interface
 unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);
+unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 
 // cursor_op
@@ -110,3 +106,6 @@ SEXP r_mdb_cursor_op();
 void cleanup_txn_cursors(SEXP r_txn);
 void cleanup_cursor(SEXP r_cursor, SEXP r_txn);
 void cleanup_txn(SEXP r_txn);
+
+// Extra:
+SEXP r_mdb_dbi_id(SEXP r_dbi);
