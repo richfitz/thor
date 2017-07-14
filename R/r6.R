@@ -294,8 +294,9 @@ R6_transaction <- R6::R6Class(
     ##   - append, overwrite, dupdata on put
     ##   - replace, pop
     ##   - deletion gets MDB_NOTFOUND detection
-    get = function(key) {
-      mdb_get(self$.ptr, self$.db$.ptr, key)
+    ##   - get should be able to throw (or not)
+    get = function(key, missing_value = NULL, proxy = FALSE) {
+      mdb_get(self$.ptr, self$.db$.ptr, key, missing_value, proxy)
     },
     put = function(key, data, flags = NULL) {
       mdb_put(self$.ptr, self$.db$.ptr, key, data, flags)

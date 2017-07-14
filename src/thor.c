@@ -289,12 +289,28 @@ SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
 }
 
 // --- use the database ---
-SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
+SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_missing_value,
+               SEXP r_proxy) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
+  const bool proxy = scalar_logical(r_proxy, "proxy");
   sexp_to_mdb_val(r_key, "key", &key);
-  no_error(mdb_get(txn, dbi, &key, &data), "mdb_get");
+
+  unsigned int rc = mdb_get(txn, dbi, &key, &data);
+  if (rc == MDB_NOTFOUND) {
+    if (proxy) {
+      // return a null proxy
+      Rf_error("not yet implemented");
+    } else {
+      return r_missing_value;
+    }
+  }
+  // this is really the else clause:
+  no_error(rc, "mdb_get");
+  if (proxy) {
+    Rf_error("not yet implemented");
+  }
   return mdb_val_to_sexp(&data);
 }
 

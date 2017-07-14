@@ -56,7 +56,8 @@ SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
 SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
-SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key);
+SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
+               SEXP r_missing_value, SEXP r_proxy);
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data);
 
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
