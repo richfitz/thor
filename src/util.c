@@ -25,7 +25,7 @@ size_t scalar_size(SEXP x, const char * name) {
   if (ret < 0) {
     Rf_error("Expected a size for %s", name);
   }
-  return (size_t)x;
+  return (size_t)ret;
 }
 
 bool scalar_logical(SEXP x, const char * name) {

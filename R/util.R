@@ -50,7 +50,7 @@ stack <- function() {
     push = function(x) {
       data[[length(data) + 1L]] <<- x
     },
-    pop = function(x, empty = NULL) {
+    pop = function(empty = NULL) {
       n <- length(data)
       if (n == 0L) {
         return(empty)
@@ -70,4 +70,11 @@ stack <- function() {
         }
       }
     })
+}
+
+assert_is <- function(x, what, name = deparse(substitute(x))) {
+  if (!inherits(x, what)) {
+    stop(sprintf("'%s' must be a %s", name,
+                 paste(what, collapse = " / ")), call. = FALSE)
+  }
 }

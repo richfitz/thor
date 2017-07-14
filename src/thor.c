@@ -6,15 +6,11 @@
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
 SEXP thor_flag_group_id_name;
-SEXP thor_env_txn_name;
-SEXP thor_txn_cursor_name;
 SEXP thor_txn_readonly_name;
 SEXP thor_cursor_orphan_name;
 
 void thor_init() {
   thor_flag_group_id_name = install("group_id");
-  thor_env_txn_name = install("transaction");
-  thor_txn_cursor_name = install("cursors");
   thor_txn_readonly_name = install("readonly");
   thor_cursor_orphan_name = install("orphan");
 }
@@ -23,9 +19,9 @@ void thor_cleanup() {
 }
 
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened);
-static SEXP r_mdb_txn_wrap(MDB_txn *txn, SEXP r_env);
+static SEXP r_mdb_txn_wrap(MDB_txn *txn);
 static SEXP r_mdb_dbi_wrap(MDB_dbi dbi);
-static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor, SEXP r_txn);
+static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor);
 static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
 static void r_mdb_dbi_finalize(SEXP r_dbi);
@@ -184,9 +180,8 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
-  SEXP r_txn = PROTECT(r_mdb_txn_wrap(txn, r_env));
+  SEXP r_txn = PROTECT(r_mdb_txn_wrap(txn));
 
-  setAttrib(r_env, thor_env_txn_name, r_txn);
   setAttrib(r_txn, thor_txn_readonly_name,
             ScalarLogical((flags & MDB_RDONLY) > 0));
 
@@ -208,14 +203,14 @@ SEXP r_mdb_txn_id(SEXP r_txn) {
 SEXP r_mdb_txn_commit(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   no_error(mdb_txn_commit(txn), "mdb_txn_commit");
-  cleanup_txn(r_txn);
+  R_ClearExternalPtr(r_txn);
   return R_NilValue;
 }
 
 SEXP r_mdb_txn_abort(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   mdb_txn_abort(txn);
-  cleanup_txn(r_txn);
+  R_ClearExternalPtr(r_txn);
   return R_NilValue;
 }
 
@@ -227,7 +222,6 @@ SEXP r_mdb_txn_reset(SEXP r_txn) {
     Rf_error("mdb_txn_reset can be used only with read-only transactions");
   }
   mdb_txn_reset(txn);
-  cleanup_txn_cursors(r_txn);
   return R_NilValue;
 }
 
@@ -333,16 +327,12 @@ SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_cursor *cursor;
   no_error(mdb_cursor_open(txn, dbi, &cursor), "mdb_cursor_open");
-  SEXP r_cursor = PROTECT(r_mdb_cursor_wrap(cursor, r_txn));
-  setAttrib(r_txn, thor_txn_cursor_name,
-            CONS(r_cursor, getAttrib(r_txn, thor_txn_cursor_name)));
-  UNPROTECT(1);
-  return r_cursor;
+  return r_mdb_cursor_wrap(cursor);
 }
 
 SEXP r_mdb_cursor_close(SEXP r_cursor) {
-  SEXP r_txn = R_ExternalPtrProtected(r_cursor);
-  cleanup_cursor(r_cursor, r_txn);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  mdb_cursor_close(cursor);
   return R_NilValue;
 }
 
@@ -350,21 +340,13 @@ SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, true);
   mdb_cursor_renew(txn, cursor);
-  // Register the cursor with the transaction:
-  R_SetExternalPtrProtected(r_cursor, r_txn);
   setAttrib(r_cursor, thor_cursor_orphan_name, R_NilValue);
-  setAttrib(r_txn, thor_txn_cursor_name,
-            CONS(r_cursor, getAttrib(r_txn, thor_txn_cursor_name)));
   return R_NilValue;
 }
 
 SEXP r_mdb_cursor_txn(SEXP r_cursor) {
-  // This first bit is called for the side effect of making sure that
-  // we have a valid cursor.
-  r_mdb_get_cursor(r_cursor, true, false);
-  // The other option here is we create a *second* txn object and wrap
-  // that up but I prefer this way (even if it sidesteps the mdb API)
-  return R_ExternalPtrProtected(r_cursor);
+  Rf_error("don't call this"); // TODO
+  return R_NilValue;
 }
 
 SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
@@ -519,17 +501,9 @@ static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
   return ret;
 }
 
-static SEXP r_mdb_txn_wrap(MDB_txn *txn, SEXP r_env) {
-  // The options here for getting the GC right are we can
-  //
-  // - add the env to the tag of the txn - this takes care of keeping
-  //   the transaction alive in the case of accidental deletion of the
-  //   handle, so we'll do that.
-  // - add the txn to something in the environment so that when the
-  //   environment is *forceably* closed we can abort all
-  //   transactions - this is not done yet.
+static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
   SEXP ptr_type = PROTECT(ScalarInteger(THOR_TXN));
-  SEXP ret = PROTECT(R_MakeExternalPtr(txn, ptr_type, r_env));
+  SEXP ret = PROTECT(R_MakeExternalPtr(txn, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
   UNPROTECT(2);
@@ -557,9 +531,9 @@ static SEXP r_mdb_dbi_wrap(MDB_dbi dbi) {
   return ret;
 }
 
-static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor, SEXP r_txn) {
+static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor) {
   SEXP ptr_type = PROTECT(ScalarInteger(THOR_CURSOR));
-  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, ptr_type, r_txn));
+  SEXP ret = PROTECT(R_MakeExternalPtr(cursor, ptr_type, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
   setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
   UNPROTECT(2);
@@ -572,13 +546,6 @@ static void r_mdb_env_finalize(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, false);
   if (env != NULL) {
     Rprintf("Cleaning environent\n");
-    // Some care is needed here I think
-    // mdb_env_close(env);
-    SEXP r_txn = getAttrib(r_env, thor_env_txn_name);
-    if (r_txn != R_NilValue) {
-      Rprintf("...first to clean up transaction\n");
-      r_mdb_txn_finalize(r_txn);
-    }
     Rprintf("...closing environment\n");
     mdb_env_close(env);
     R_ClearExternalPtr(r_env);
@@ -589,16 +556,8 @@ static void r_mdb_txn_finalize(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, false);
   if (txn != NULL) {
     Rprintf("Cleaning transaction\n");
-    // TODO: deal with live cursors here
-    Rprintf("...aborting live transaction\n");
     mdb_txn_abort(txn);
-    SEXP r_env = R_ExternalPtrProtected(r_txn);
-    if (getAttrib(r_env, thor_env_txn_name) == r_txn) {
-      Rprintf("...unsetting env/txn link\n");
-      setAttrib(r_env, thor_env_txn_name, R_NilValue);
-    }
     R_ClearExternalPtr(r_txn);
-    R_SetExternalPtrProtected(r_txn, R_NilValue);
   }
 }
 
@@ -881,55 +840,7 @@ SEXP r_mdb_cursor_op() {
   return ret;
 }
 
-// This is fine for now, but better would be to render these good to
-// renew
-void cleanup_txn_cursors(SEXP r_txn) {
-  SEXP r_cursors = getAttrib(r_txn, thor_txn_cursor_name);
-  bool txn_readonly =
-    (bool)INTEGER(getAttrib(r_txn, thor_txn_readonly_name))[0];
-  if (txn_readonly) {
-    setAttrib(r_txn, thor_txn_cursor_name, R_NilValue);
-    while (r_cursors != R_NilValue) {
-      SEXP r_cursor = CAR(r_cursors);
-      MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false, false);
-      if (cursor) {
-        mdb_cursor_close(cursor);
-      }
-      R_SetExternalPtrProtected(r_cursor, R_NilValue);
-      setAttrib(r_cursor, thor_cursor_orphan_name, ScalarLogical(true));
-      // And continue...
-      r_cursors = CDR(r_cursors);
-    }
-  } else {
-    while (r_cursors != R_NilValue) {
-      r_mdb_cursor_finalize(CAR(r_cursors));
-      r_cursors = CDR(r_cursors);
-    }
-  }
-}
-
-void cleanup_cursor(SEXP r_cursor, SEXP r_txn) {
-  // Stop protecting the transaction:
-  R_SetExternalPtrProtected(r_cursor, R_NilValue);
-  // Remove cursor from the transaction itself
-  setAttrib(r_txn, thor_txn_cursor_name,
-            pairlist_drop(getAttrib(r_txn, thor_txn_cursor_name), r_cursor));
-  // Close the cursor itself:
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
-  mdb_cursor_close(cursor);
-  // Mark as closed
-  setAttrib(r_cursor, thor_cursor_orphan_name, ScalarLogical(true));
-}
-
-void cleanup_txn(SEXP r_txn) {
-  R_ClearExternalPtr(r_txn);
-  cleanup_txn_cursors(r_txn);
-  SEXP r_env = R_ExternalPtrProtected(r_txn);
-  R_SetExternalPtrProtected(r_txn, R_NilValue);
-  setAttrib(r_env, thor_env_txn_name, R_NilValue);
-}
-
-SEXP  r_mdb_dbi_id(SEXP r_dbi) {
+SEXP r_mdb_dbi_id(SEXP r_dbi) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   return ScalarInteger((int) dbi);
 }
