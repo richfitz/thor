@@ -14,7 +14,25 @@
 ##   Transaction : txn
 ##   Cursor : cur
 
-## TODO: Make a global cache of environment handles (or a lock)
+## For print methods,
+## * indicate if .ptr is NULL or not
+## * indicate dependents
+## * hide all dots (and the print function)
+
+dbenv <- function(path, flags = NULL,
+                  maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
+                  reversekey = FALSE, dupsort = FALSE, create = TRUE) {
+  R6_dbenv$new(path, flags,
+               maxdbs = maxdbs, maxreaders = maxreaders, mapsize = mapsize,
+               reversekey = reversekey, dupsort = dupsort, create = create)
+}
+
+## TODO: Make a global cache of environment handles (or a lock) so
+## that if we open a database multiple times we will prevent a
+## deadlock.  However, we can't do that in a really trivial way
+## because we'd need to be very careful about close.  So a proxy
+## object (like the deps) would need to be kept around that keeps
+## track of the write transaction bit.  For now it's not done.
 R6_dbenv <- R6::R6Class(
   "dbenv",
   cloneable = FALSE,
@@ -26,40 +44,42 @@ R6_dbenv <- R6::R6Class(
     .write_txn = NULL,
 
     ## This argument list will likely grow to drop flags
-    initialize = function(path, flags = NULL, reversekey = FALSE,
-                          maxdbs = NULL, maxreaders = NULL,
-                          dupsort = FALSE, create = TRUE) {
+    initialize = function(path, flags = NULL,
+                          maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
+                          reversekey = FALSE, dupsort = FALSE, create = TRUE) {
+      self$.deps = stack()
       self$.ptr <- mdb_env_create()
+
+      ## TODO: throughout here, nicer conversion to integer
       if (!is.null(maxreaders)) {
         mdb_env_set_maxreaders(self$.ptr, as.integer(maxreaders))
       }
       if (!is.null(maxdbs)) {
         mdb_env_set_maxdbs(self$.ptr, as.integer(maxdbs))
       }
+      if (!is.null(mapsize)) {
+        mdb_env_set_mapsize(self$.ptr, as.integer(mapsize))
+      }
 
       ## Be more user-friendly
       if (create && !file.exists(path)) {
         dir.create(path, FALSE, TRUE)
       }
-      mdb_env_open(self$.ptr, path, flags)
 
-      ## Bookkeeping:
-      self$.deps = stack()
+      mdb_env_open(self$.ptr, path, flags_env$NOTLS | flags)
+
       self$open_database(NULL, NULL, reversekey, dupsort, create)
     },
 
     finalize = function() {
-      message("[R] Cleanup env")
+      message("[GC] env")
       self$close()
     },
 
-    ## Informational
-    set_mapsize = function(mapsize) {
-      mdb_env_set_mapsize(self$.ptr, mapsize)
-    },
     path = function() {
       mdb_env_get_path(self$.ptr)
     },
+    ## This one needs work I think...
     flags = function() {
       mdb_env_get_flags(self$.ptr)
     },
@@ -181,7 +201,12 @@ R6_transaction <- R6::R6Class(
     .write = NULL,
 
     initialize = function(env, db = NULL, parent = NULL, write = FALSE) {
+      ## If the R6 issue is not a bug then we don't have to store
+      ## upstream references for GC purposes - just if we need to use
+      ## them!
       self$.env <- env
+      env$.deps$add(self)
+
       if (is.null(db)) {
         db <- env$.db
       } else {
@@ -201,31 +226,25 @@ R6_transaction <- R6::R6Class(
         if (!is.null(env$.write_txn)) {
           stop("Write transaction is already active for this environment")
         }
-        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, NULL)
+        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = FALSE)
         env$.write_txn <- self
       } else {
-        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, flags_txn$RDONLY)
+        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = TRUE)
       }
     },
 
     invalidate = function() {
       ## Remove ourselves from upstream things
 
+      ## TODO: This is a very different approach taken to the python
+      ## library where invalidate calls these things but abort does
+      ## not
+
       self$abort()
-
-
-
-      ## TODO: there is some duplication here with abort/commit - I
-      ## think we're also doing this stuff twice depending on who
-      ## calls it....
-      self$.env <- NULL
-      self$.db <- NULL
-
-
-      self$.ptr <- NULL
     },
 
     finalize = function() {
+      message("[GC] transaction")
       if (!is.null(self$.ptr)) {
         self$abort()
       }
@@ -295,32 +314,41 @@ R6_cursor <- R6::R6Class(
   public = list(
     .txn = NULL,
     .db = NULL,
-    ptr = NULL,
+    .ptr = NULL,
     initialize = function(txn) {
       self$.txn <- txn
       self$.db <- txn$.db
       self$.ptr <- mdb_cursor_open(self$.txn$.ptr, self$.db$.ptr)
       txn$.deps$add(self)
-      db$.deps$add(self)
+      ## TODO: To implement mdb_drop we need to keep track of
+      ## db->cursor links too
+      ##   self$.db$.deps$add(self)
+    },
+
+    finalize = function() {
+      message("[GC] env")
+      self$invalidate()
     },
 
     invalidate = function() {
-      self$close()
-      self$.db$.deps$discard(self)
-      self$.txn$.deps$discard(self)
-      self$.txn <- NULL
-      self$.db  <- NULL
-      self$.ptr <- NULL
+      if (!is.null(self$.ptr)) {
+        self$close()
+      }
     },
 
     close = function() {
       mdb_cursor_close(self$.ptr)
+      ## self$.db$.deps$discard(self)
+      self$.txn$.deps$discard(self)
       self$.txn <- NULL
       self$.db <- NULL
+      self$.ptr <- NULL
     },
 
     ## This might not be ideal.  There are some other ways forward
-    ## here - see the python interface in particular.
+    ## here - see the python interface in particular.  Supporting key,
+    ## value, item, etc would be nice.  Knowing when the items need to
+    ## be refreshed might also be nice.  Lots to do!
     get = function(key, op) {
       mdb_cursor_get(self$.ptr, key, op)
     },
@@ -336,12 +364,12 @@ R6_cursor <- R6::R6Class(
   ))
 
 ## Helper function
-with_new_txn <- function(env, f, parent = NULL, flags = NULL, write = FALSE) {
+with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
   if (write) {
     if (!is.null(env$.write_txn)) {
       stop("FIXME")
     }
-    txn <- mdb_txn_begin(env$.ptr)
+    txn <- mdb_txn_begin(env$.ptr, parent, FALSE)
     withCallingHandlers({
       ret <- f(txn)
       mdb_txn_commit(txn)
@@ -349,7 +377,7 @@ with_new_txn <- function(env, f, parent = NULL, flags = NULL, write = FALSE) {
     }, error = function(e) mdb_txn_abort(txn))
   } else {
     ## Consider using the pool system in env?
-    txn <- mdb_txn_begin(env$.ptr)
+    txn <- mdb_txn_begin(env$.ptr, parent, TRUE)
     withCallingHandlers({
       f(txn)
     }, finally = function(e) mdb_txn_abort(txn))
@@ -362,6 +390,7 @@ invalidate_dependencies <- function(x) {
     deps <- x$.deps$get()
     message(sprintf("%d deps", length(deps)))
     for (d in x$.deps$get()) {
+      message(sprintf("...invalidating a %s", class(d)[[1]]))
       d$invalidate()
     }
     x$.deps <- NULL

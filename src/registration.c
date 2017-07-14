@@ -29,7 +29,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_env_set_maxdbs",          (DL_FUNC) &r_mdb_env_set_maxdbs,        2},
   {"Cmdb_env_get_maxkeysize",      (DL_FUNC) &r_mdb_env_get_maxkeysize,    1},
 
-  {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             3},
+  {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             5},
   {"Cmdb_txn_id",                  (DL_FUNC) &r_mdb_txn_id,                1},
   {"Cmdb_txn_env",                 (DL_FUNC) &r_mdb_txn_env,               1},
   {"Cmdb_txn_commit",              (DL_FUNC) &r_mdb_txn_commit,            1},
@@ -63,8 +63,6 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_reader_check",            (DL_FUNC) &r_mdb_reader_check,          1},
 
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
-  {"Cmdb_flags_dbi",               (DL_FUNC) &r_mdb_flags_dbi,             0},
-  {"Cmdb_flags_txn",               (DL_FUNC) &r_mdb_flags_txn,             0},
   {"Cmdb_flags_put",               (DL_FUNC) &r_mdb_flags_put,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
 

@@ -1,8 +1,6 @@
 ## These are our flag holders; they will need exporting as data
 ## objects but I never remember how to do that!
 flags_env <- new.env(parent = emptyenv())
-flags_dbi <- new.env(parent = emptyenv())
-flags_txn <- new.env(parent = emptyenv())
 flags_put <- new.env(parent = emptyenv())
 cursor_op <- new.env(parent = emptyenv())
 NO_FLAGS <- NULL
@@ -24,8 +22,6 @@ init_flags <- function() {
     class(e) <- "mdb_flags"
   }
   init(Cmdb_flags_env, "env", flags_env)
-  init(Cmdb_flags_dbi, "dbi", flags_dbi)
-  init(Cmdb_flags_txn, "txn", flags_txn)
   init(Cmdb_flags_put, "put", flags_put)
 
   init(Cmdb_cursor_op, "cursor_op", cursor_op)

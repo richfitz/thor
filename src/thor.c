@@ -171,12 +171,15 @@ SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
 }
 
 // Transactions:
-SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags) {
+SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
+                     SEXP r_rdonly, SEXP r_nosync, SEXP r_nometasync) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
-  const unsigned int
-    flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_TXN);
+  const unsigned int flags =
+    sexp_to_flag(r_rdonly, MDB_RDONLY, "rdonly") |
+    sexp_to_flag(r_nosync, MDB_NOSYNC, "nosync") |
+    sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync");
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -475,6 +478,9 @@ MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error, bool orphaned) {
 
 void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
                      bool closed_error) {
+  if (r_ptr == R_NilValue) {
+    Rf_error("%s has been cleaned up; can't use!", name);
+  }
   if (TYPEOF(r_ptr) != EXTPTRSXP) {
     Rf_error("Expected an external pointer");
   }
@@ -670,53 +676,6 @@ SEXP r_mdb_flags_env() {
 
   setAttrib(ret, R_NamesSymbol, nms);
   setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_ENV));
-  UNPROTECT(2);
-  return ret;
-}
-
-// mdb_dbi_open:
-SEXP r_mdb_flags_dbi() {
-  int n = 7;
-  SEXP ret = PROTECT(allocVector(INTSXP, n));
-  SEXP nms = PROTECT(allocVector(STRSXP, n));
-
-  // mdb_dbi_open:
-  INTEGER(ret)[0] = MDB_REVERSEKEY;
-  SET_STRING_ELT(nms, 0, mkChar("REVERSEKEY"));
-  INTEGER(ret)[1] = MDB_DUPSORT;
-  SET_STRING_ELT(nms, 1, mkChar("DUPSORT"));
-  INTEGER(ret)[2] = MDB_INTEGERKEY;
-  SET_STRING_ELT(nms, 2, mkChar("INTEGERKEY"));
-  INTEGER(ret)[3] = MDB_DUPFIXED;
-  SET_STRING_ELT(nms, 3, mkChar("DUPFIXED"));
-  INTEGER(ret)[4] = MDB_INTEGERDUP;
-  SET_STRING_ELT(nms, 4, mkChar("INTEGERDUP"));
-  INTEGER(ret)[5] = MDB_REVERSEDUP;
-  SET_STRING_ELT(nms, 5, mkChar("REVERSEDUP"));
-  INTEGER(ret)[6] = MDB_CREATE;
-  SET_STRING_ELT(nms, 6, mkChar("CREATE"));
-
-  setAttrib(ret, R_NamesSymbol, nms);
-  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_DBI));
-  UNPROTECT(2);
-  return ret;
-}
-
-SEXP r_mdb_flags_txn() {
-  int n = 3;
-  SEXP ret = PROTECT(allocVector(INTSXP, n));
-  SEXP nms = PROTECT(allocVector(STRSXP, n));
-
-  // mdb_dbi_open:
-  INTEGER(ret)[0] = MDB_RDONLY;
-  SET_STRING_ELT(nms, 0, mkChar("RDONLY"));
-  INTEGER(ret)[1] = MDB_NOSYNC;
-  SET_STRING_ELT(nms, 1, mkChar("NOSYNC"));
-  INTEGER(ret)[2] = MDB_NOMETASYNC;
-  SET_STRING_ELT(nms, 2, mkChar("NOMETASYNC"));
-
-  setAttrib(ret, R_NamesSymbol, nms);
-  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_TXN));
   UNPROTECT(2);
   return ret;
 }

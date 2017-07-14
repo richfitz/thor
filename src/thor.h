@@ -5,8 +5,6 @@
 
 typedef enum thor_flag_group {
   THOR_FLAGS_ENV,
-  THOR_FLAGS_DBI,
-  THOR_FLAGS_TXN,
   THOR_FLAGS_PUT,
   THOR_CURSOR_OP
 } thor_flag_group;
@@ -40,7 +38,8 @@ SEXP r_mdb_env_get_maxreaders(SEXP r_env);
 SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs);
 SEXP r_mdb_env_get_maxkeysize(SEXP r_env);
 
-SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent, SEXP r_flags);
+SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
+                     SEXP r_rdonly, SEXP r_nosync, SEXP r_nometasync);
 SEXP r_mdb_txn_env(SEXP r_txn);
 SEXP r_mdb_txn_id(SEXP r_txn);
 SEXP r_mdb_txn_commit(SEXP r_txn);
@@ -48,6 +47,7 @@ SEXP r_mdb_txn_abort(SEXP r_txn);
 SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 
+// TODO: support integerkey, dupfixed, integerdup, reversedup
 SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
                     SEXP r_reversekey, SEXP r_dupsort, SEXP r_create);
 SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi);
@@ -90,8 +90,6 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 
 // - export to R
 SEXP r_mdb_flags_env();
-SEXP r_mdb_flags_dbi();
-SEXP r_mdb_flags_txn();
 SEXP r_mdb_flags_put();
 
 // - interface

@@ -64,8 +64,10 @@ mdb_env_get_maxkeysize <- function(env) {
 }
 
 ## transactions:
-mdb_txn_begin <- function(env, parent = NULL, flags = NULL) {
-  .Call(Cmdb_txn_begin, env, parent, flags)
+mdb_txn_begin <- function(env, parent, rdonly) {
+  ## TODO: This currently allows a couple of additional arguments but
+  ## we'll NULL them out for now.
+  .Call(Cmdb_txn_begin, env, parent, rdonly, NULL, NULL)
 }
 
 mdb_txn_id <- function(txn) {
