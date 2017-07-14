@@ -8,11 +8,13 @@
 SEXP thor_flag_group_id_name;
 SEXP thor_txn_readonly_name;
 SEXP thor_cursor_orphan_name;
+SEXP thor_size_name;
 
 void thor_init() {
   thor_flag_group_id_name = install("group_id");
   thor_txn_readonly_name = install("readonly");
   thor_cursor_orphan_name = install("orphan");
+  thor_size_name = install("size");
 }
 
 void thor_cleanup() {
@@ -308,10 +310,7 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_missing_value,
   }
   // this is really the else clause:
   no_error(rc, "mdb_get");
-  if (proxy) {
-    Rf_error("not yet implemented");
-  }
-  return mdb_val_to_sexp(&data);
+  return mdb_val_to_sexp(&data, proxy);
 }
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
@@ -396,8 +395,8 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op) {
   //    SET_VECTOR_ELT(ret, 1, r_key);
   // else
   //    ...as below
-  SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key));
-  SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data));
+  SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, false));
+  SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, false));
   UNPROTECT(1);
   return ret;
 }
@@ -631,9 +630,36 @@ void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x) {
   x->mv_size = length(r_c);
 }
 
-SEXP mdb_val_to_sexp(MDB_val *x) {
+SEXP mdb_val_to_sexp(MDB_val *x, bool proxy) {
+  return proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x);
+}
+
+SEXP mdb_val_to_sexp_copy(MDB_val *x) {
   SEXP ret = PROTECT(allocVector(STRSXP, 1));
   SET_STRING_ELT(ret, 0, mkCharLen(x->mv_data, x->mv_size));
+  UNPROTECT(1);
+  return ret;
+}
+
+SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
+  SEXP ret = PROTECT(R_MakeExternalPtr(x->mv_data, R_NilValue, R_NilValue));
+  setAttrib(ret, thor_size_name, ScalarInteger(x->mv_size));
+  UNPROTECT(1);
+  return ret;
+}
+
+// We'll improve this eventually - allowing conversions to different
+// types (at the very least raw/string) and subsetting (get these
+// bytes).  But for now, just grab the whole thing:
+SEXP r_mdb_proxy_copy(SEXP r_ptr) {
+  const size_t size = (size_t) INTEGER(getAttrib(r_ptr, thor_size_name))[0];
+  const void * data = R_ExternalPtrAddr(r_ptr);
+  if (data == NULL) {
+    Rf_error("proxy has been invalidated; can't use!");
+  }
+
+  SEXP ret = PROTECT(allocVector(STRSXP, 1));
+  SET_STRING_ELT(ret, 0, mkCharLen(data, size));
   UNPROTECT(1);
   return ret;
 }

@@ -199,6 +199,7 @@ R6_transaction <- R6::R6Class(
     .deps = NULL,
     .parent = NULL,
     .write = NULL,
+    .mutations = 0L,
 
     initialize = function(env, db = NULL, parent = NULL, write = FALSE) {
       ## If the R6 issue is not a bug then we don't have to store
@@ -296,12 +297,19 @@ R6_transaction <- R6::R6Class(
     ##   - deletion gets MDB_NOTFOUND detection
     ##   - get should be able to throw (or not)
     get = function(key, missing_value = NULL, proxy = FALSE) {
-      mdb_get(self$.ptr, self$.db$.ptr, key, missing_value, proxy)
+      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_value, proxy)
+      if (proxy) {
+        mdb_val_proxy(txn, res)
+      } else {
+        res
+      }
     },
     put = function(key, data, flags = NULL) {
+      self$.mutations = self$.mutations + 1L
       mdb_put(self$.ptr, self$.db$.ptr, key, data, flags)
     },
     del = function(key, data = NULL) {
+      self$.mutations = self$.mutations + 1L
       mdb_del(self$.ptr, self$.db$.ptr, key, data)
     },
 
@@ -398,4 +406,31 @@ invalidate_dependencies <- function(x) {
   } else {
     message("(null deps)")
   }
+}
+
+mdb_val_proxy <- function(txn, data) {
+  mutations <- txn$.mutations
+  force(data)
+  ret <- list(
+    invalidate = function() {
+      data <<- NULL
+      txn <<- NULL
+    },
+    is_valid = function() {
+      !is.null(txn$.ptr) && identical(txn$.mutations, mutations)
+    },
+    size = function() {
+      attr(data, "size")
+    },
+    value = function() {
+      if (is.null(txn$.ptr)) {
+        stop("mdb_val_proxy is invalid: transaction has been closed")
+      } else if (!identical(txn$.mutations, mutations)) {
+        stop("mdb_val_proxy is invalid: transaction has modified database")
+      }
+      mdb_proxy_copy(data)
+    })
+  class(ret) <- "mdb_val_proxy"
+  txn$.deps$add(ret)
+  ret
 }

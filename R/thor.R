@@ -179,6 +179,11 @@ mdb_reader_check <- function(env) {
   .Call(Cmdb_reader_check, env)
 }
 
+## TODO: these are not mdb api but my own things; rename?
 mdb_dbi_id <- function(dbi) {
   .Call(Cmdb_dbi_id, dbi)
+}
+
+mdb_proxy_copy <- function(x) {
+  .Call(Cmdb_proxy_copy, x)
 }
