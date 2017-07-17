@@ -178,9 +178,9 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
   const unsigned int flags =
-    sexp_to_flag(r_rdonly, MDB_RDONLY, "rdonly") |
-    sexp_to_flag(r_nosync, MDB_NOSYNC, "nosync") |
-    sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync");
+    sexp_to_flag(r_rdonly, MDB_RDONLY, "rdonly", false) |
+    sexp_to_flag(r_nosync, MDB_NOSYNC, "nosync", false) |
+    sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync", false);
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -247,9 +247,9 @@ SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
 
   const unsigned int flags =
-    sexp_to_flag(r_reversekey, MDB_REVERSEKEY, "reversekey") |
-    sexp_to_flag(r_dupsort, MDB_DUPSORT, "dupsort") |
-    sexp_to_flag(r_create, MDB_CREATE, "create");
+    sexp_to_flag(r_reversekey, MDB_REVERSEKEY, "reversekey", false) |
+    sexp_to_flag(r_dupsort, MDB_DUPSORT, "dupsort", false) |
+    sexp_to_flag(r_create, MDB_CREATE, "create", false);
 
   MDB_dbi dbi;
   no_error(mdb_dbi_open(txn, name, flags, &dbi), "mdb_dbi_open");
@@ -310,11 +310,15 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
   }
 }
 
-SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
+SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data,
+               SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_PUT);
+  const unsigned int flags =
+    sexp_to_flag(r_nodupdata, MDB_NODUPDATA, "nodupdata", false) |
+    sexp_to_flag(r_nooverwrite, MDB_NOOVERWRITE, "nooverwrite", false) |
+    sexp_to_flag(r_append, MDB_APPEND, "append", false);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   no_error(mdb_put(txn, dbi, &key, &data, flags), "mdb_put");
@@ -396,12 +400,16 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
   return ret;
 }
 
-SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags) {
+SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
+                      SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
-  const unsigned int flags = sexp_to_mdb_flags(r_flags, THOR_FLAGS_PUT);
+  const unsigned int flags =
+    sexp_to_flag(r_nodupdata, MDB_NODUPDATA, "nodupdata", false) |
+    sexp_to_flag(r_nooverwrite, MDB_NOOVERWRITE, "nooverwrite", false) |
+    sexp_to_flag(r_append, MDB_APPEND, "append", false);
   no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
   return R_NilValue;
 }
@@ -704,32 +712,6 @@ SEXP r_mdb_flags_env() {
   return ret;
 }
 
-SEXP r_mdb_flags_put() {
-  int n = 7;
-  SEXP ret = PROTECT(allocVector(INTSXP, n));
-  SEXP nms = PROTECT(allocVector(STRSXP, n));
-
-  INTEGER(ret)[0] = MDB_NOOVERWRITE;
-  SET_STRING_ELT(nms, 0, mkChar("NOOVERWRITE"));
-  INTEGER(ret)[1] = MDB_NODUPDATA;
-  SET_STRING_ELT(nms, 1, mkChar("NODUPDATA"));
-  INTEGER(ret)[2] = MDB_CURRENT;
-  SET_STRING_ELT(nms, 2, mkChar("CURRENT"));
-  INTEGER(ret)[3] = MDB_RESERVE;
-  SET_STRING_ELT(nms, 3, mkChar("RESERVE"));
-  INTEGER(ret)[4] = MDB_APPEND;
-  SET_STRING_ELT(nms, 4, mkChar("APPEND"));
-  INTEGER(ret)[5] = MDB_APPENDDUP;
-  SET_STRING_ELT(nms, 5, mkChar("APPENDDUP"));
-  INTEGER(ret)[6] = MDB_MULTIPLE;
-  SET_STRING_ELT(nms, 6, mkChar("MULTIPLE"));
-
-  setAttrib(ret, R_NamesSymbol, nms);
-  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_FLAGS_PUT));
-  UNPROTECT(2);
-  return ret;
-}
-
 unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id) {
   int ret = 0;
   if (r_flags != R_NilValue) {
@@ -753,11 +735,12 @@ unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id) {
   return ret;
 }
 
-unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name) {
+unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name,
+                          bool invert) {
   if (r_x == R_NilValue) {
     return 0;
   } else {
-    return scalar_logical(r_x, name) ? if_set : 0;
+    return scalar_logical(r_x, name) != invert ? if_set : 0;
   }
 }
 

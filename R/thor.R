@@ -119,8 +119,9 @@ mdb_get <- function(txn, dbi, key, missing_value, proxy, raw) {
   .Call(Cmdb_get, txn, dbi, key, missing_value, proxy, raw)
 }
 
-mdb_put <- function(txn, dbi, key, data, flags) {
-  .Call(Cmdb_put, txn, dbi, key, data, flags)
+mdb_put <- function(txn, dbi, key, data,
+                    nodupdata = NULL, nooverwrite = NULL, append = NULL) {
+  .Call(Cmdb_put, txn, dbi, key, data, nodupdata, nooverwrite, append)
 }
 
 mdb_del <- function(txn, dbi, key, data) {
@@ -151,8 +152,10 @@ mdb_cursor_get <- function(cursor, key, op) {
   .Call(Cmdb_cursor_get, cursor, key, op)
 }
 
-mdb_cursor_put <- function(cursor, key, data, flags) {
-  .Call(Cmdb_cursor_put, cursor, key, data, flags)
+mdb_cursor_put <- function(cursor, key, data, flags, nodupdata = NULL,
+                           nooverwrite = NULL, append = NULL) {
+  .Call(Cmdb_cursor_put, cursor, key, data,
+        nodupdata, nooverwrite, append)
 }
 
 mdb_cursor_del <- function(cursor, nodupdata) {

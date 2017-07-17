@@ -42,7 +42,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_dbi_close",               (DL_FUNC) &r_mdb_dbi_close,             2},
   {"Cmdb_drop",                    (DL_FUNC) &r_mdb_drop,                  3},
 
-  {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   5},
+  {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   7},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   6},
   {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
 
@@ -52,7 +52,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_cursor_txn",              (DL_FUNC) &r_mdb_cursor_txn,            1},
   {"Cmdb_cursor_dbi",              (DL_FUNC) &r_mdb_cursor_dbi,            1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            4},
-  {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            4},
+  {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            6},
   {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},
   {"Cmdb_cursor_count",            (DL_FUNC) &r_mdb_cursor_count,          1},
 
@@ -62,7 +62,6 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_reader_check",            (DL_FUNC) &r_mdb_reader_check,          1},
 
   {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
-  {"Cmdb_flags_put",               (DL_FUNC) &r_mdb_flags_put,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
 
   // Extensions

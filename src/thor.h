@@ -6,7 +6,6 @@
 
 typedef enum thor_flag_group {
   THOR_FLAGS_ENV,
-  THOR_FLAGS_PUT,
   THOR_CURSOR_OP
 } thor_flag_group;
 
@@ -56,7 +55,8 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_txn);
 SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 
-SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
+SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data,
+               SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                SEXP r_missing_is_error, SEXP r_proxy, SEXP r_as_raw);
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data);
@@ -70,7 +70,8 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor);
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
                       SEXP r_proxy, SEXP r_as_raw);
 
-SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
+SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
+                      SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append);
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata);
 SEXP r_mdb_cursor_count(SEXP r_cursor);
 
@@ -101,11 +102,11 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 
 // - export to R
 SEXP r_mdb_flags_env();
-SEXP r_mdb_flags_put();
 
 // - interface
 unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);
-unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name);
+unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name,
+                          bool invert);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 
 // cursor_op
