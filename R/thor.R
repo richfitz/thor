@@ -184,6 +184,6 @@ mdb_dbi_id <- function(dbi) {
   .Call(Cmdb_dbi_id, dbi)
 }
 
-mdb_proxy_copy <- function(x) {
-  .Call(Cmdb_proxy_copy, x)
+mdb_proxy_copy <- function(x, as_raw) {
+  .Call(Cmdb_proxy_copy, x, as_raw)
 }

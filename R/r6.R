@@ -303,8 +303,6 @@ R6_transaction <- R6::R6Class(
     ##   - append, overwrite, dupdata on put
     ##   - replace, pop
     ##   - deletion gets MDB_NOTFOUND detection
-    ##   - get should be able to throw (or not)
-    ##   - get picks up an as_raw option, passed through to the proxy
     ##
     ## For rleveldb I implemented `error_if_missing` and did not
     ## implement `missing_value` (then for mget the reverse).
@@ -312,7 +310,7 @@ R6_transaction <- R6::R6Class(
       res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error, proxy,
                      as_raw)
       if (proxy) {
-        mdb_val_proxy(txn, res, as_raw)
+        mdb_val_proxy(self, res, as_raw)
       } else {
         res
       }
@@ -479,31 +477,49 @@ invalidate_dependencies <- function(x) {
   }
 }
 
-mdb_val_proxy <- function(txn, data, as_raw) {
+## The behaviour here for null objects is not very clear.  We might
+## want to utilise the value-if-missing thing actually.
+##
+## TODO: value_if_missing is going to need sanitisation but we'll do
+## that elsewhere.  Probably it needs to match as_raw?
+##
+## TODO: as_raw on value() taking a default here might be nicer.  But
+## it's a faff to implement and requires more bookkeeping (because we
+## need to keep multiple copies of the data around or do the
+## conversion ourselves)
+mdb_val_proxy <- function(txn, data, as_raw, value_if_missing = NULL) {
   mutations <- txn$.mutations
-  force(data)
-  to_resolve <- FALSE
-  the_value <- NULL
-  as_raw_default <- as_raw
+  force(as_raw)
+  if (is.null(data)) {
+    to_resolve <- FALSE
+    value <- value_if_missing
+    size <- if (is.character(value)) nchar(value) else length(value)
+  } else {
+    to_resolve <- TRUE
+    value <- NULL
+    size <- attr(data, "size", TRUE)
+  }
 
   ret <- list(
     is_valid = function() {
       !is.null(txn$.ptr) && identical(txn$.mutations, mutations)
     },
     size = function() {
-      attr(data, "size")
+      ## NOTE: this does not check validity!  It's also "safe" in that
+      ## it does not access the database in anyway.
+      size
     },
-    value = function(as_raw = as_raw_default) {
+    value = function() {
       if (is.null(txn$.ptr)) {
         stop("mdb_val_proxy is invalid: transaction has been closed")
       } else if (!identical(txn$.mutations, mutations)) {
         stop("mdb_val_proxy is invalid: transaction has modified database")
       }
       if (to_resolve) {
-        the_value <<- mdb_proxy_copy(data, as_raw)
+        value <<- mdb_proxy_copy(data, as_raw)
         to_resolve <<- FALSE
       }
-      the_value
+      value
     })
   class(ret) <- "mdb_val_proxy"
   ret

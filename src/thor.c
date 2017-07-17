@@ -602,27 +602,7 @@ static void r_mdb_cursor_finalize(SEXP r_cursor) {
 
 // --- other ---
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x) {
-  // For now we'll just go with a *pure* string interface and worry
-  // about a more complete interface later.  There are some fun things
-  // that can be done that are more interesting than string keys (most
-  // obviously raw keys but also read-only mmaped return values,
-  // direct serialising of atomic types, protocol buffers, etc).
-  if (TYPEOF(r_x) != STRSXP || length(r_x) != 1) {
-    Rf_error("Expected a scalar character for %s", name);
-  }
-  SEXP r_c = STRING_ELT(r_x, 0);
-
-  // TODO: Can we get away here without a copy?  I believe that mdb
-  // will not modify or free these, and expects the same of us on
-  // return.  A more subtle issue though is that if the transaction
-  // does not complete before 'x' is garbage collected (which could
-  // happen especially under gctorture) then by the time the data is
-  // added there will not be any data to add and we'll put junk in.
-  // So we'll at least need a "safe" mode here that does do the
-  // allocation and copy but also promise to clean things up later
-  // (perhaps - that might not be the case)
-  x->mv_data = (void*) CHAR(r_c);
-  x->mv_size = length(r_c);
+  x->mv_size = sexp_get_data(r_x, (const char**) &(x->mv_data), name);
 }
 
 SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy, return_as as_raw) {
@@ -656,17 +636,14 @@ SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
 // We'll improve this eventually - allowing conversions to different
 // types (at the very least raw/string) and subsetting (get these
 // bytes).  But for now, just grab the whole thing:
-SEXP r_mdb_proxy_copy(SEXP r_ptr) {
-  const size_t size = (size_t) INTEGER(getAttrib(r_ptr, thor_size_name))[0];
+SEXP r_mdb_proxy_copy(SEXP r_ptr, SEXP r_as_raw) {
   const void * data = R_ExternalPtrAddr(r_ptr);
   if (data == NULL) {
     Rf_error("proxy has been invalidated; can't use!");
   }
-
-  SEXP ret = PROTECT(allocVector(STRSXP, 1));
-  SET_STRING_ELT(ret, 0, mkCharLen(data, size));
-  UNPROTECT(1);
-  return ret;
+  const size_t size = (size_t) INTEGER(getAttrib(r_ptr, thor_size_name))[0];
+  return_as as_raw = to_return_as(r_as_raw);
+  return raw_string_to_sexp(data, size, as_raw);
 }
 
 SEXP mdb_stat_to_sexp(MDB_stat *stat) {

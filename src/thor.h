@@ -88,12 +88,12 @@ void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
                      bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
-SEXP r_mdb_proxy_copy(SEXP r_ptr);
+SEXP r_mdb_proxy_copy(SEXP r_ptr, SEXP r_as_raw);
 
-SEXP mdb_val_to_sexp(MDB_val *x, bool proxy, return_as as_raw);
+SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy, return_as as_raw);
 SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw);
 SEXP mdb_val_to_sexp_proxy(MDB_val *x);
-SEXP mdb_missing_to_sexp(bool proxy, bool missing_is_error,
+SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
                          SEXP r_missing_value, SEXP r_key);
 SEXP mdb_stat_to_sexp(MDB_stat *stat);
 

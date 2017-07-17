@@ -112,3 +112,25 @@ SEXP raw_string_to_sexp(const char *str, size_t len, return_as as_raw) {
   UNPROTECT(1);
   return ret;
 }
+
+size_t sexp_get_data(SEXP data, const char **data_contents, const char* name) {
+  switch (TYPEOF(data)) {
+  case CHARSXP:
+    *data_contents = CHAR(data);
+    return length(data);
+    break;
+  case STRSXP:
+    if (length(data) != 1) {
+      Rf_error("%s must be a scalar character", name);
+    }
+    SEXP el = STRING_ELT(data, 0);
+    *data_contents = CHAR(el);
+    return length(el);
+    break;
+  case RAWSXP:
+    *data_contents = (const char*) RAW(data);
+    return length(data);
+  default:
+    Rf_error("Invalid data type for %s; expected string or raw", name);
+  }
+}
