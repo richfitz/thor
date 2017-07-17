@@ -291,26 +291,22 @@ SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
 }
 
 // --- use the database ---
-SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_missing_value,
-               SEXP r_proxy) {
+SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_missing_is_error,
+               SEXP r_as_proxy) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
-  const bool proxy = scalar_logical(r_proxy, "proxy");
+  const bool
+    missing_is_error = scalar_logical(r_missing_is_error, "missing_is_error"),
+    as_proxy = scalar_logical(r_as_proxy, "as_proxy");
   sexp_to_mdb_val(r_key, "key", &key);
-
-  unsigned int rc = mdb_get(txn, dbi, &key, &data);
+  int rc = mdb_get(txn, dbi, &key, &data);
   if (rc == MDB_NOTFOUND) {
-    if (proxy) {
-      // return a null proxy
-      Rf_error("not yet implemented");
-    } else {
-      return r_missing_value;
-    }
+    return mdb_missing_to_sexp(as_proxy, missing_is_error, R_NilValue, r_key);
+  } else {
+    no_error(rc, "mdb_get");
+    return mdb_val_to_sexp(&data, as_proxy);
   }
-  // this is really the else clause:
-  no_error(rc, "mdb_get");
-  return mdb_val_to_sexp(&data, proxy);
 }
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags) {
@@ -373,30 +369,27 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
   return r_mdb_dbi_wrap(dbi);
 }
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op) {
+// TODO: Need to handle (amongst other things) missing values properly
+// here.  This is an issue in particular where we sail off the end of
+// the iteration.
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
+                      SEXP r_as_proxy) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
   if (r_key != R_NilValue) {
     sexp_to_mdb_val(r_key, "key", &key);
   }
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
-  // MDB_NOTFOUND should not necessarily be an error
-  no_error(mdb_cursor_get(cursor, &key, &data, cursor_op), "mdb_cursor_get");
-  // some trickery here will be useful to send a proxy object back for
-  // the data rather than the full data.  Or we could return something
-  // like a list.  For now, that's what I'm going to do; this would be
-  // the *maximal* return object.
+  bool as_proxy = scalar_logical(r_as_proxy, "as_proxy");
+
+  int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
+
   SEXP ret = PROTECT(allocVector(VECSXP, 2));
-  // could avoid a key here if we do a quick comparison of the input key
-  // if r_key != R_Nilvalue &&
-  //    key.len == r_key.len &&
-  //    key.data == r_key.data
-  // then
-  //    SET_VECTOR_ELT(ret, 1, r_key);
-  // else
-  //    ...as below
-  SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, false));
-  SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, false));
+  if (rc != MDB_NOTFOUND) {
+    no_error(rc, "mdb_cursor_get");
+    SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, as_proxy));
+    SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, as_proxy));
+  }
   UNPROTECT(1);
   return ret;
 }
@@ -630,8 +623,21 @@ void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x) {
   x->mv_size = length(r_c);
 }
 
-SEXP mdb_val_to_sexp(MDB_val *x, bool proxy) {
-  return proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x);
+SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy) {
+  return as_proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x);
+}
+
+SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
+                         SEXP r_missing_value, SEXP r_key) {
+  if (missing_is_error) {
+    if (TYPEOF(r_key) == STRSXP) {
+      Rf_error("Key '%s' not found in database",
+               CHAR(STRING_ELT(r_key, 0)));
+    } else {
+      Rf_error("Key not found in database");
+    }
+  }
+  return as_proxy ? R_NilValue : r_missing_value;
 }
 
 SEXP mdb_val_to_sexp_copy(MDB_val *x) {

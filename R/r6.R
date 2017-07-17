@@ -14,9 +14,11 @@
 ##   Transaction : txn
 ##   Cursor : cur
 
-## For print methods,
+## For print methods:
+##
 ## * indicate if .ptr is NULL or not
-## * indicate dependents
+## * indicate dependents (there's a tree issue here; that's
+##   fairly easy to deal with).
 ## * hide all dots (and the print function)
 
 dbenv <- function(path, flags = NULL,
@@ -178,7 +180,13 @@ R6_database <- R6::R6Class(
       env$.deps$add(self)
     },
     invalidate = function() {
-      ## NOTE: We don't explicitly call close here; this is on purpose
+      ## NOTE: We don't explicitly call close here, following the
+      ## docs.  I think we could consider doing better though - if we
+      ## have a situation where there are no depenendents in the
+      ## parent we can close fairly easily.  We can also arrange to
+      ## invalidate things where that is useful because we have it
+      ## already.  This way around we don't free up handles which is
+      ## not perfect.
       self$.ptr <- NULL
     },
     id = function() {
@@ -288,16 +296,20 @@ R6_transaction <- R6::R6Class(
       self$.db <- NULL
       self$.env <- NULL
       self$.ptr <- NULL
+      self$.mutations <- Inf
     },
 
     ## TODO: some work to do here:
-    ##   - proxy object
     ##   - append, overwrite, dupdata on put
     ##   - replace, pop
     ##   - deletion gets MDB_NOTFOUND detection
     ##   - get should be able to throw (or not)
-    get = function(key, missing_value = NULL, proxy = FALSE) {
-      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_value, proxy)
+    ##   - get picks up an as_raw option, passed through to the proxy
+    ##
+    ## For rleveldb I implemented `error_if_missing` and did not
+    ## implement `missing_value` (then for mget the reverse).
+    get = function(key, missing_is_error = TRUE, proxy = FALSE) {
+      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error, proxy)
       if (proxy) {
         mdb_val_proxy(txn, res)
       } else {
@@ -313,6 +325,13 @@ R6_transaction <- R6::R6Class(
       mdb_del(self$.ptr, self$.db$.ptr, key, data)
     },
 
+    ## TODO: For rleveldb I also implemented:
+    ##
+    ##   mget, mput
+    ##   vectorised del (as delete)
+    ##   exists
+    ##   keys
+    ##   keys_len
     cursor = function() {
       R6_cursor$new(self)
     }
@@ -324,6 +343,9 @@ R6_cursor <- R6::R6Class(
     .txn = NULL,
     .db = NULL,
     .ptr = NULL,
+    .cur_key = NULL,
+    .cur_value = NULL,
+
     initialize = function(txn) {
       self$.txn <- txn
       self$.db <- txn$.db
@@ -354,12 +376,61 @@ R6_cursor <- R6::R6Class(
       self$.ptr <- NULL
     },
 
+    .cursor_get = function(cursor_op) {
+      ## This should/could be done in one move _each_ (perhaps) but
+      ## this way works too.  It will do perhaps too much and we
+      ## should split this into two bits (key, value).  Other issues;
+      ## there is no null proxy object (boo) and there is work needed
+      ## on the R side to build a proxy object; we should save the bit
+      ## required to build the proxy only as that's very cheap.
+      x <- mdb_cursor_get(self$.ptr, key, op, TRUE)
+      self$.cur_key <- mdb_value_proxy(x[[1L]])
+      self$.cur_value <- mdb_value_proxy(x[[2L]])
+      !is.null(x[[1L]])
+    },
+    .cursor_cur_refresh = function() {
+      is.null(self$.cur_key) ||
+        is.null(self$.cur_value) ||
+        !self$.cur_key$is_valid() ||
+        !self$.cur_value$is_valid()
+    },
+
+    ## TODO: allow proxy key output?  Given that keys are only 511
+    ## bytes that does not seem that great.  OTOH it could be useful
+    ## if we're doing some sort of key iteration if I implement a
+    ## 'match' method for the proxy...
+    key = function(proxy = FALSE) {
+      if (is.null(self$.cur_key) ||!self$.cur_key$is_valid()) {
+        self$.cursor_get(cursor_op$GET_CURRENT)
+      }
+      if (proxy) {
+        mdb_val_proxy(self$.txn, self$.cur_key)
+      } else {
+        mdb_proxy_copy(self$.cur_key)
+      }
+    },
+    value = function(proxy) {
+      if (proxy) {
+        if (is.null(self$.cur_value_proxy) ||
+            !self$.cur_value_proxy$is_valid()) {
+          self$.cursor_get(cursor_op$GET_CURRENT, FALSE, TRUE, TRUE)
+        }
+        self$.cur_value_proxy
+      } else {
+        if (!identical(self$.mutations, self$.txn$.mutations)) {
+          self$.cursor_get(cursor_op$GET_CURRENT, FALSE, TRUE, FALSE)
+        }
+        self$.cur_value
+      }
+    },
+
     ## This might not be ideal.  There are some other ways forward
     ## here - see the python interface in particular.  Supporting key,
     ## value, item, etc would be nice.  Knowing when the items need to
     ## be refreshed might also be nice.  Lots to do!
     get = function(key, op) {
-      mdb_cursor_get(self$.ptr, key, op)
+      mdb_val_proxy(txn, res)
+      mdb_cursor_get(self$.ptr, key, op, proxy)
     },
     put = function(key, data, flags = NULL) {
       mdb_cursor_put(self$.ptr, key, data, flags)
@@ -376,6 +447,7 @@ R6_cursor <- R6::R6Class(
 with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
   if (write) {
     if (!is.null(env$.write_txn)) {
+      ## This just needs to send out a decent error message
       stop("FIXME")
     }
     txn <- mdb_txn_begin(env$.ptr, parent, FALSE)
@@ -411,11 +483,10 @@ invalidate_dependencies <- function(x) {
 mdb_val_proxy <- function(txn, data) {
   mutations <- txn$.mutations
   force(data)
+  to_resolve <- FALSE
+  the_value <- NULL
+
   ret <- list(
-    invalidate = function() {
-      data <<- NULL
-      txn <<- NULL
-    },
     is_valid = function() {
       !is.null(txn$.ptr) && identical(txn$.mutations, mutations)
     },
@@ -428,9 +499,12 @@ mdb_val_proxy <- function(txn, data) {
       } else if (!identical(txn$.mutations, mutations)) {
         stop("mdb_val_proxy is invalid: transaction has modified database")
       }
-      mdb_proxy_copy(data)
+      if (to_resolve) {
+        the_value <<- mdb_proxy_copy(data)
+        to_resolve <<- FALSE
+      }
+      the_value
     })
   class(ret) <- "mdb_val_proxy"
-  txn$.deps$add(ret)
   ret
 }
