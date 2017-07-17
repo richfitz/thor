@@ -1,5 +1,4 @@
 #include "thor.h"
-#include "util.h"
 #include <R_ext/Rdynload.h>
 #include <Rversion.h>
 
@@ -44,7 +43,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_drop",                    (DL_FUNC) &r_mdb_drop,                  3},
 
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   5},
-  {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   5},
+  {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   6},
   {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},

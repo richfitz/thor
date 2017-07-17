@@ -115,8 +115,8 @@ mdb_drop <- function(txn, dbi, del) {
   .Call(Cmdb_drop, txn, dbi, del)
 }
 
-mdb_get <- function(txn, dbi, key, missing_value, proxy) {
-  .Call(Cmdb_get, txn, dbi, key, missing_value, proxy)
+mdb_get <- function(txn, dbi, key, missing_value, proxy, raw) {
+  .Call(Cmdb_get, txn, dbi, key, missing_value, proxy, raw)
 }
 
 mdb_put <- function(txn, dbi, key, data, flags) {

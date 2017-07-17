@@ -70,3 +70,45 @@ SEXP pairlist_drop(SEXP x, SEXP el) {
     }
   }
 }
+
+return_as to_return_as(SEXP x) {
+  if (x == R_NilValue) {
+    return AS_ANY;
+  } else if (TYPEOF(x) == LGLSXP && LENGTH(x) == 1) {
+    int as_raw = INTEGER(x)[0];
+    if (as_raw == NA_LOGICAL) {
+      Rf_error("Expected a non-missing logical scalar (or NULL)");
+    }
+    return as_raw ? AS_RAW : AS_STRING;
+  } else {
+    Rf_error("Expected a logical scalar (or NULL)");
+    return AS_ANY;
+  }
+}
+
+bool is_raw_string(const char* str, size_t len, return_as as_raw) {
+  if (as_raw == AS_RAW) {
+    return true;
+  } else {
+    bool has_raw = memchr(str, '\0', len) != NULL;
+    if (has_raw && as_raw == AS_STRING) {
+      Rf_error("Value contains embedded nul bytes; cannot return string");
+    }
+    return has_raw;
+  }
+}
+
+// This is the same strategy as redux.
+SEXP raw_string_to_sexp(const char *str, size_t len, return_as as_raw) {
+  bool is_raw = is_raw_string(str, len, as_raw);
+  SEXP ret;
+  if (is_raw) {
+    ret = PROTECT(allocVector(RAWSXP, len));
+    memcpy(RAW(ret), str, len);
+  } else {
+    ret = PROTECT(allocVector(STRSXP, 1));
+    SET_STRING_ELT(ret, 0, mkCharLen(str, len));
+  }
+  UNPROTECT(1);
+  return ret;
+}

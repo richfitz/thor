@@ -308,10 +308,11 @@ R6_transaction <- R6::R6Class(
     ##
     ## For rleveldb I implemented `error_if_missing` and did not
     ## implement `missing_value` (then for mget the reverse).
-    get = function(key, missing_is_error = TRUE, proxy = FALSE) {
-      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error, proxy)
+    get = function(key, missing_is_error = TRUE, proxy = FALSE, as_raw = NULL) {
+      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error, proxy,
+                     as_raw)
       if (proxy) {
-        mdb_val_proxy(txn, res)
+        mdb_val_proxy(txn, res, as_raw)
       } else {
         res
       }
@@ -395,21 +396,19 @@ R6_cursor <- R6::R6Class(
         !self$.cur_value$is_valid()
     },
 
-    ## TODO: allow proxy key output?  Given that keys are only 511
-    ## bytes that does not seem that great.  OTOH it could be useful
-    ## if we're doing some sort of key iteration if I implement a
-    ## 'match' method for the proxy...
-    key = function(proxy = FALSE) {
+    key = function(proxy = FALSE, as_raw = FALSE) {
       if (is.null(self$.cur_key) ||!self$.cur_key$is_valid()) {
         self$.cursor_get(cursor_op$GET_CURRENT)
       }
       if (proxy) {
-        mdb_val_proxy(self$.txn, self$.cur_key)
+        mdb_val_proxy(self$.txn, self$.cur_key, as_raw)
       } else {
-        mdb_proxy_copy(self$.cur_key)
+        mdb_proxy_copy(self$.cur_key, as_raw)
       }
     },
-    value = function(proxy) {
+
+    value = function(proxy, as_raw) {
+      ## TODO: this is totally broken at present
       if (proxy) {
         if (is.null(self$.cur_value_proxy) ||
             !self$.cur_value_proxy$is_valid()) {
@@ -480,11 +479,12 @@ invalidate_dependencies <- function(x) {
   }
 }
 
-mdb_val_proxy <- function(txn, data) {
+mdb_val_proxy <- function(txn, data, as_raw) {
   mutations <- txn$.mutations
   force(data)
   to_resolve <- FALSE
   the_value <- NULL
+  as_raw_default <- as_raw
 
   ret <- list(
     is_valid = function() {
@@ -493,14 +493,14 @@ mdb_val_proxy <- function(txn, data) {
     size = function() {
       attr(data, "size")
     },
-    value = function() {
+    value = function(as_raw = as_raw_default) {
       if (is.null(txn$.ptr)) {
         stop("mdb_val_proxy is invalid: transaction has been closed")
       } else if (!identical(txn$.mutations, mutations)) {
         stop("mdb_val_proxy is invalid: transaction has modified database")
       }
       if (to_resolve) {
-        the_value <<- mdb_proxy_copy(data)
+        the_value <<- mdb_proxy_copy(data, as_raw)
         to_resolve <<- FALSE
       }
       the_value

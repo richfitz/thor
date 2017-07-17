@@ -1,5 +1,4 @@
 #include "thor.h"
-#include "util.h"
 
 // These are symbols that we'll use here to avoid having to use
 // `install()` at every use (following R-exts).  This is relatively
@@ -291,21 +290,23 @@ SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
 }
 
 // --- use the database ---
-SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_missing_is_error,
-               SEXP r_as_proxy) {
+SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
+               SEXP r_missing_is_error, SEXP r_as_proxy, SEXP r_as_raw) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   const bool
     missing_is_error = scalar_logical(r_missing_is_error, "missing_is_error"),
     as_proxy = scalar_logical(r_as_proxy, "as_proxy");
+  return_as as_raw = to_return_as(r_as_raw);
   sexp_to_mdb_val(r_key, "key", &key);
+
   int rc = mdb_get(txn, dbi, &key, &data);
   if (rc == MDB_NOTFOUND) {
     return mdb_missing_to_sexp(as_proxy, missing_is_error, R_NilValue, r_key);
   } else {
     no_error(rc, "mdb_get");
-    return mdb_val_to_sexp(&data, as_proxy);
+    return mdb_val_to_sexp(&data, as_proxy, as_raw);
   }
 }
 
@@ -373,7 +374,7 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
 // here.  This is an issue in particular where we sail off the end of
 // the iteration.
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
-                      SEXP r_as_proxy) {
+                      SEXP r_as_proxy, SEXP r_as_raw) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
   if (r_key != R_NilValue) {
@@ -381,14 +382,15 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
   }
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
   bool as_proxy = scalar_logical(r_as_proxy, "as_proxy");
+  return_as as_raw = to_return_as(r_as_raw);
 
   int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
 
   SEXP ret = PROTECT(allocVector(VECSXP, 2));
   if (rc != MDB_NOTFOUND) {
     no_error(rc, "mdb_cursor_get");
-    SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, as_proxy));
-    SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, as_proxy));
+    SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, as_proxy, as_raw));
+    SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, as_proxy, as_raw));
   }
   UNPROTECT(1);
   return ret;
@@ -623,8 +625,8 @@ void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x) {
   x->mv_size = length(r_c);
 }
 
-SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy) {
-  return as_proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x);
+SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy, return_as as_raw) {
+  return as_proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x, as_raw);
 }
 
 SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
@@ -640,11 +642,8 @@ SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
   return as_proxy ? R_NilValue : r_missing_value;
 }
 
-SEXP mdb_val_to_sexp_copy(MDB_val *x) {
-  SEXP ret = PROTECT(allocVector(STRSXP, 1));
-  SET_STRING_ELT(ret, 0, mkCharLen(x->mv_data, x->mv_size));
-  UNPROTECT(1);
-  return ret;
+SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw) {
+  return raw_string_to_sexp(x->mv_data, x->mv_size, as_raw);
 }
 
 SEXP mdb_val_to_sexp_proxy(MDB_val *x) {

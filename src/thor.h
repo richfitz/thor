@@ -2,6 +2,7 @@
 #include <Rinternals.h>
 #include <stdbool.h>
 #include "lmdb.h"
+#include "util.h"
 
 typedef enum thor_flag_group {
   THOR_FLAGS_ENV,
@@ -57,7 +58,7 @@ SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
-               SEXP r_missing_is_error, SEXP r_proxy);
+               SEXP r_missing_is_error, SEXP r_proxy, SEXP r_as_raw);
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data);
 
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
@@ -67,7 +68,7 @@ SEXP r_mdb_cursor_txn(SEXP r_cursor);
 SEXP r_mdb_cursor_dbi(SEXP r_cursor);
 
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
-                      SEXP r_proxy);
+                      SEXP r_proxy, SEXP r_as_raw);
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data, SEXP r_flags);
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata);
@@ -89,8 +90,8 @@ void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP r_mdb_proxy_copy(SEXP r_ptr);
 
-SEXP mdb_val_to_sexp(MDB_val *x, bool proxy);
-SEXP mdb_val_to_sexp_copy(MDB_val *x);
+SEXP mdb_val_to_sexp(MDB_val *x, bool proxy, return_as as_raw);
+SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw);
 SEXP mdb_val_to_sexp_proxy(MDB_val *x);
 SEXP mdb_missing_to_sexp(bool proxy, bool missing_is_error,
                          SEXP r_missing_value, SEXP r_key);
