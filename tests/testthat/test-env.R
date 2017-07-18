@@ -52,3 +52,14 @@ test_that("information", {
 
   expect_identical(env$path(), p)
 })
+
+test_that("no create", {
+  p <- tempfile()
+  expect_error(dbenv(p, create = FALSE), "No such file or directory")
+  expect_false(file.exists(p))
+
+  ## This surprises me a bit:
+  dir.create(p)
+  env <- dbenv(p, create = FALSE)
+  expect_is(env, "dbenv")
+})

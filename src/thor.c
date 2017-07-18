@@ -55,6 +55,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags) {
   int rc = mdb_env_open(env, path, flags, mode);
   if (rc != MDB_SUCCESS) {
     mdb_env_close(env);
+    R_ClearExternalPtr(r_env);
     Rf_error("Error in mdb_env_open: %s", mdb_strerror(rc));
   }
 
