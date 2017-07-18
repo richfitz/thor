@@ -62,6 +62,9 @@ stack <- function() {
     get = function(x) {
       data
     },
+    length = function() {
+      length(data)
+    },
     discard = function(x) {
       for (i in seq_along(data)) {
         if (identical(data[[i]], x)) {
