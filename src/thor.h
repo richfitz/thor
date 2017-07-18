@@ -5,7 +5,6 @@
 #include "util.h"
 
 typedef enum thor_flag_group {
-  THOR_FLAGS_ENV,
   THOR_CURSOR_OP
 } thor_flag_group;
 
@@ -23,13 +22,15 @@ void thor_cleanup();
 SEXP r_mdb_version();
 
 SEXP r_mdb_env_create();
-SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_flags);
+SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
+                    SEXP r_nosubdir, SEXP r_nosync, SEXP r_rdonly,
+                    SEXP r_nometasync, SEXP r_writemap, SEXP r_nolock,
+                    SEXP r_mapasync, SEXP r_nordahead, SEXP r_nomeminit);
 SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path, SEXP r_compact);
 SEXP r_mdb_env_stat(SEXP r_env);
 SEXP r_mdb_env_info(SEXP r_env);
 SEXP r_mdb_env_sync(SEXP r_env, SEXP r_force);
 SEXP r_mdb_env_close(SEXP r_env);
-SEXP r_mdb_env_set_flags(SEXP r_env, SEXP r_flags, SEXP r_set);
 SEXP r_mdb_env_get_flags(SEXP r_env);
 SEXP r_mdb_env_get_path(SEXP r_env);
 SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size);
@@ -100,14 +101,12 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 
 // Flags
 
-// - export to R
-SEXP r_mdb_flags_env();
-
 // - interface
 unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);
 unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name,
                           bool invert);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
+bool flag_to_bool(unsigned int flags, unsigned int x, bool invert);
 
 // cursor_op
 SEXP r_mdb_cursor_op();

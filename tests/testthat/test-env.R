@@ -52,6 +52,14 @@ test_that("information", {
   expect_identical(env$maxreaders(), 126L)
 
   expect_identical(env$path(), p)
+
+  ## This test will get reused when we test setting flags and it is
+  ## also going to be useful when we replace all the "no" flags.
+  flags <- env$flags()
+  expect_is(flags, "logical")
+  expect_true(all(names(flags) %in% names(formals(dbenv))))
+  expect_equal(as.list(formals(dbenv)[names(flags)]),
+               as.list(flags))
 })
 
 test_that("no create", {

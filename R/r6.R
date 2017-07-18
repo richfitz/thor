@@ -21,10 +21,21 @@
 ##   fairly easy to deal with).
 ## * hide all dots (and the print function)
 
-dbenv <- function(path, flags = NULL,
+dbenv <- function(path, ..., mode = as.octmode("644"),
+                  ## flags for env
+                  nosubdir = FALSE, nosync = FALSE, rdonly = FALSE,
+                  nometasync = FALSE, writemap = FALSE, nolock = FALSE,
+                  mapasync = FALSE, nordahead = FALSE, nomeminit = FALSE,
+                  ## other args
                   maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
                   reversekey = FALSE, dupsort = FALSE, create = TRUE) {
-  R6_dbenv$new(path, flags,
+  R6_dbenv$new(path, mode,
+               ## flags:
+               nosubdir = nosubdir, nosync = nosync, rdonly = rdonly,
+               nometasync = nometasync, writemap = writemap, nolock = nolock,
+               mapasync = mapasync, nordahead = nordahead,
+               nomeminit = nomeminit,
+               ## other:
                maxdbs = maxdbs, maxreaders = maxreaders, mapsize = mapsize,
                reversekey = reversekey, dupsort = dupsort, create = create)
 }
@@ -46,9 +57,13 @@ R6_dbenv <- R6::R6Class(
     .write_txn = NULL,
 
     ## This argument list will likely grow to drop flags
-    initialize = function(path, flags = NULL,
+    initialize = function(path, mode,
+                          nosubdir, nosync, rdonly,
+                          nometasync, writemap, nolock,
+                          mapasync, nordahead, nomeminit,
                           maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
                           reversekey = FALSE, dupsort = FALSE, create = TRUE) {
+      assert_is(mode, "octmode")
       self$.deps = stack()
       self$.ptr <- mdb_env_create()
 
@@ -67,9 +82,10 @@ R6_dbenv <- R6::R6Class(
       if (create && !file.exists(path)) {
         dir.create(path, FALSE, TRUE)
       }
-
-      mdb_env_open(self$.ptr, path, flags_env$NOTLS | flags)
-
+      mdb_env_open(self$.ptr, path, mode,
+                   nosubdir, nosync, rdonly,
+                   nometasync, writemap, nolock,
+                   mapasync, nordahead, nomeminit)
       self$open_database(NULL, NULL, reversekey, dupsort, create)
     },
 

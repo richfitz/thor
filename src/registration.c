@@ -13,13 +13,12 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_version",                 (DL_FUNC) &r_mdb_version,               0},
 
   {"Cmdb_env_create",              (DL_FUNC) &r_mdb_env_create,            0},
-  {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,              3},
+  {"Cmdb_env_open",                (DL_FUNC) &r_mdb_env_open,             12},
   {"Cmdb_env_copy",                (DL_FUNC) &r_mdb_env_copy,              3},
   {"Cmdb_env_stat",                (DL_FUNC) &r_mdb_env_stat,              1},
   {"Cmdb_env_info",                (DL_FUNC) &r_mdb_env_info,              1},
   {"Cmdb_env_sync",                (DL_FUNC) &r_mdb_env_sync,              2},
   {"Cmdb_env_close",               (DL_FUNC) &r_mdb_env_close,             1},
-  {"Cmdb_env_set_flags",           (DL_FUNC) &r_mdb_env_set_flags,         3},
   {"Cmdb_env_get_flags",           (DL_FUNC) &r_mdb_env_get_flags,         1},
   {"Cmdb_env_get_path",            (DL_FUNC) &r_mdb_env_get_path,          1},
   {"Cmdb_env_set_mapsize",         (DL_FUNC) &r_mdb_env_set_mapsize,       2},
@@ -61,7 +60,6 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_reader_list",             (DL_FUNC) &r_mdb_reader_list,           1},
   {"Cmdb_reader_check",            (DL_FUNC) &r_mdb_reader_check,          1},
 
-  {"Cmdb_flags_env",               (DL_FUNC) &r_mdb_flags_env,             0},
   {"Cmdb_cursor_op",               (DL_FUNC) &r_mdb_cursor_op,             0},
 
   // Extensions

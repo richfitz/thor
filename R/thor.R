@@ -6,8 +6,14 @@ mdb_env_create <- function() {
   .Call(Cmdb_env_create)
 }
 
-mdb_env_open <- function(env, path, flags) {
-  .Call(Cmdb_env_open, env, path, flags)
+mdb_env_open <- function(env, path, mode,
+                         nosubdir, nosync, rdonly,
+                         nometasync, writemap, nolock,
+                         mapasync, nordahead, nomeminit) {
+  .Call(Cmdb_env_open, env, path, mode,
+        nosubdir, nosync, rdonly,
+        nometasync, writemap, nolock,
+        mapasync, nordahead, nomeminit)
 }
 
 ## NOTE: departure from mdb api here because not using copy2
@@ -31,12 +37,8 @@ mdb_env_close <- function(env) {
   .Call(Cmdb_env_close, env)
 }
 
-mdb_env_set_flags <- function(env, flags, set = TRUE) {
-  .Call(Cmdb_env_set_flags, env, flags, set)
-}
-
 mdb_env_get_flags <- function(env) {
-  as_mdb_flag(.Call(Cmdb_env_get_flags, env), flags_env)
+  .Call(Cmdb_env_get_flags, env)
 }
 
 mdb_env_get_path <- function(env) {
