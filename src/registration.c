@@ -72,8 +72,6 @@ static const R_CallMethodDef call_methods[] = {
 
   // Testing
   {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},
-  {"Cpairlist_create",             (DL_FUNC) &pairlist_create,             1},
-  {"Cpairlist_drop",               (DL_FUNC) &pairlist_drop,               2},
 
   {NULL,                           NULL,                                   0}
 };

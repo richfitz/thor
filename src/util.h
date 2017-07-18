@@ -12,9 +12,6 @@ bool scalar_logical(SEXP x, const char * name);
 
 SEXP r_is_null_pointer(SEXP x);
 
-SEXP pairlist_create(SEXP x);
-SEXP pairlist_drop(SEXP x, SEXP el);
-
 typedef enum return_as {
   AS_RAW,
   AS_STRING,
