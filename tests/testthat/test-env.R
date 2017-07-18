@@ -4,6 +4,7 @@ test_that("create & close", {
   env <- dbenv(tempfile())
 
   expect_is(env, "dbenv")
+  expect_is(env, "R6")
   expect_equal(mode(env$.ptr), "externalptr")
 
   expect_is(env$.db, "database")
