@@ -13,6 +13,15 @@
 ##   Database : db
 ##   Transaction : txn
 ##   Cursor : cur
+##
+## or
+##
+##   mdb_env
+##   mdb_dbi
+##   mdb_txn
+##   mdb_cursor
+##
+## which is at least very simple and clear and mirrors the C api nicely
 
 ## For print methods:
 ##
@@ -322,11 +331,12 @@ R6_transaction <- R6::R6Class(
     ##
     ## For rleveldb I implemented `error_if_missing` and did not
     ## implement `missing_value` (then for mget the reverse).
-    get = function(key, missing_is_error = TRUE, proxy = FALSE, as_raw = NULL) {
-      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error, proxy,
-                     as_raw)
-      if (proxy) {
-        mdb_val_proxy(self, res, as_raw)
+    get = function(key, missing_is_error = TRUE,
+                   as_proxy = FALSE, as_raw = NULL) {
+      res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error,
+                     as_proxy, as_raw)
+      if (as_proxy) {
+        mdb_val_proxy(self, res)
       } else {
         res
       }
@@ -398,7 +408,8 @@ R6_cursor <- R6::R6Class(
       ## there is no null proxy object (boo) and there is work needed
       ## on the R side to build a proxy object; we should save the bit
       ## required to build the proxy only as that's very cheap.
-      x <- mdb_cursor_get(self$.ptr, key, op, TRUE)
+      ## browser()
+      x <- mdb_cursor_get(self$.ptr, NULL, cursor_op)
       self$.cur_key <- mdb_value_proxy(x[[1L]])
       self$.cur_value <- mdb_value_proxy(x[[2L]])
       !is.null(x[[1L]])
@@ -410,11 +421,11 @@ R6_cursor <- R6::R6Class(
         !self$.cur_value$is_valid()
     },
 
-    key = function(proxy = FALSE, as_raw = FALSE) {
+    key = function(as_proxy = FALSE, as_raw = FALSE) {
       if (is.null(self$.cur_key) ||!self$.cur_key$is_valid()) {
         self$.cursor_get(cursor_op$GET_CURRENT)
       }
-      if (proxy) {
+      if (as_proxy) {
         mdb_val_proxy(self$.txn, self$.cur_key, as_raw)
       } else {
         mdb_proxy_copy(self$.cur_key, as_raw)
@@ -435,6 +446,10 @@ R6_cursor <- R6::R6Class(
         }
         self$.cur_value
       }
+    },
+
+    first = function() {
+      self$.cursor_get(cursor_op$FIRST)
     },
 
     ## This might not be ideal.  There are some other ways forward
@@ -503,39 +518,40 @@ invalidate_dependencies <- function(x) {
 ## it's a faff to implement and requires more bookkeeping (because we
 ## need to keep multiple copies of the data around or do the
 ## conversion ourselves)
-mdb_val_proxy <- function(txn, data, as_raw, value_if_missing = NULL) {
+mdb_val_proxy <- function(txn, data, value_if_missing = NULL) {
   mutations <- txn$.mutations
-  force(as_raw)
-  if (is.null(data)) {
-    to_resolve <- FALSE
-    value <- value_if_missing
-    size <- if (is.character(value)) nchar(value) else length(value)
+
+  ## TODO: I'll tidy this up when resolving issue above
+  ## r_mdb_proxy_copy (thor.c)
+  is_missing <- is.null(data)
+  if (is_missing) {
+    size <- if (is.character(value_if_missing))
+              nchar(value_if_missing) else length(value_if_missing)
   } else {
-    to_resolve <- TRUE
-    value <- NULL
     size <- attr(data, "size", TRUE)
   }
 
   ret <- list(
     is_valid = function() {
-      !is.null(txn$.ptr) && identical(txn$.mutations, mutations)
+      identical(txn$.mutations, mutations)
     },
     size = function() {
       ## NOTE: this does not check validity!  It's also "safe" in that
       ## it does not access the database in anyway.
       size
     },
-    value = function() {
-      if (is.null(txn$.ptr)) {
-        stop("mdb_val_proxy is invalid: transaction has been closed")
-      } else if (!identical(txn$.mutations, mutations)) {
-        stop("mdb_val_proxy is invalid: transaction has modified database")
+    value = function(as_raw = NULL) {
+      if (!identical(txn$.mutations, mutations)) {
+        if (is.null(txn$.ptr)) { # !is.finite(txn$.mutations)
+          stop("mdb_val_proxy is invalid: transaction has been closed")
+        } else {
+          stop("mdb_val_proxy is invalid: transaction has modified database")
+        }
+      } else if (is_missing) {
+        value_if_missing
+      } else {
+        mdb_proxy_copy(data, as_raw)
       }
-      if (to_resolve) {
-        value <<- mdb_proxy_copy(data, as_raw)
-        to_resolve <<- FALSE
-      }
-      value
     })
   class(ret) <- "mdb_val_proxy"
   ret

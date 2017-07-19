@@ -15,6 +15,13 @@ typedef enum thor_ptr_type {
   THOR_CURSOR
 } thor_ptr_type;
 
+typedef struct thor_val_proxy {
+  size_t size;
+  const void * data;
+  bool data_contains_nul;
+  bool resolved[AS_ANY];
+} thor_val_proxy;
+
 void thor_init();
 void thor_cleanup();
 
@@ -68,8 +75,7 @@ SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor);
 SEXP r_mdb_cursor_txn(SEXP r_cursor);
 SEXP r_mdb_cursor_dbi(SEXP r_cursor);
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
-                      SEXP r_proxy, SEXP r_as_raw);
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key);
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
                       SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append);
@@ -86,6 +92,7 @@ MDB_env * r_mdb_get_env(SEXP r_env, bool closed_error);
 MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi r_mdb_get_dbi(SEXP r_dbi);
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error, bool orphaned);
+
 void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
                      bool closed_error);
 

@@ -68,7 +68,9 @@ mdb_env_get_maxkeysize <- function(env) {
 ## transactions:
 mdb_txn_begin <- function(env, parent, rdonly) {
   ## TODO: This currently allows a couple of additional arguments but
-  ## we'll NULL them out for now.
+  ## we'll NULL them out for now.  These should be settable, but I
+  ## don't know that it's always a reasonable thing to do to allow
+  ## them.
   .Call(Cmdb_txn_begin, env, parent, rdonly, NULL, NULL)
 }
 
@@ -117,8 +119,8 @@ mdb_drop <- function(txn, dbi, del) {
   .Call(Cmdb_drop, txn, dbi, del)
 }
 
-mdb_get <- function(txn, dbi, key, missing_value, proxy, raw) {
-  .Call(Cmdb_get, txn, dbi, key, missing_value, proxy, raw)
+mdb_get <- function(txn, dbi, key, missing_value, as_proxy, as_raw) {
+  .Call(Cmdb_get, txn, dbi, key, missing_value, as_proxy, as_raw)
 }
 
 mdb_put <- function(txn, dbi, key, data,
@@ -150,8 +152,8 @@ mdb_cursor_dbi <- function(cursor) {
   .Call(Cmdb_cursor_dbi, cursor)
 }
 
-mdb_cursor_get <- function(cursor, key, op) {
-  .Call(Cmdb_cursor_get, cursor, key, op)
+mdb_cursor_get <- function(cursor, op, key) {
+  .Call(Cmdb_cursor_get, cursor, op, key)
 }
 
 mdb_cursor_put <- function(cursor, key, data, flags, nodupdata = NULL,

@@ -27,6 +27,7 @@ static void r_mdb_env_finalize(SEXP r_env);
 static void r_mdb_txn_finalize(SEXP r_txn);
 static void r_mdb_dbi_finalize(SEXP r_dbi);
 static void r_mdb_cursor_finalize(SEXP r_cursor);
+static void r_thor_val_proxy_finalize(SEXP r_proxy);
 
 SEXP r_mdb_version() {
   SEXP ret = PROTECT(allocVector(VECSXP, 1));
@@ -413,16 +414,18 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
 // TODO: Need to handle (amongst other things) missing values properly
 // here.  This is an issue in particular where we sail off the end of
 // the iteration.
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_key, SEXP r_cursor_op,
-                      SEXP r_as_proxy, SEXP r_as_raw) {
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
-  if (r_key != R_NilValue) {
+  MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
+  return_as as_proxy = true, as_raw = false;
+
+  if (r_key != NULL) {
+    if (cursor_op != MDB_SET) { // should not be needed when we're done
+      Rf_error("key is allowed only with MDB_SET");
+    }
     sexp_to_mdb_val(r_key, "key", &key);
   }
-  MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
-  bool as_proxy = scalar_logical(r_as_proxy, "as_proxy");
-  return_as as_raw = to_return_as(r_as_raw);
 
   int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
 
@@ -644,6 +647,14 @@ static void r_mdb_cursor_finalize(SEXP r_cursor) {
   }
 }
 
+static void r_thor_val_proxy_finalize(SEXP r_proxy) {
+  const thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
+  if (proxy != NULL) {
+    Free(proxy);
+    R_ClearExternalPtr(r_proxy);
+  }
+}
+
 // --- other ---
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x) {
   x->mv_size = sexp_get_data(r_x, (const char**) &(x->mv_data), name);
@@ -671,23 +682,73 @@ SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw) {
 }
 
 SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
-  SEXP ret = PROTECT(R_MakeExternalPtr(x->mv_data, R_NilValue, R_NilValue));
+  thor_val_proxy *ptr = (thor_val_proxy*) Calloc(1, thor_val_proxy);
+  SEXP resolved = PROTECT(allocVector(VECSXP, 2));
+  SEXP ret = PROTECT(R_MakeExternalPtr(ptr, R_NilValue, resolved));
+  R_RegisterCFinalizer(ret, r_thor_val_proxy_finalize);
+
+  ptr->size = x->mv_size;
+  ptr->data = x->mv_data;
+  ptr->data_contains_nul = false;
+  ptr->resolved[AS_STRING] = false;
+  ptr->resolved[AS_RAW] = false;
+
+  // Not sure about this one; I might need to come back here for it
   setAttrib(ret, thor_size_name, ScalarInteger(x->mv_size));
-  UNPROTECT(1);
+
+  UNPROTECT(2);
   return ret;
 }
 
 // We'll improve this eventually - allowing conversions to different
 // types (at the very least raw/string) and subsetting (get these
 // bytes).  But for now, just grab the whole thing:
-SEXP r_mdb_proxy_copy(SEXP r_ptr, SEXP r_as_raw) {
-  const void * data = R_ExternalPtrAddr(r_ptr);
-  if (data == NULL) {
+//
+// When we do fix this up it will acquire some args like:
+//
+// * from/to - the section to get
+// * convert - something to indicate what we convert to
+//
+// I've done this reasonably in 'ring' - I can probably pull the
+// relevant bits out into a shared package if need be.
+//
+// TODO: push the transaction check in here; when we build a proxy we
+// get the number of transactions and then push in the transaction as
+// an argument here.  That then goes into the logic for resolving the
+// proxy.
+//
+// TODO: Need a proper null proxy object too; that will be required
+// for getting size treated the same way.
+SEXP r_mdb_proxy_copy(SEXP r_proxy, SEXP r_as_raw) {
+  thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
+  if (proxy == NULL) {
     Rf_error("proxy has been invalidated; can't use!");
   }
-  const size_t size = (size_t) INTEGER(getAttrib(r_ptr, thor_size_name))[0];
   return_as as_raw = to_return_as(r_as_raw);
-  return raw_string_to_sexp(data, size, as_raw);
+
+  // This type detection bit here is the hard bit:
+  if (as_raw == AS_ANY) {
+    if (proxy->resolved[AS_STRING]) {
+      as_raw = AS_STRING;
+    } else if (proxy->data_contains_nul) {
+      as_raw = AS_RAW;
+    } else {
+      proxy->data_contains_nul =
+        is_raw_string(proxy->data, proxy->size, AS_ANY);
+      as_raw = proxy->data_contains_nul ? AS_RAW : AS_STRING;
+    }
+  }
+
+  SEXP resolved = R_ExternalPtrProtected(r_proxy);
+  SEXP ret;
+  if (proxy->resolved[as_raw]) {
+    ret = VECTOR_ELT(resolved, as_raw);
+  } else {
+    ret = raw_string_to_sexp(proxy->data, proxy->size, as_raw);
+    SET_VECTOR_ELT(resolved, as_raw, ret);
+    proxy->resolved[as_raw] = true;
+  }
+  return ret;
 }
 
 SEXP mdb_stat_to_sexp(MDB_stat *stat) {

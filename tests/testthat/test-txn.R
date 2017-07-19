@@ -125,7 +125,9 @@ test_that("get: raw key", {
   value <- "hello world"
   expect_error(txn$get(key), "Key not found in database")
   expect_null(txn$get(key, FALSE))
-  p <- txn$get(key, FALSE, TRUE)
+
+  p <- txn$get(key, missing_is_error = FALSE, as_proxy = TRUE)
+  expect_is(p, "mdb_val_proxy")
   expect_null(p$value())
   expect_identical(p$size(), 0L)
 
@@ -133,14 +135,29 @@ test_that("get: raw key", {
   expect_false(p$is_valid())
   expect_error(p$value(),
                "mdb_val_proxy is invalid: transaction has modified database")
+  ## TODO: Fix this I think...
   expect_identical(p$size(), 0L)
 
-  p <- txn$get(key, FALSE, TRUE, FALSE)
+  p <- txn$get(key, as_proxy = TRUE)
+  expect_is(p, "mdb_val_proxy")
   expect_identical(p$value(), value)
   expect_identical(p$size(), nchar(value))
-  expect_identical(txn$get(key, FALSE, TRUE, NULL)$value(), value)
-  expect_identical(txn$get(key, FALSE, TRUE, TRUE)$value(), charToRaw(value))
-  expect_identical(txn$get(key, FALSE, TRUE, TRUE)$size(), nchar(value))
+
+  ## These are all done twice to stamp out possible corner cases:
+  expect_identical(p$value(FALSE), value)
+  expect_identical(p$value(FALSE), value)
+  expect_identical(p$value(NULL), value)
+  expect_identical(p$value(NULL), value)
+  expect_identical(p$value(TRUE), charToRaw(value))
+  expect_identical(p$value(TRUE), charToRaw(value))
+
+  ## And again, but with different values first, to deal with how this
+  ## is constructed.
+  p <- txn$get(key, as_proxy = TRUE)
+  expect_identical(p$value(TRUE), charToRaw(value))
+  expect_identical(p$value(TRUE), charToRaw(value))
+  expect_identical(p$value(FALSE), value)
+  expect_identical(p$value(NULL), value)
 
   txn$put(key, key)
   expect_false(p$is_valid())
@@ -148,24 +165,26 @@ test_that("get: raw key", {
                "mdb_val_proxy is invalid: transaction has modified database")
   expect_identical(p$size(), nchar(value))
 
-  p <- txn$get(key, FALSE, TRUE, FALSE)
-  expect_error(p$value(),
+  p <- txn$get(key, as_proxy = TRUE)
+  expect_error(p$value(FALSE),
                "Value contains embedded nul bytes; cannot return string")
-  p <- txn$get(key, FALSE, TRUE, NULL)
   expect_identical(p$size(), length(key))
   expect_identical(p$value(), key)
+  expect_identical(p$value(TRUE), key)
 })
 
 test_that("get: proxy", {
   env <- dbenv(tempfile())
   txn <- env$begin(write = TRUE)
 
-  expect_null(txn$put("foo", "bar"))
+  value <- "bar"
+  expect_null(txn$put("foo", value))
 
-  p1 <- txn$get("foo", proxy = TRUE)
+  p1 <- txn$get("foo", as_proxy = TRUE)
   expect_is(p1, "mdb_val_proxy")
   expect_identical(p1$size(), 3L)
-  expect_identical(p1$value(), "bar")
+  expect_identical(p1$value(), value)
+  expect_identical(p1$value(TRUE), charToRaw(value))
   expect_true(p1$is_valid())
 
   ## Let's do an update which should invalidate the proxy:
@@ -175,7 +194,7 @@ test_that("get: proxy", {
                "mdb_val_proxy is invalid: transaction has modified database")
 
   ## Then again:
-  p2 <- txn$get("another", proxy = TRUE)
+  p2 <- txn$get("another", as_proxy = TRUE)
   expect_identical(p2$value(), "key")
 
   ## But this time we invalidate the transaction:

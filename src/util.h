@@ -12,11 +12,13 @@ bool scalar_logical(SEXP x, const char * name);
 
 SEXP r_is_null_pointer(SEXP x);
 
+// The order here is relied on elsewhere...
 typedef enum return_as {
-  AS_RAW,
   AS_STRING,
+  AS_RAW,
   AS_ANY
 } return_as;
+
 return_as to_return_as(SEXP x);
 
 bool is_raw_string(const char* str, size_t len, return_as as_raw);
