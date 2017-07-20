@@ -382,7 +382,7 @@ R6_cursor <- R6::R6Class(
     },
 
     finalize = function() {
-      message("[GC] env")
+      message("[GC] cursor")
       self$invalidate()
     },
 
