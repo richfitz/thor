@@ -627,7 +627,7 @@ static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor) {
 static void r_mdb_env_finalize(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, false);
   if (env != NULL) {
-    Rprintf("Cleaning environent\n");
+    Rprintf("Finalizing environent\n");
     Rprintf("...closing environment\n");
     mdb_env_close(env);
     R_ClearExternalPtr(r_env);
@@ -637,7 +637,7 @@ static void r_mdb_env_finalize(SEXP r_env) {
 static void r_mdb_txn_finalize(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, false);
   if (txn != NULL) {
-    Rprintf("Cleaning transaction\n");
+    Rprintf("Finalizing transaction\n");
     mdb_txn_abort(txn);
     R_ClearExternalPtr(r_txn);
   }
@@ -650,6 +650,7 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
   // same as python interface which simply does not implement it.
   void * data = R_ExternalPtrAddr(r_dbi);
   if (data) {
+    Rprintf("Finalizing dbi\n");
     Free(data);
     R_ClearExternalPtr(r_dbi);
   }
@@ -658,7 +659,7 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
 static void r_mdb_cursor_finalize(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false, false);
   if (cursor != NULL) {
-    Rprintf("Cleaning cursor\n");
+    Rprintf("Finalizing cursor\n");
     // These can definitely be garbage collected directly I think;
     // once they're out of scope we can't get it back.
     mdb_cursor_close(cursor);
@@ -669,6 +670,7 @@ static void r_mdb_cursor_finalize(SEXP r_cursor) {
 static void r_thor_val_proxy_finalize(SEXP r_proxy) {
   const thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
   if (proxy != NULL) {
+    Rprintf("Clearing proxy\n");
     Free(proxy);
     R_ClearExternalPtr(r_proxy);
   }

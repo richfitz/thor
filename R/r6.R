@@ -295,13 +295,14 @@ R6_transaction <- R6::R6Class(
     },
     commit = function() {
       message("...committing transaction")
+      invalidate_dependencies(self)
       mdb_txn_commit(self$.ptr)
       self$.cleanup()
     },
     abort = function() {
       if (!is.null(self$.ptr)) {
         message("...aborting transaction")
-        ##
+        invalidate_dependencies(self)
         tryCatch(
           mdb_txn_abort(self$.ptr),
           error = function(e) message("error cleaning up but pressing on"))
@@ -317,7 +318,6 @@ R6_transaction <- R6::R6Class(
       if (self$.write) {
         self$.env$.write_txn <- NULL
       }
-      invalidate_dependencies(self)
       self$.db <- NULL
       self$.env <- NULL
       self$.ptr <- NULL
@@ -388,6 +388,9 @@ R6_cursor <- R6::R6Class(
 
     invalidate = function() {
       if (!is.null(self$.ptr)) {
+        if (is_null_pointer(self$.txn$.ptr)) {
+          stop("This should not happen!")
+        }
         self$close()
       }
     },
@@ -506,7 +509,7 @@ invalidate_dependencies <- function(x) {
   if (!is.null(x$.deps)) {
     deps <- x$.deps$get()
     message(sprintf("%d deps", length(deps)))
-    for (d in x$.deps$get()) {
+    for (d in rev(deps)) {
       message(sprintf("...invalidating a %s", class(d)[[1]]))
       d$invalidate()
     }
