@@ -179,7 +179,17 @@ mdb_dcmp <- function(txn, dbi, a, b) {
 }
 
 mdb_reader_list <- function(env) {
-  .Call(Cmdb_reader_list, env)
+  str <- .Call(Cmdb_reader_list, env)
+  if (length(str) > 1L) {
+    dat <- strsplit(trimws(str), "\\s+")
+    ret <- matrix(unlist(dat[-1L]), length(dat) - 1L, byrow = TRUE)
+    colnames(ret) <- dat[[1L]]
+  } else {
+    ## This requires keeping in sync with upstream
+    ret <- matrix(character(0L), 0L, 3L)
+    colnames(ret) <- c("pid", "thread", "txnid")
+  }
+  ret
 }
 
 mdb_reader_check <- function(env) {

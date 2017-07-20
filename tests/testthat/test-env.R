@@ -72,3 +72,19 @@ test_that("no create", {
   env <- dbenv(p, create = FALSE)
   expect_is(env, "dbenv")
 })
+
+test_that("list readers", {
+  env <- dbenv(tempfile())
+  cols <- c("pid", "thread", "txnid")
+  expect_equal(env$readers(),
+               matrix("", 0, 3, dimnames = list(NULL, cols)))
+  t1 <- env$begin()
+  t2 <- env$begin()
+  m <- env$readers()
+  expect_is(m, "matrix")
+  expect_equal(colnames(m), cols)
+  expect_equal(nrow(m), 2L)
+  expect_equal(m[, "txnid"], as.character(c(t1$id(), t2$id())))
+  expect_equal(m[, "pid"], rep(as.character(Sys.getpid()), 2))
+  expect_match(m[, "thread"], "^[[:xdigit:]]+$")
+})

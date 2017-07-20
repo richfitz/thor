@@ -496,16 +496,30 @@ SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   return ScalarInteger(mdb_dcmp(txn, dbi, &a, &b));
 }
 
-// TODO: Swap this out for an accumulator
+struct reader_data {
+  size_t n;
+  SEXP data;
+};
+
 int mdb_reader_list_callback(const char *msg, void *ctx) {
-  REprintf(msg);
+  struct reader_data * data = (struct reader_data*) ctx;
+  data->n++;
+  data->data = PROTECT(CONS(mkChar(msg), data->data));
   return 0;
 }
 
 SEXP r_mdb_reader_list(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  mdb_reader_list(env, &mdb_reader_list_callback, NULL);
-  return R_NilValue;
+  struct reader_data data = {0, R_NilValue};
+  mdb_reader_list(env, &mdb_reader_list_callback, &data);
+  SEXP str = data.data;
+  SEXP ret = PROTECT(allocVector(STRSXP, data.n));
+  for (size_t i = data.n; i > 0; --i) {
+    SET_STRING_ELT(ret, i - 1, CAR(str));
+    str = CDR(str);
+  }
+  UNPROTECT(data.n + 1);
+  return ret;
 }
 
 SEXP r_mdb_reader_check(SEXP r_env) {
