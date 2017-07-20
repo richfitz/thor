@@ -81,3 +81,12 @@ assert_is <- function(x, what, name = deparse(substitute(x))) {
                  paste(what, collapse = " / ")), call. = FALSE)
   }
 }
+
+list_to_fixed_env <- function(x, env) {
+  for (i in names(x)) {
+    env[[i]] <- x[[i]]
+    lockBinding(i, env)
+  }
+  lockEnvironment(env)
+  invisible(env)
+}

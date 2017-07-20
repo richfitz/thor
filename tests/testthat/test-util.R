@@ -23,3 +23,16 @@ test_that("stack", {
   x$clear()
   expect_identical(x$length(), 0L)
 })
+
+test_that("list_to_fixed_env", {
+  e <- list_to_fixed_env(setNames(seq_len(4), letters[1:4]),
+                         new.env(parent = emptyenv()))
+  expect_is(e, "environment")
+  expect_identical(e[["a"]], 1L)
+  expect_identical(e[["d"]], 4L)
+  expect_true(environmentIsLocked(e))
+  expect_true(bindingIsLocked("a", e))
+  expect_true(bindingIsLocked("d", e))
+  expect_error(e$a <- 1)
+  expect_error(e$d <- 1)
+})

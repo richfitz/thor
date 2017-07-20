@@ -16,7 +16,6 @@ mdb_env_open <- function(env, path, mode,
         mapasync, nordahead, nomeminit)
 }
 
-## NOTE: departure from mdb api here because not using copy2
 mdb_env_copy <- function(env, path, compact = FALSE) {
   .Call(Cmdb_env_copy, env, path, compact)
 }

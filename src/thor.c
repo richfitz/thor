@@ -5,13 +5,11 @@
 // `install()` at every use (following R-exts).  This is relatively
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
-SEXP thor_flag_group_id_name;
 SEXP thor_txn_readonly_name;
 SEXP thor_cursor_orphan_name;
 SEXP thor_size_name;
 
 void thor_init() {
-  thor_flag_group_id_name = install("group_id");
   thor_txn_readonly_name = install("readonly");
   thor_cursor_orphan_name = install("orphan");
   thor_size_name = install("size");
@@ -799,29 +797,6 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat) {
 }
 
 // Flags
-unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id) {
-  int ret = 0;
-  if (r_flags != R_NilValue) {
-    // Here we could look at the class attribute instead but this will
-    // be fine for now
-    SEXP r_group_id = getAttrib(r_flags, thor_flag_group_id_name);
-    if (r_group_id == R_NilValue) {
-      Rf_error("mdb flags must be an mdb_flag object");
-    }
-    if (INTEGER(r_group_id)[0] != group_id) {
-      // TODO: we should give more useful error messages here but that
-      // involves a big boring switch statement.
-      Rf_error("Wrong flag type");
-    }
-    size_t n_flags = length(r_flags);
-    int *flags = INTEGER(r_flags);
-    for (size_t i = 0; i < n_flags; ++i) {
-      ret = ret | flags[i];
-    }
-  }
-  return ret;
-}
-
 unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name,
                           bool invert) {
   if (r_x == R_NilValue) {
@@ -838,13 +813,6 @@ bool flag_to_bool(unsigned int flags, unsigned int x, bool invert) {
 }
 
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op) {
-  SEXP r_group_id = getAttrib(r_cursor_op, thor_flag_group_id_name);
-  if (r_group_id == R_NilValue) {
-    Rf_error("cursor_op must be an mdb_flag object");
-  }
-  if (INTEGER(r_group_id)[0] != THOR_CURSOR_OP || length(r_cursor_op) != 1) {
-    Rf_error("cursor_op must be an cursor_op object");
-  }
   return INTEGER(r_cursor_op)[0];
 }
 
@@ -853,6 +821,7 @@ SEXP r_mdb_cursor_op() {
   int n = 19;
   SEXP ret = PROTECT(allocVector(INTSXP, n));
   SEXP nms = PROTECT(allocVector(STRSXP, n));
+  setAttrib(ret, R_NamesSymbol, nms);
 
   INTEGER(ret)[0] = MDB_FIRST;
   SET_STRING_ELT(nms, 0, mkChar("FIRST"));
@@ -893,8 +862,6 @@ SEXP r_mdb_cursor_op() {
   INTEGER(ret)[18] = MDB_PREV_MULTIPLE;
   SET_STRING_ELT(nms, 18, mkChar("PREV_MULTIPLE"));
 
-  setAttrib(ret, R_NamesSymbol, nms);
-  setAttrib(ret, thor_flag_group_id_name, ScalarInteger(THOR_CURSOR_OP));
   UNPROTECT(2);
   return ret;
 }

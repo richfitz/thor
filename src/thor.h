@@ -109,7 +109,6 @@ SEXP mdb_stat_to_sexp(MDB_stat *stat);
 // Flags
 
 // - interface
-unsigned int sexp_to_mdb_flags(SEXP r_flags, thor_flag_group group_id);
 unsigned int sexp_to_flag(SEXP r_x, unsigned int if_set, const char *name,
                           bool invert);
 MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
