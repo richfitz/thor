@@ -516,27 +516,19 @@ invalidate_dependencies <- function(x) {
   }
 }
 
-## The behaviour here for null objects is not very clear.  We might
-## want to utilise the value-if-missing thing actually.
-##
-## TODO: value_if_missing is going to need sanitisation but we'll do
-## that elsewhere.  Probably it needs to match as_raw?
-##
-## TODO: as_raw on value() taking a default here might be nicer.  But
-## it's a faff to implement and requires more bookkeeping (because we
-## need to keep multiple copies of the data around or do the
-## conversion ourselves)
-mdb_val_proxy <- function(txn, data, value_if_missing = NULL) {
-  mutations <- txn$.mutations
-
-  ## TODO: I'll tidy this up when resolving issue above
-  ## r_mdb_proxy_copy (thor.c)
+mdb_val_proxy <- function(txn, data) {
   is_missing <- is.null(data)
-  if (is_missing) {
-    size <- if (is.character(value_if_missing))
-              nchar(value_if_missing) else length(value_if_missing)
-  } else {
-    size <- attr(data, "size", TRUE)
+
+  ## NOTE: a zero size for midding key makes sense because a
+  ## zero-length value is not allowed (I believe).
+  size <- if (is_missing) 0L else attr(data, "size", TRUE)
+
+  mutations <- txn$.mutations
+  assert_valid <- function() {
+    if (!identical(txn$.mutations, mutations)) {
+      reason <- if (is.null(txn$.ptr)) "been closed" else "modified database"
+      stop("mdb_val_proxy is invalid: transaction has ", reason)
+    }
   }
 
   ret <- list(
@@ -544,19 +536,13 @@ mdb_val_proxy <- function(txn, data, value_if_missing = NULL) {
       identical(txn$.mutations, mutations)
     },
     size = function() {
-      ## NOTE: this does not check validity!  It's also "safe" in that
-      ## it does not access the database in anyway.
+      assert_valid()
       size
     },
     value = function(as_raw = NULL) {
-      if (!identical(txn$.mutations, mutations)) {
-        if (is.null(txn$.ptr)) { # !is.finite(txn$.mutations)
-          stop("mdb_val_proxy is invalid: transaction has been closed")
-        } else {
-          stop("mdb_val_proxy is invalid: transaction has modified database")
-        }
-      } else if (is_missing) {
-        value_if_missing
+      assert_valid()
+      if (is_missing) {
+        NULL
       } else {
         mdb_proxy_copy(data, as_raw)
       }

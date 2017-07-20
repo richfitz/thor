@@ -135,8 +135,8 @@ test_that("get: raw key", {
   expect_false(p$is_valid())
   expect_error(p$value(),
                "mdb_val_proxy is invalid: transaction has modified database")
-  ## TODO: Fix this I think...
-  expect_identical(p$size(), 0L)
+  expect_error(p$size(),
+               "mdb_val_proxy is invalid: transaction has modified database")
 
   p <- txn$get(key, as_proxy = TRUE)
   expect_is(p, "mdb_val_proxy")
@@ -163,7 +163,8 @@ test_that("get: raw key", {
   expect_false(p$is_valid())
   expect_error(p$value(),
                "mdb_val_proxy is invalid: transaction has modified database")
-  expect_identical(p$size(), nchar(value))
+  expect_error(p$size(),
+               "mdb_val_proxy is invalid: transaction has modified database")
 
   p <- txn$get(key, as_proxy = TRUE)
   expect_error(p$value(FALSE),

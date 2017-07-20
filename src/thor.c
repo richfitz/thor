@@ -410,9 +410,6 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
   return r_mdb_dbi_wrap(dbi);
 }
 
-// TODO: Need to handle (amongst other things) missing values properly
-// here.  This is an issue in particular where we sail off the end of
-// the iteration.
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
@@ -733,14 +730,6 @@ SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
 //
 // I've done this reasonably in 'ring' - I can probably pull the
 // relevant bits out into a shared package if need be.
-//
-// TODO: push the transaction check in here; when we build a proxy we
-// get the number of transactions and then push in the transaction as
-// an argument here.  That then goes into the logic for resolving the
-// proxy.
-//
-// TODO: Need a proper null proxy object too; that will be required
-// for getting size treated the same way.
 SEXP r_mdb_proxy_copy(SEXP r_proxy, SEXP r_as_raw) {
   thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
   if (proxy == NULL) {
