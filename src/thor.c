@@ -1,4 +1,5 @@
 #include "thor.h"
+#include <errno.h>
 
 // These are symbols that we'll use here to avoid having to use
 // `install()` at every use (following R-exts).  This is relatively
@@ -418,22 +419,31 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
   MDB_val key, data;
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
-  return_as as_proxy = true, as_raw = false;
 
-  if (r_key != NULL) {
-    if (cursor_op != MDB_SET) { // should not be needed when we're done
+  if (r_key != R_NilValue) {
+    if (cursor_op != MDB_SET_KEY) { // should not be needed when we're done
       Rf_error("key is allowed only with MDB_SET");
     }
     sexp_to_mdb_val(r_key, "key", &key);
   }
 
   int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
+  // Possibly this would be nicer to do if we store something to
+  // indicate if the cursor has ever been positioned?
 
   SEXP ret = PROTECT(allocVector(VECSXP, 2));
-  if (rc != MDB_NOTFOUND) {
-    no_error(rc, "mdb_cursor_get");
+
+  if (rc == MDB_SUCCESS) {
+    const bool as_proxy = true;
+    const return_as as_raw = AS_ANY;
     SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, as_proxy, as_raw));
     SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, as_proxy, as_raw));
+  } else {
+    bool ok = rc == MDB_NOTFOUND ||
+      (rc == EINVAL && cursor_op == MDB_GET_CURRENT);
+    if (!ok) {
+      no_error(rc, "mdb_cursor_get");
+    }
   }
   UNPROTECT(1);
   return ret;

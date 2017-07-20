@@ -401,73 +401,81 @@ R6_cursor <- R6::R6Class(
       self$.ptr <- NULL
     },
 
-    .cursor_get = function(cursor_op) {
+    .cursor_get = function(cursor_op, key = NULL) {
       ## This should/could be done in one move _each_ (perhaps) but
       ## this way works too.  It will do perhaps too much and we
       ## should split this into two bits (key, value).  Other issues;
       ## there is no null proxy object (boo) and there is work needed
       ## on the R side to build a proxy object; we should save the bit
       ## required to build the proxy only as that's very cheap.
-      ## browser()
-      x <- mdb_cursor_get(self$.ptr, NULL, cursor_op)
-      self$.cur_key <- mdb_value_proxy(x[[1L]])
-      self$.cur_value <- mdb_value_proxy(x[[2L]])
-      !is.null(x[[1L]])
-    },
-    .cursor_cur_refresh = function() {
-      is.null(self$.cur_key) ||
-        is.null(self$.cur_value) ||
-        !self$.cur_key$is_valid() ||
-        !self$.cur_value$is_valid()
+      x <- mdb_cursor_get(self$.ptr, cursor_op, key)
+      self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
+      self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
+      invisible(!is.null(x[[2L]]))
     },
 
-    key = function(as_proxy = FALSE, as_raw = FALSE) {
+    ## TODO: pass value_if_missing through to value and make size NA for these?
+    key = function(as_proxy = FALSE, as_raw = NULL) {
       if (is.null(self$.cur_key) ||!self$.cur_key$is_valid()) {
         self$.cursor_get(cursor_op$GET_CURRENT)
       }
       if (as_proxy) {
-        mdb_val_proxy(self$.txn, self$.cur_key, as_raw)
+        self$.cur_key
       } else {
-        mdb_proxy_copy(self$.cur_key, as_raw)
+        self$.cur_key$value(as_raw)
       }
     },
 
-    value = function(proxy, as_raw) {
-      ## TODO: this is totally broken at present
-      if (proxy) {
-        if (is.null(self$.cur_value_proxy) ||
-            !self$.cur_value_proxy$is_valid()) {
-          self$.cursor_get(cursor_op$GET_CURRENT, FALSE, TRUE, TRUE)
-        }
-        self$.cur_value_proxy
-      } else {
-        if (!identical(self$.mutations, self$.txn$.mutations)) {
-          self$.cursor_get(cursor_op$GET_CURRENT, FALSE, TRUE, FALSE)
-        }
+    value = function(as_proxy = FALSE, as_raw = NULL) {
+      if (is.null(self$.cur_value) ||!self$.cur_value$is_valid()) {
+        self$.cursor_get(cursor_op$GET_CURRENT)
+      }
+      if (as_proxy) {
         self$.cur_value
+      } else {
+        self$.cur_value$value(as_raw)
       }
     },
 
     first = function() {
       self$.cursor_get(cursor_op$FIRST)
     },
+    last = function() {
+      self$.cursor_get(cursor_op$LAST)
+    },
+    move_prev = function() {
+      self$.cursor_get(cursor_op$PREV)
+    },
+    move_next = function() {
+      self$.cursor_get(cursor_op$NEXT)
+    },
+    seek_key = function(key) {
+      self$.cursor_get(cursor_op$SET_KEY, key)
+    },
+    seek = function(key) {
+      self$.cursor_get(cursor_op$SET_KEY_RANGE, key)
+    },
 
-    ## This might not be ideal.  There are some other ways forward
-    ## here - see the python interface in particular.  Supporting key,
-    ## value, item, etc would be nice.  Knowing when the items need to
-    ## be refreshed might also be nice.  Lots to do!
-    get = function(key, op) {
-      mdb_val_proxy(txn, res)
-      mdb_cursor_get(self$.ptr, key, op, proxy)
+    del = function() {
+      nodupdata <- NULL
+      res <- mdb_cursor_del(self$.ptr, nodupdata)
+      self$.txn$.mutations <- self$.txn$.mutations + 1L
+      self$.cursor_get(cursor_op$GET_CURRENT)
+      res
     },
-    put = function(key, data, flags = NULL) {
-      mdb_cursor_put(self$.ptr, key, data, flags)
+    put = function(value, nodupdata = NULL, nooverwrite = NULL, append = NULL) {
+      res <- mdb_cursor_put(self$.ptr, value,
+                            nodupdata, nooverwrite, append)
+      self$.txn$.mutations <- self$.txn$.mutations + 1L
+      self$.cursor_get(cursor_op$GET_CURRENT)
+      res
     },
-    del = function(nodupdata = FALSE) {
-      mdb_cursor_del(self$.ptr, nodupdata)
-    },
-    count = function() {
-      mdb_cursor_count(self$.ptr)
+    get = function(key, as_proxy = FALSE, as_raw = NULL, default = NULL) {
+      if (self$.cursor_get(cursor_op$SET_KEY, key)) {
+        self$value(as_proxy, as_raw) # needs to take default *here*
+      } else {
+        default
+      }
     }
   ))
 
