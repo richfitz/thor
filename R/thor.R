@@ -139,10 +139,6 @@ mdb_cursor_close <- function(cursor) {
   .Call(Cmdb_cursor_close, cursor)
 }
 
-mdb_cursor_renew <- function(txn, cursor) {
-  .Call(Cmdb_cursor_renew, txn, cursor)
-}
-
 mdb_cursor_txn <- function(cursor) {
   .Call(Cmdb_cursor_txn, cursor)
 }

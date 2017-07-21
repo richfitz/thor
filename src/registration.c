@@ -47,7 +47,6 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
-  {"Cmdb_cursor_renew",            (DL_FUNC) &r_mdb_cursor_renew,          2},
   {"Cmdb_cursor_txn",              (DL_FUNC) &r_mdb_cursor_txn,            1},
   {"Cmdb_cursor_dbi",              (DL_FUNC) &r_mdb_cursor_dbi,            1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            3},

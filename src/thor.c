@@ -5,11 +5,9 @@
 // `install()` at every use (following R-exts).  This is relatively
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
-SEXP thor_cursor_orphan_name;
 SEXP thor_size_name;
 
 void thor_init() {
-  thor_cursor_orphan_name = install("orphan");
   thor_size_name = install("size");
 }
 
@@ -372,16 +370,8 @@ SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
 }
 
 SEXP r_mdb_cursor_close(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   mdb_cursor_close(cursor);
-  return R_NilValue;
-}
-
-SEXP r_mdb_cursor_renew(SEXP r_txn, SEXP r_cursor) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, true);
-  mdb_cursor_renew(txn, cursor);
-  setAttrib(r_cursor, thor_cursor_orphan_name, R_NilValue);
   return R_NilValue;
 }
 
@@ -391,13 +381,13 @@ SEXP r_mdb_cursor_txn(SEXP r_cursor) {
 }
 
 SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_dbi dbi = mdb_cursor_dbi(cursor);
   return r_mdb_dbi_wrap(dbi);
 }
 
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, data;
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
 
@@ -432,7 +422,7 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
                       SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
@@ -445,7 +435,7 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
 }
 
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   const bool nodupdata = scalar_logical(r_nodupdata, "nodupdata");
   const unsigned int flags = nodupdata ? MDB_NODUPDATA : 0;
   no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
@@ -453,7 +443,7 @@ SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata) {
 }
 
 SEXP r_mdb_cursor_count(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   mdb_size_t count;
   no_error(mdb_cursor_count(cursor, &count), "mdb_cursor_count");
   return ScalarInteger(count);
@@ -525,17 +515,9 @@ MDB_dbi r_mdb_get_dbi(SEXP r_dbi) {
   return *data;
 }
 
-MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error, bool orphaned) {
-  SEXP r_orphaned = getAttrib(r_cursor, thor_cursor_orphan_name);
-  if (closed_error && (orphaned == (r_orphaned == R_NilValue))) {
-    if (orphaned) {
-      Rf_error("Expected an orphaned cursor but recieved an open one");
-    } else {
-      Rf_error("Expected an open cursor but recieved an orphaned one");
-    }
-  }
-  return (MDB_cursor*) r_pointer_addr(r_cursor, THOR_CURSOR, "cursor",
-                                      closed_error);
+MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error) {
+  return (MDB_cursor*)
+    r_pointer_addr(r_cursor, THOR_CURSOR, "cursor", closed_error);
 }
 
 void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
@@ -643,7 +625,7 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
 }
 
 static void r_mdb_cursor_finalize(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false, false);
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false);
   if (cursor != NULL) {
     Rprintf("Finalizing cursor\n");
     // These can definitely be garbage collected directly I think;
