@@ -368,6 +368,7 @@ SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
 SEXP r_mdb_cursor_close(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   mdb_cursor_close(cursor);
+  R_ClearExternalPtr(r_cursor);
   return R_NilValue;
 }
 

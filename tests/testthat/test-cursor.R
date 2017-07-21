@@ -10,10 +10,18 @@ test_that("create", {
   expect_identical(txn$.deps$get(), list(cur))
   expect_null(cur$.deps)
 
+  cur_ptr <- cur$.ptr
+  txn_ptr <- txn$.ptr
+  env_ptr <- env$.ptr
+
   env$close()
   expect_null(cur$.ptr)
   expect_null(txn$.ptr)
   expect_null(env$.ptr)
+
+  expect_true(is_null_pointer(cur_ptr))
+  expect_true(is_null_pointer(txn_ptr))
+  expect_true(is_null_pointer(env_ptr))
 })
 
 test_that("basic use", {

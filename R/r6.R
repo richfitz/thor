@@ -29,7 +29,6 @@
 ## * indicate dependents (there's a tree issue here; that's
 ##   fairly easy to deal with).
 ## * hide all dots (and the print function)
-
 dbenv <- function(path, ..., mode = as.octmode("644"),
                   ## flags for env
                   subdir = TRUE, sync = TRUE, rdonly = FALSE,
