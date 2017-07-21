@@ -1,7 +1,11 @@
 context("env")
 
 test_that("create & close", {
-  env <- dbenv(tempfile())
+  path <- tempfile()
+  env <- dbenv(path)
+
+  expect_true(file.exists(path))
+  expect_true(file.info(path)$isdir)
 
   expect_is(env, "dbenv")
   expect_is(env, "R6")
@@ -87,4 +91,16 @@ test_that("list readers", {
   expect_equal(m[, "txnid"], as.character(c(t1$id(), t2$id())))
   expect_equal(m[, "pid"], rep(as.character(Sys.getpid()), 2))
   expect_match(m[, "thread"], "^[[:xdigit:]]+$")
+})
+
+test_that("subdir = FALSE", {
+  base <- new_empty_dir()
+  path <- tempfile(tmpdir = new_empty_dir())
+  env <- dbenv(path, subdir = FALSE)
+
+  expect_true(file.exists(path))
+  expect_false(file.info(path)$isdir)
+  expect_true(file.exists(paste0(path, "-lock")))
+
+  expect_false(env$flags()[["subdir"]])
 })

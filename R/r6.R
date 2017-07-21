@@ -32,7 +32,7 @@
 
 dbenv <- function(path, ..., mode = as.octmode("644"),
                   ## flags for env
-                  nosubdir = FALSE, nosync = FALSE, rdonly = FALSE,
+                  subdir = TRUE, nosync = FALSE, rdonly = FALSE,
                   nometasync = FALSE, writemap = FALSE, nolock = FALSE,
                   mapasync = FALSE, nordahead = FALSE, nomeminit = FALSE,
                   ## other args
@@ -40,7 +40,7 @@ dbenv <- function(path, ..., mode = as.octmode("644"),
                   reversekey = FALSE, dupsort = FALSE, create = TRUE) {
   R6_dbenv$new(path, mode,
                ## flags:
-               nosubdir = nosubdir, nosync = nosync, rdonly = rdonly,
+               subdir = subdir, nosync = nosync, rdonly = rdonly,
                nometasync = nometasync, writemap = writemap, nolock = nolock,
                mapasync = mapasync, nordahead = nordahead,
                nomeminit = nomeminit,
@@ -68,7 +68,7 @@ R6_dbenv <- R6::R6Class(
 
     ## This argument list will likely grow to drop flags
     initialize = function(path, mode,
-                          nosubdir, nosync, rdonly,
+                          subdir, nosync, rdonly,
                           nometasync, writemap, nolock,
                           mapasync, nordahead, nomeminit,
                           maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
@@ -90,11 +90,11 @@ R6_dbenv <- R6::R6Class(
       }
 
       ## Be more user-friendly
-      if (create && !file.exists(path)) {
+      if (create && subdir && !file.exists(path)) {
         dir.create(path, FALSE, TRUE)
       }
       mdb_env_open(self$.ptr, path, mode,
-                   nosubdir, nosync, rdonly,
+                   subdir, nosync, rdonly,
                    nometasync, writemap, nolock,
                    mapasync, nordahead, nomeminit)
       self$open_database(NULL, NULL, reversekey, dupsort, create)

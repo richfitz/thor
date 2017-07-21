@@ -39,7 +39,7 @@ SEXP r_mdb_env_create() {
 }
 
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
-                    SEXP r_nosubdir, SEXP r_nosync, SEXP r_rdonly,
+                    SEXP r_subdir, SEXP r_nosync, SEXP r_rdonly,
                     SEXP r_nometasync, SEXP r_writemap, SEXP r_nolock,
                     SEXP r_mapasync, SEXP r_nordahead, SEXP r_nomeminit) {
   MDB_env * env = r_mdb_get_env(r_env, true);
@@ -47,7 +47,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
   const mdb_mode_t mode = scalar_size(r_mode, "mode");
   // skipping: fixedmap, notls
   const unsigned int flags = MDB_NOTLS |
-    sexp_to_flag(r_nosubdir,   MDB_NOSUBDIR,   "nosubdir",   false) |
+    sexp_to_flag(r_subdir,     MDB_NOSUBDIR,   "subdir",     true)  |
     sexp_to_flag(r_nosync,     MDB_NOSYNC,     "nosync",     false) |
     sexp_to_flag(r_rdonly,     MDB_RDONLY,     "rdonly",     false) |
     sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync", false) |
@@ -78,8 +78,8 @@ SEXP r_mdb_env_get_flags(SEXP r_env) {
 
   // val[i] = flag_to_bool(flags, MDB_FIXEDMAP, false);
   // SET_STRING_ELT(nms, i++, mkChar("fixedmap"));
-  val[i] = flag_to_bool(flags, MDB_NOSUBDIR, false);
-  SET_STRING_ELT(nms, i++, mkChar("nosubdir"));
+  val[i] = flag_to_bool(flags, MDB_NOSUBDIR, true);
+  SET_STRING_ELT(nms, i++, mkChar("subdir"));
   val[i] = flag_to_bool(flags, MDB_RDONLY, false);
   SET_STRING_ELT(nms, i++, mkChar("rdonly"));
   val[i] = flag_to_bool(flags, MDB_WRITEMAP, false);
