@@ -51,7 +51,7 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
 SEXP r_mdb_txn_env(SEXP r_txn);
 SEXP r_mdb_txn_id(SEXP r_txn);
 SEXP r_mdb_txn_commit(SEXP r_txn);
-SEXP r_mdb_txn_abort(SEXP r_txn);
+SEXP r_mdb_txn_abort(SEXP r_txn, SEXP r_closed_error);
 SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 

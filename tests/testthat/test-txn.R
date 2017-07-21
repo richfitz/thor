@@ -205,3 +205,32 @@ test_that("get: proxy", {
   expect_error(p2$value(),
                "mdb_val_proxy is invalid: transaction has been closed")
 })
+
+test_that("transaction caching", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  txn$commit()
+  expect_identical(env$.spare_txns$get(), list())
+
+  txn <- env$begin(write = FALSE)
+  txn_ptr <- txn$.ptr
+
+  expect_equal(txn$get("g"), "G")
+  txn$abort()
+
+  expect_identical(env$.spare_txns$get(), list(txn_ptr))
+  expect_null(txn$.ptr)
+  expect_error(txn$get("a"), "txn has been cleaned up")
+
+  txn2 <- env$begin(write = FALSE)
+  expect_identical(env$.spare_txns$get(), list())
+  expect_identical(txn2$.ptr, txn_ptr)
+  expect_equal(txn2$get("g"), "G")
+
+  txn2$abort(FALSE)
+  expect_identical(env$.spare_txns$get(), list())
+  expect_true(is_null_pointer(txn_ptr))
+})

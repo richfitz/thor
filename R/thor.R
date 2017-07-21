@@ -85,8 +85,8 @@ mdb_txn_commit <- function(txn) {
   .Call(Cmdb_txn_commit, txn)
 }
 
-mdb_txn_abort <- function(txn) {
-  .Call(Cmdb_txn_abort, txn)
+mdb_txn_abort <- function(txn, closed_error) {
+  .Call(Cmdb_txn_abort, txn, closed_error)
 }
 
 mdb_txn_reset <- function(txn) {

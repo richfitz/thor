@@ -64,6 +64,7 @@ R6_dbenv <- R6::R6Class(
     .dbs = new.env(parent = emptyenv()),
     .deps = NULL,
     .write_txn = NULL,
+    .spare_txns = NULL,
 
     ## This argument list will likely grow to drop flags
     initialize = function(path, mode,
@@ -75,6 +76,7 @@ R6_dbenv <- R6::R6Class(
       assert_is(mode, "octmode")
       self$.deps = stack()
       self$.ptr <- mdb_env_create()
+      self$.spare_txns = stack()
 
       ## TODO: throughout here, nicer conversion to integer
       if (!is.null(maxreaders)) {
@@ -145,6 +147,10 @@ R6_dbenv <- R6::R6Class(
     close = function() {
       if (!is.null(self$.ptr)) {
         invalidate_dependencies(self)
+        for (txn_ptr in rev(self$.spare_txns$get())) {
+          mdb_txn_abort(txn_ptr, FALSE)
+        }
+        self$.spare_txns <- NULL
         mdb_env_close(self$.ptr)
         self$.db <- NULL
         self$.dbs <- NULL
@@ -248,12 +254,12 @@ R6_transaction <- R6::R6Class(
       }
       self$.db <- db
       self$.deps <- stack()
-      self$.write <- TRUE
+      self$.write <- write
 
       if (!is.null(parent)) {
         assert_is(parent, "transaction")
         self$.parent = parent
-        parent$.deps$add(self)
+        parent$.deps$add(self) # possibly should come after possible abort?
       }
 
       if (write) {
@@ -263,7 +269,24 @@ R6_transaction <- R6::R6Class(
         self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = FALSE)
         env$.write_txn <- self
       } else {
-        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = TRUE)
+        ptr <- env$.spare_txns$pop()
+        if (is.null(ptr)) {
+          self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = TRUE)
+        } else {
+          mdb_txn_renew(ptr)
+          self$.ptr <- ptr
+        }
+      }
+    },
+
+    .cache_spare = function() {
+      if (!self$.write) {
+        mdb_txn_reset(self$.ptr)
+        self$.env$.spare_txns$push(self$.ptr)
+        self$.cleanup()
+        TRUE
+      } else {
+        FALSE
       }
     },
 
@@ -274,7 +297,7 @@ R6_transaction <- R6::R6Class(
       ## library where invalidate calls these things but abort does
       ## not
 
-      self$abort()
+      self$abort(FALSE)
     },
 
     finalize = function() {
@@ -296,17 +319,19 @@ R6_transaction <- R6::R6Class(
     commit = function() {
       message("...committing transaction")
       invalidate_dependencies(self)
-      mdb_txn_commit(self$.ptr)
-      self$.cleanup()
+      if (!self$.cache_spare()) {
+        mdb_txn_commit(self$.ptr)
+        self$.cleanup()
+      }
     },
-    abort = function() {
+    abort = function(cache = TRUE) {
       if (!is.null(self$.ptr)) {
         message("...aborting transaction")
         invalidate_dependencies(self)
-        tryCatch(
-          mdb_txn_abort(self$.ptr),
-          error = function(e) message("error cleaning up but pressing on"))
-        self$.cleanup()
+        if (!(cache && self$.cache_spare())) {
+          mdb_txn_abort(self$.ptr, FALSE)
+          self$.cleanup()
+        }
       }
     },
     .cleanup = function() {
@@ -494,13 +519,13 @@ with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
       ret <- f(txn)
       mdb_txn_commit(txn)
       ret
-    }, error = function(e) mdb_txn_abort(txn))
+    }, error = function(e) mdb_txn_abort(txn, FALSE))
   } else {
     ## Consider using the pool system in env?
     txn <- mdb_txn_begin(env$.ptr, parent, TRUE)
     withCallingHandlers({
       f(txn)
-    }, finally = function(e) mdb_txn_abort(txn))
+    }, finally = function(e) mdb_txn_abort(txn, FALSE))
   }
 }
 

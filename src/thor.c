@@ -247,8 +247,9 @@ SEXP r_mdb_txn_commit(SEXP r_txn) {
   return R_NilValue;
 }
 
-SEXP r_mdb_txn_abort(SEXP r_txn) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+SEXP r_mdb_txn_abort(SEXP r_txn, SEXP r_closed_error) {
+  bool closed_error = scalar_logical(r_closed_error, "closed_error");
+  MDB_txn * txn = r_mdb_get_txn(r_txn, closed_error);
   mdb_txn_abort(txn);
   R_ClearExternalPtr(r_txn);
   return R_NilValue;

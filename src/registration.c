@@ -31,7 +31,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_txn_id",                  (DL_FUNC) &r_mdb_txn_id,                1},
   {"Cmdb_txn_env",                 (DL_FUNC) &r_mdb_txn_env,               1},
   {"Cmdb_txn_commit",              (DL_FUNC) &r_mdb_txn_commit,            1},
-  {"Cmdb_txn_abort",               (DL_FUNC) &r_mdb_txn_abort,             1},
+  {"Cmdb_txn_abort",               (DL_FUNC) &r_mdb_txn_abort,             2},
   {"Cmdb_txn_reset",               (DL_FUNC) &r_mdb_txn_reset,             1},
   {"Cmdb_txn_renew",               (DL_FUNC) &r_mdb_txn_renew,             1},
 
