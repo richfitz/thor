@@ -5,12 +5,10 @@
 // `install()` at every use (following R-exts).  This is relatively
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
-SEXP thor_txn_readonly_name;
 SEXP thor_cursor_orphan_name;
 SEXP thor_size_name;
 
 void thor_init() {
-  thor_txn_readonly_name = install("readonly");
   thor_cursor_orphan_name = install("orphan");
   thor_size_name = install("size");
 }
@@ -222,9 +220,6 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
   SEXP r_txn = PROTECT(r_mdb_txn_wrap(txn));
 
-  setAttrib(r_txn, thor_txn_readonly_name,
-            ScalarLogical((flags & MDB_RDONLY) > 0));
-
   UNPROTECT(1);
   return r_txn;
 }
@@ -257,22 +252,12 @@ SEXP r_mdb_txn_abort(SEXP r_txn, SEXP r_closed_error) {
 
 SEXP r_mdb_txn_reset(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  bool txn_readonly =
-    (bool)INTEGER(getAttrib(r_txn, thor_txn_readonly_name))[0];
-  if (!txn_readonly) {
-    Rf_error("mdb_txn_reset can be used only with read-only transactions");
-  }
   mdb_txn_reset(txn);
   return R_NilValue;
 }
 
 SEXP r_mdb_txn_renew(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  bool txn_readonly =
-    (bool)INTEGER(getAttrib(r_txn, thor_txn_readonly_name))[0];
-  if (!txn_readonly) {
-    Rf_error("mdb_txn_reset can be used only with read-only transactions");
-  }
   no_error(mdb_txn_renew(txn), "mdb_txn_renew");
   return R_NilValue;
 }
