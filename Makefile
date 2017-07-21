@@ -43,6 +43,7 @@ clean:
 	rm -rf src/dde.so.dSYM
 	rm -rf tests/testthat/*.so.dSYM
 	rm -rf inst/examples/*.so.dSYM
+	make -C src/lmdb clean
 
 README.md: README.Rmd
 	Rscript -e "options(warnPartialMatchArgs=FALSE); knitr::knit('$<')"

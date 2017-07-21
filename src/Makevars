@@ -1,0 +1,25 @@
+# -*-makefile-*-
+PKG_CFLAGS = -Ilmdb
+
+# There are two ways of achiving this; one is to simply list:
+
+OBJECTS = \
+   lmdb/mdb.o \
+   lmdb/midl.o \
+   registration.o \
+   thor.o \
+   util.o
+
+# We need to make sure to clean up the .o files within the
+# subdirectory though.
+
+# And the other is to do
+
+# PKG_LIBS = -Llmdb -llmdb $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+# $(SHLIB): lmdb/liblmdb.a
+# lmdb/liblmdb.a:
+# 	@(cd lmdb && $(MAKE) liblmdb.a \
+# 	  CC="$(CC)" CFLAGS="$(CFLAGS) $(CPPFLAGS)" AR="$(AR)")
+
+# But I am having some trouble with the linking there, with the
+# library not being found and linked in correctly.

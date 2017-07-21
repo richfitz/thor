@@ -1,7 +1,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <stdbool.h>
-#include "lmdb.h"
+#include <lmdb.h>
 
 void no_error(int x, const char* str);
 

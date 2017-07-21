@@ -1,7 +1,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <stdbool.h>
-#include "lmdb.h"
+#include <lmdb.h>
 #include "util.h"
 
 typedef enum thor_flag_group {
