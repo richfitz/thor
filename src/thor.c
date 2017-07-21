@@ -39,23 +39,23 @@ SEXP r_mdb_env_create() {
 }
 
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
-                    SEXP r_subdir, SEXP r_nosync, SEXP r_rdonly,
-                    SEXP r_nometasync, SEXP r_writemap, SEXP r_nolock,
-                    SEXP r_mapasync, SEXP r_nordahead, SEXP r_nomeminit) {
+                    SEXP r_subdir, SEXP r_sync, SEXP r_rdonly,
+                    SEXP r_metasync, SEXP r_writemap, SEXP r_lock,
+                    SEXP r_mapasync, SEXP r_rdahead, SEXP r_meminit) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char * path = scalar_character(r_path, "path");
   const mdb_mode_t mode = scalar_size(r_mode, "mode");
   // skipping: fixedmap, notls
   const unsigned int flags = MDB_NOTLS |
-    sexp_to_flag(r_subdir,     MDB_NOSUBDIR,   "subdir",     true)  |
-    sexp_to_flag(r_nosync,     MDB_NOSYNC,     "nosync",     false) |
-    sexp_to_flag(r_rdonly,     MDB_RDONLY,     "rdonly",     false) |
-    sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync", false) |
-    sexp_to_flag(r_writemap,   MDB_WRITEMAP,   "writemap",   false) |
-    sexp_to_flag(r_nolock,     MDB_NOLOCK,     "nolock",     false) |
-    sexp_to_flag(r_mapasync,   MDB_MAPASYNC,   "mapasync",   false) |
-    sexp_to_flag(r_nordahead,  MDB_NORDAHEAD,  "nordahead",  false) |
-    sexp_to_flag(r_nomeminit,  MDB_NOMEMINIT,  "nomeminit",  false);
+    sexp_to_flag(r_subdir,   MDB_NOSUBDIR,   "subdir",     true)  |
+    sexp_to_flag(r_sync,     MDB_NOSYNC,     "sync",       true)  |
+    sexp_to_flag(r_rdonly,   MDB_RDONLY,     "rdonly",     false) |
+    sexp_to_flag(r_metasync, MDB_NOMETASYNC, "metasync",   true)  |
+    sexp_to_flag(r_writemap, MDB_WRITEMAP,   "writemap",   false) |
+    sexp_to_flag(r_lock,     MDB_NOLOCK,     "lock",       true)  |
+    sexp_to_flag(r_mapasync, MDB_MAPASYNC,   "mapasync",   false) |
+    sexp_to_flag(r_rdahead,  MDB_NORDAHEAD,  "rdahead",    true)  |
+    sexp_to_flag(r_meminit,  MDB_NOMEMINIT,  "meminit",    true);
 
   int rc = mdb_env_open(env, path, flags, mode);
   if (rc != MDB_SUCCESS) {
@@ -84,20 +84,20 @@ SEXP r_mdb_env_get_flags(SEXP r_env) {
   SET_STRING_ELT(nms, i++, mkChar("rdonly"));
   val[i] = flag_to_bool(flags, MDB_WRITEMAP, false);
   SET_STRING_ELT(nms, i++, mkChar("writemap"));
-  val[i] = flag_to_bool(flags, MDB_NOMETASYNC, false);
-  SET_STRING_ELT(nms, i++, mkChar("nometasync"));
-  val[i] = flag_to_bool(flags, MDB_NOSYNC, false);
-  SET_STRING_ELT(nms, i++, mkChar("nosync"));
+  val[i] = flag_to_bool(flags, MDB_NOMETASYNC, true);
+  SET_STRING_ELT(nms, i++, mkChar("metasync"));
+  val[i] = flag_to_bool(flags, MDB_NOSYNC, true);
+  SET_STRING_ELT(nms, i++, mkChar("sync"));
   val[i] = flag_to_bool(flags, MDB_MAPASYNC, false);
   SET_STRING_ELT(nms, i++, mkChar("mapasync"));
-  // val[i] = flag_to_bool(flags, MDB_NOTLS, false);
-  // SET_STRING_ELT(nms, i++, mkChar("NOTLS"));
-  val[i] = flag_to_bool(flags, MDB_NOLOCK, false);
-  SET_STRING_ELT(nms, i++, mkChar("nolock"));
-  val[i] = flag_to_bool(flags, MDB_NORDAHEAD, false);
-  SET_STRING_ELT(nms, i++, mkChar("nordahead"));
-  val[i] = flag_to_bool(flags, MDB_NOMEMINIT, false);
-  SET_STRING_ELT(nms, i++, mkChar("nomeminit"));
+  // val[i] = flag_to_bool(flags, MDB_NOTLS, true);
+  // SET_STRING_ELT(nms, i++, mkChar("tls"));
+  val[i] = flag_to_bool(flags, MDB_NOLOCK, true);
+  SET_STRING_ELT(nms, i++, mkChar("lock"));
+  val[i] = flag_to_bool(flags, MDB_NORDAHEAD, true);
+  SET_STRING_ELT(nms, i++, mkChar("rdahead"));
+  val[i] = flag_to_bool(flags, MDB_NOMEMINIT, true);
+  SET_STRING_ELT(nms, i++, mkChar("meminit"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);

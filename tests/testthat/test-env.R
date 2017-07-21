@@ -104,3 +104,13 @@ test_that("subdir = FALSE", {
 
   expect_false(env$flags()[["subdir"]])
 })
+
+test_that("some flags", {
+  path <- tempfile()
+
+  env1 <- dbenv(path, sync = FALSE)
+  expect_false(env1$flags()[["sync"]])
+
+  env2 <- dbenv(path, sync = TRUE)
+  expect_true(env2$flags()[["sync"]])
+})

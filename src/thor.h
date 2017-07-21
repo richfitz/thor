@@ -29,9 +29,9 @@ SEXP r_mdb_version();
 
 SEXP r_mdb_env_create();
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
-                    SEXP r_subdir, SEXP r_nosync, SEXP r_rdonly,
-                    SEXP r_nometasync, SEXP r_writemap, SEXP r_nolock,
-                    SEXP r_mapasync, SEXP r_nordahead, SEXP r_nomeminit);
+                    SEXP r_subdir, SEXP r_sync, SEXP r_rdonly,
+                    SEXP r_metasync, SEXP r_writemap, SEXP r_lock,
+                    SEXP r_mapasync, SEXP r_rdahead, SEXP r_meminit);
 SEXP r_mdb_env_copy(SEXP r_env, SEXP r_path, SEXP r_compact);
 SEXP r_mdb_env_stat(SEXP r_env);
 SEXP r_mdb_env_info(SEXP r_env);

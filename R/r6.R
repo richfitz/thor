@@ -32,18 +32,18 @@
 
 dbenv <- function(path, ..., mode = as.octmode("644"),
                   ## flags for env
-                  subdir = TRUE, nosync = FALSE, rdonly = FALSE,
-                  nometasync = FALSE, writemap = FALSE, nolock = FALSE,
-                  mapasync = FALSE, nordahead = FALSE, nomeminit = FALSE,
+                  subdir = TRUE, sync = TRUE, rdonly = FALSE,
+                  metasync = TRUE, writemap = FALSE, lock = TRUE,
+                  mapasync = FALSE, rdahead = TRUE, meminit = TRUE,
                   ## other args
                   maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
                   reversekey = FALSE, dupsort = FALSE, create = TRUE) {
   R6_dbenv$new(path, mode,
                ## flags:
-               subdir = subdir, nosync = nosync, rdonly = rdonly,
-               nometasync = nometasync, writemap = writemap, nolock = nolock,
-               mapasync = mapasync, nordahead = nordahead,
-               nomeminit = nomeminit,
+               subdir = subdir, sync = sync, rdonly = rdonly,
+               metasync = metasync, writemap = writemap, lock = lock,
+               mapasync = mapasync, rdahead = rdahead,
+               meminit = meminit,
                ## other:
                maxdbs = maxdbs, maxreaders = maxreaders, mapsize = mapsize,
                reversekey = reversekey, dupsort = dupsort, create = create)
@@ -68,9 +68,9 @@ R6_dbenv <- R6::R6Class(
 
     ## This argument list will likely grow to drop flags
     initialize = function(path, mode,
-                          subdir, nosync, rdonly,
-                          nometasync, writemap, nolock,
-                          mapasync, nordahead, nomeminit,
+                          subdir, sync, rdonly,
+                          metasync, writemap, lock,
+                          mapasync, rdahead, meminit,
                           maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
                           reversekey = FALSE, dupsort = FALSE, create = TRUE) {
       assert_is(mode, "octmode")
@@ -94,9 +94,9 @@ R6_dbenv <- R6::R6Class(
         dir.create(path, FALSE, TRUE)
       }
       mdb_env_open(self$.ptr, path, mode,
-                   subdir, nosync, rdonly,
-                   nometasync, writemap, nolock,
-                   mapasync, nordahead, nomeminit)
+                   subdir, sync, rdonly,
+                   metasync, writemap, lock,
+                   mapasync, rdahead, meminit)
       self$open_database(NULL, NULL, reversekey, dupsort, create)
     },
 

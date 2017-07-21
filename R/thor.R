@@ -7,13 +7,13 @@ mdb_env_create <- function() {
 }
 
 mdb_env_open <- function(env, path, mode,
-                         subdir, nosync, rdonly,
-                         nometasync, writemap, nolock,
-                         mapasync, nordahead, nomeminit) {
+                         subdir, sync, rdonly,
+                         metasync, writemap, lock,
+                         mapasync, nordahead, meminit) {
   .Call(Cmdb_env_open, env, path, mode,
-        subdir, nosync, rdonly,
-        nometasync, writemap, nolock,
-        mapasync, nordahead, nomeminit)
+        subdir, sync, rdonly,
+        metasync, writemap, lock,
+        mapasync, nordahead, meminit)
 }
 
 mdb_env_copy <- function(env, path, compact = FALSE) {
