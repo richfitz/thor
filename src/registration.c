@@ -2,13 +2,6 @@
 #include <R_ext/Rdynload.h>
 #include <Rversion.h>
 
-// for testing:
-SEXP thor_test_cleanup() {
-  thor_cleanup();
-  thor_init();
-  return R_NilValue;
-}
-
 static const R_CallMethodDef call_methods[] = {
   {"Cmdb_version",                 (DL_FUNC) &r_mdb_version,               0},
 
@@ -81,9 +74,3 @@ void R_init_thor(DllInfo *info) {
   /* R_forceSymbols(info, TRUE); */
 #endif
 }
-
-// # nocov start
-void R_unload_thor(DllInfo *info) {
-  thor_cleanup();
-}
-// # nocov end

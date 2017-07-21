@@ -6,12 +6,8 @@
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
 SEXP thor_size_name;
-
 void thor_init() {
   thor_size_name = install("size");
-}
-
-void thor_cleanup() {
 }
 
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened);

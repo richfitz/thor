@@ -23,7 +23,6 @@ typedef struct thor_val_proxy {
 } thor_val_proxy;
 
 void thor_init();
-void thor_cleanup();
 
 // LMDB API:
 SEXP r_mdb_version();
