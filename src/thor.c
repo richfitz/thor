@@ -286,7 +286,20 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   unsigned int flags = 0;
   no_error(mdb_dbi_flags(txn, dbi, &flags), "mdb_dbi_flags");
-  return ScalarInteger(flags);
+
+  SEXP ret = PROTECT(allocVector(LGLSXP, 2));
+  SEXP nms = PROTECT(allocVector(STRSXP, 2));
+  int* val = INTEGER(ret);
+  size_t i = 0;
+
+  val[i] = flag_to_bool(flags, MDB_REVERSEKEY, false);
+  SET_STRING_ELT(nms, i++, mkChar("reversekey"));
+  val[i] = flag_to_bool(flags, MDB_DUPSORT, false);
+  SET_STRING_ELT(nms, i++, mkChar("dupsort"));
+
+  setAttrib(ret, R_NamesSymbol, nms);
+  UNPROTECT(2);
+  return ret;
 }
 
 // "Normally unnecessary. Use with care"

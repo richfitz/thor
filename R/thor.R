@@ -106,7 +106,7 @@ mdb_stat <- function(txn, dbi) {
 }
 
 mdb_dbi_flags <- function(txn, dbi) {
-  as_mdb_flag(.Call(Cmdb_dbi_flags, txn, dbi), flags_dbi)
+  .Call(Cmdb_dbi_flags, txn, dbi)
 }
 
 mdb_dbi_close <- function(env, dbi) {

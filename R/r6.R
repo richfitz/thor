@@ -224,6 +224,10 @@ R6_database <- R6::R6Class(
     },
     id = function() {
       mdb_dbi_id(self$.ptr)
+    },
+    flags = function(txn) {
+      assert_is(txn, "transaction")
+      mdb_dbi_flags(txn$.ptr, self$.ptr)
     }
   ))
 
