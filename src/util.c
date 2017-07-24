@@ -1,9 +1,19 @@
 #include "util.h"
 
-void no_error(int x, const char* str) {
-  if (x != MDB_SUCCESS) {
-    Rf_error("Error in mdb: %s: %s", mdb_strerror(x), str);
+void no_error(int rc, const char* str) {
+  if (rc != MDB_SUCCESS) {
+    Rf_error("Error in mdb: %s: %s", mdb_strerror(rc), str);
   }
+}
+
+bool no_error2(int rc, const char* str) {
+  bool found = false;
+  if (rc == MDB_SUCCESS) {
+    found = true;
+  } else if (rc != MDB_NOTFOUND) {
+    Rf_error("Error in mdb: %s: %s", mdb_strerror(rc), str);
+  }
+  return found;
 }
 
 const char * scalar_character(SEXP x, const char * name) {

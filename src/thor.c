@@ -346,14 +346,14 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
-  if (r_data == NULL) {
+  if (r_data == R_NilValue) {
     data.mv_size = 0;
     data.mv_data = "";
   } else {
     sexp_to_mdb_val(r_data, "data", &data);
   }
-  no_error(mdb_del(txn, dbi, &key, &data), "mdb_del");
-  return R_NilValue;
+  int rc = mdb_del(txn, dbi, &key, &data);
+  return ScalarLogical(no_error2(rc, "mdb_del"));
 }
 
 SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
@@ -362,13 +362,7 @@ SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   int rc = mdb_get(txn, dbi, &key, &data);
-  bool found = false;
-  if (rc == MDB_SUCCESS) {
-    found = true;
-  } else if (rc != MDB_NOTFOUND) {
-    no_error(rc, "mdb_exists");
-  }
-  return ScalarLogical(found);
+  return ScalarLogical(no_error2(rc, "mdb_exists"));
 }
 
 // --- cursors ---

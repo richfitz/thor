@@ -3,7 +3,8 @@
 #include <stdbool.h>
 #include <lmdb.h>
 
-void no_error(int x, const char* str);
+void no_error(int rc, const char* str);
+bool no_error2(int rc, const char* str);
 
 const char * scalar_character(SEXP x, const char * name);
 int scalar_int(SEXP x, const char * name);

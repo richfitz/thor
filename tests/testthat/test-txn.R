@@ -235,6 +235,17 @@ test_that("transaction caching", {
   expect_true(is_null_pointer(txn_ptr))
 })
 
+test_that("del", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  expect_true(txn$del("a"))
+  expect_false(txn$del("a"))
+  env$close()
+})
+
 test_that("exists", {
   env <- dbenv(tempfile())
   txn <- env$begin(write = TRUE)
