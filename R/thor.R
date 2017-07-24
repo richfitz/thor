@@ -9,14 +9,14 @@ mdb_env_create <- function() {
 mdb_env_open <- function(env, path, mode,
                          subdir, sync, rdonly,
                          metasync, writemap, lock,
-                         mapasync, nordahead, meminit) {
+                         mapasync, rdahead, meminit) {
   .Call(Cmdb_env_open, env, path, mode,
         subdir, sync, rdonly,
         metasync, writemap, lock,
-        mapasync, nordahead, meminit)
+        mapasync, rdahead, meminit)
 }
 
-mdb_env_copy <- function(env, path, compact = FALSE) {
+mdb_env_copy <- function(env, path, compact) {
   .Call(Cmdb_env_copy, env, path, compact)
 }
 
@@ -122,9 +122,8 @@ mdb_get <- function(txn, dbi, key, missing_value, as_proxy, as_raw) {
   .Call(Cmdb_get, txn, dbi, key, missing_value, as_proxy, as_raw)
 }
 
-mdb_put <- function(txn, dbi, key, data,
-                    nodupdata = NULL, nooverwrite = NULL, append = NULL) {
-  .Call(Cmdb_put, txn, dbi, key, data, nodupdata, nooverwrite, append)
+mdb_put <- function(txn, dbi, key, data, dupdata, overwrite, append) {
+  .Call(Cmdb_put, txn, dbi, key, data, dupdata, overwrite, append)
 }
 
 mdb_del <- function(txn, dbi, key, data) {
@@ -155,14 +154,13 @@ mdb_cursor_get <- function(cursor, op, key) {
   .Call(Cmdb_cursor_get, cursor, op, key)
 }
 
-mdb_cursor_put <- function(cursor, key, data, flags, nodupdata = NULL,
-                           nooverwrite = NULL, append = NULL) {
+mdb_cursor_put <- function(cursor, key, data, dupdata, overwrite, append) {
   .Call(Cmdb_cursor_put, cursor, key, data,
-        nodupdata, nooverwrite, append)
+        dupdata, overwrite, append)
 }
 
-mdb_cursor_del <- function(cursor, nodupdata) {
-  .Call(Cmdb_cursor_del, cursor, nodupdata)
+mdb_cursor_del <- function(cursor, dupdata) {
+  .Call(Cmdb_cursor_del, cursor, dupdata)
 }
 
 mdb_cursor_count <- function(cursor) {

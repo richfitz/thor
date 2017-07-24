@@ -201,14 +201,14 @@ SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
 
 // Transactions:
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
-                     SEXP r_rdonly, SEXP r_nosync, SEXP r_nometasync) {
+                     SEXP r_rdonly, SEXP r_sync, SEXP r_metasync) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
   const unsigned int flags =
     sexp_to_flag(r_rdonly, MDB_RDONLY, "rdonly", false) |
-    sexp_to_flag(r_nosync, MDB_NOSYNC, "nosync", false) |
-    sexp_to_flag(r_nometasync, MDB_NOMETASYNC, "nometasync", false);
+    sexp_to_flag(r_sync, MDB_NOSYNC, "sync", true) |
+    sexp_to_flag(r_metasync, MDB_NOMETASYNC, "metasync", true);
 
   MDB_txn *txn;
   no_error(mdb_txn_begin(env, parent, flags, &txn), "mdb_txn_begin");
@@ -327,13 +327,13 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
 }
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data,
-               SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append) {
+               SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, data;
   const unsigned int flags =
-    sexp_to_flag(r_nodupdata, MDB_NODUPDATA, "nodupdata", false) |
-    sexp_to_flag(r_nooverwrite, MDB_NOOVERWRITE, "nooverwrite", false) |
+    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
+    sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
@@ -427,23 +427,23 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
 }
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
-                      SEXP r_nodupdata, SEXP r_nooverwrite, SEXP r_append) {
+                      SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_data, "data", &data);
   const unsigned int flags =
-    sexp_to_flag(r_nodupdata, MDB_NODUPDATA, "nodupdata", false) |
-    sexp_to_flag(r_nooverwrite, MDB_NOOVERWRITE, "nooverwrite", false) |
+    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
+    sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
   return R_NilValue;
 }
 
-SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_nodupdata) {
+SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_dupdata) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  const bool nodupdata = scalar_logical(r_nodupdata, "nodupdata");
-  const unsigned int flags = nodupdata ? MDB_NODUPDATA : 0;
+  const bool dupdata = scalar_logical(r_dupdata, "dupdata");
+  const unsigned int flags = dupdata ? 0 : MDB_NODUPDATA;
   no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
   return R_NilValue;
 }

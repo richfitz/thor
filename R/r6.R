@@ -65,13 +65,12 @@ R6_dbenv <- R6::R6Class(
     .write_txn = NULL,
     .spare_txns = NULL,
 
-    ## This argument list will likely grow to drop flags
     initialize = function(path, mode,
                           subdir, sync, rdonly,
                           metasync, writemap, lock,
                           mapasync, rdahead, meminit,
-                          maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
-                          reversekey = FALSE, dupsort = FALSE, create = TRUE) {
+                          maxdbs, maxreaders, mapsize,
+                          reversekey, dupsort, create) {
       assert_is(mode, "octmode")
       self$.deps = stack()
       self$.ptr <- mdb_env_create()
@@ -239,7 +238,7 @@ R6_transaction <- R6::R6Class(
     .write = NULL,
     .mutations = 0L,
 
-    initialize = function(env, db = NULL, parent = NULL, write = FALSE) {
+    initialize = function(env, db, parent, write) {
       ## If the R6 issue is not a bug then we don't have to store
       ## upstream references for GC purposes - just if we need to use
       ## them!
@@ -364,9 +363,10 @@ R6_transaction <- R6::R6Class(
         res
       }
     },
-    put = function(key, data, flags = NULL) {
+    put = function(key, data, dupdata = TRUE, overwrite = TRUE,
+                   append = FALSE) {
       self$.mutations = self$.mutations + 1L
-      mdb_put(self$.ptr, self$.db$.ptr, key, data, flags)
+      mdb_put(self$.ptr, self$.db$.ptr, key, data, dupdata, overwrite, append)
     },
     del = function(key, data = NULL) {
       self$.mutations = self$.mutations + 1L
@@ -486,16 +486,14 @@ R6_cursor <- R6::R6Class(
       self$.cursor_get(cursor_op$SET_KEY_RANGE, key)
     },
 
-    del = function() {
-      nodupdata <- NULL
-      res <- mdb_cursor_del(self$.ptr, nodupdata)
+    del = function(dupdata = TRUE) {
+      res <- mdb_cursor_del(self$.ptr, dupdata)
       self$.txn$.mutations <- self$.txn$.mutations + 1L
       self$.cursor_get(cursor_op$GET_CURRENT)
       res
     },
-    put = function(value, nodupdata = NULL, nooverwrite = NULL, append = NULL) {
-      res <- mdb_cursor_put(self$.ptr, value,
-                            nodupdata, nooverwrite, append)
+    put = function(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE) {
+      res <- mdb_cursor_put(self$.ptr, key, value, dupdata, overwrite, append)
       self$.txn$.mutations <- self$.txn$.mutations + 1L
       self$.cursor_get(cursor_op$GET_CURRENT)
       res
