@@ -60,7 +60,7 @@ R6_dbenv <- R6::R6Class(
   public = list(
     .ptr = NULL,
     .db = NULL,
-    .dbs = new.env(parent = emptyenv()),
+    .dbs = NULL,
     .deps = NULL,
     .write_txn = NULL,
     .spare_txns = NULL,
@@ -74,16 +74,20 @@ R6_dbenv <- R6::R6Class(
       assert_is(mode, "octmode")
       self$.deps = stack()
       self$.ptr <- mdb_env_create()
+      self$.dbs <- new.env(parent = emptyenv())
       self$.spare_txns = stack()
 
       ## TODO: throughout here, nicer conversion to integer
       if (!is.null(maxreaders)) {
+        ## assert_integer_like(maxreaders)
         mdb_env_set_maxreaders(self$.ptr, as.integer(maxreaders))
       }
       if (!is.null(maxdbs)) {
+        ## assert_integer_like(maxdbs)
         mdb_env_set_maxdbs(self$.ptr, as.integer(maxdbs))
       }
       if (!is.null(mapsize)) {
+        ## assert_integer_like(mapsize)
         mdb_env_set_mapsize(self$.ptr, as.integer(mapsize))
       }
 
