@@ -131,6 +131,10 @@ mdb_del <- function(txn, dbi, key, data) {
   .Call(Cmdb_del, txn, dbi, key, data)
 }
 
+mdb_exists <- function(txn, dbi, key) {
+  .Call(Cmdb_exists, txn, dbi, key)
+}
+
 mdb_cursor_open <- function(txn, dbi) {
   .Call(Cmdb_cursor_open, txn, dbi)
 }

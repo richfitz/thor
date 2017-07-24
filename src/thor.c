@@ -356,6 +356,21 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
   return R_NilValue;
 }
 
+SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  MDB_val key, data;
+  sexp_to_mdb_val(r_key, "key", &key);
+  int rc = mdb_get(txn, dbi, &key, &data);
+  bool found = false;
+  if (rc == MDB_SUCCESS) {
+    found = true;
+  } else if (rc != MDB_NOTFOUND) {
+    no_error(rc, "mdb_exists");
+  }
+  return ScalarLogical(found);
+}
+
 // --- cursors ---
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);

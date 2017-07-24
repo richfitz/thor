@@ -374,6 +374,10 @@ R6_transaction <- R6::R6Class(
       mdb_del(self$.ptr, self$.db$.ptr, key, data)
     },
 
+    exists = function(key) {
+      mdb_exists(self$.ptr, self$.db$.ptr, key)
+    },
+
     ## TODO: For rleveldb I also implemented:
     ##
     ##   mget, mput

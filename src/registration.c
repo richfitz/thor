@@ -37,6 +37,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   7},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   6},
   {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
+  {"Cmdb_exists",                  (DL_FUNC) &r_mdb_exists,                3},
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
