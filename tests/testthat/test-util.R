@@ -36,3 +36,11 @@ test_that("list_to_fixed_env", {
   expect_error(e$a <- 1)
   expect_error(e$d <- 1)
 })
+
+test_that("assert_is", {
+  x <- 1L
+  expect_silent(assert_is(x, "integer"))
+  expect_error(assert_is(x, "character"), "'x' must be a character")
+  expect_error(assert_is(x, c("foo", "bar")),
+               "'x' must be a foo / bar")
+})

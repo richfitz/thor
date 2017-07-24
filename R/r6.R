@@ -351,7 +351,6 @@ R6_transaction <- R6::R6Class(
     ## TODO: some work to do here:
     ##   - append, overwrite, dupdata on put
     ##   - replace, pop
-    ##   - deletion gets MDB_NOTFOUND detection
     ##
     ## For rleveldb I implemented `error_if_missing` and did not
     ## implement `missing_value` (then for mget the reverse).
