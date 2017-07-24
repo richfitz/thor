@@ -114,3 +114,68 @@ test_that("some flags", {
   env2 <- dbenv(path, sync = TRUE)
   expect_true(env2$flags()[["sync"]])
 })
+
+test_that("set_mapsize", {
+  env <- dbenv(tempfile())
+  ms <- env$info()[["mapsize"]]
+  size <- ms * 2L
+  env$set_mapsize(size)
+  expect_identical(env$info()[["mapsize"]], size)
+})
+
+test_that("copy", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  txn$put("a", "A")
+  txn$commit()
+
+  path <- tempfile()
+  expect_identical(env$copy(path), path)
+  expect_true(file.exists(path))
+
+  env2 <- dbenv(path)
+  txn2 <- env2$begin()
+  expect_identical(txn2$get("a"), "A")
+})
+
+test_that("reader_check with no dead readers", {
+  ## TODO: I could write a more ambitious version of this that spawns
+  ## a new copy of R, opens the db and then kill the process.
+  env <- dbenv(tempfile())
+  expect_identical(env$reader_check(), 0L)
+})
+
+test_that("open_database", {
+  path <- tempfile()
+  env <- dbenv(path)
+  expect_identical(env$open_database(), env$.db)
+  ## This needs a much nicer error message!
+  expect_error(env$open_database("foo"), "maxdbs limit")
+  env$close()
+
+  env <- dbenv(path, maxdbs = 10)
+  dbi <- env$open_database("foo")
+  expect_identical(env$open_database("foo"), dbi)
+
+  txn <- env$begin(dbi, write = TRUE)
+  txn$put("a", "A")
+  txn$commit()
+
+  txn <- env$begin()
+  expect_null(txn$get("a", FALSE))
+  txn$abort()
+
+  txn <- env$begin(dbi)
+  expect_equal(txn$get("a", FALSE), "A")
+  txn$abort()
+})
+
+test_that("begin - one write transaction only", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  ## TODO: there needs to be some way of recovering from this
+  ## situation (and similarly some way of keeping a global cache of
+  ## envs so that we avoid a deadlock.
+  expect_error(env$begin(write = TRUE),
+               "Write transaction is already active for this environment")
+})

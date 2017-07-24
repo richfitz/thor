@@ -106,7 +106,6 @@ R6_dbenv <- R6::R6Class(
     path = function() {
       mdb_env_get_path(self$.ptr)
     },
-    ## This one needs work I think...
     flags = function() {
       mdb_env_get_flags(self$.ptr)
     },
@@ -121,6 +120,11 @@ R6_dbenv <- R6::R6Class(
     },
     maxreaders = function() {
       mdb_env_get_maxreaders(self$.ptr)
+    },
+
+    set_mapsize = function(size) {
+      ## assert_integer_like(size)
+      mdb_env_set_mapsize(self$.ptr, as.integer(size))
     },
 
     readers = function() {
