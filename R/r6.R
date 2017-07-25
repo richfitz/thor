@@ -389,6 +389,17 @@ R6_transaction <- R6::R6Class(
       mdb_exists(self$.ptr, self$.db$.ptr, key)
     },
 
+    replace = function(key, value, as_raw = NULL) {
+      cur <- self$cursor()
+      on.exit(cur$close())
+      cur$replace(key, value, as_raw)
+    },
+    pop = function(key, as_raw = NULL) {
+      cur <- self$cursor()
+      on.exit(cur$close())
+      cur$pop(key, as_raw)
+    },
+
     ## TODO: For rleveldb I also implemented:
     ##
     ##   mget, mput
@@ -409,6 +420,7 @@ R6_cursor <- R6::R6Class(
     .ptr = NULL,
     .cur_key = NULL,
     .cur_value = NULL,
+    .valid = FALSE,
 
     initialize = function(txn) {
       self$.txn <- txn
@@ -418,6 +430,12 @@ R6_cursor <- R6::R6Class(
       ## TODO: To implement mdb_drop we need to keep track of
       ## db->cursor links too
       ##   self$.db$.deps$add(self)
+      ##
+      ## though drop might be rare enough that we could try to find
+      ## all cursors that point at that database through the
+      ## dependencies that we have up through env (so go db -> env
+      ## then loop over all env dependencies and through its tree
+      ## until we find all cursors.
     },
 
     finalize = function() {
@@ -453,7 +471,7 @@ R6_cursor <- R6::R6Class(
       x <- mdb_cursor_get(self$.ptr, cursor_op, key)
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
-      invisible(!is.null(x[[2L]]))
+      self$.valid <- !is.null(x[[2L]])
     },
 
     ## TODO: pass value_if_missing through to value and make size NA for these?
@@ -491,18 +509,23 @@ R6_cursor <- R6::R6Class(
     move_next = function() {
       self$.cursor_get(cursor_op$NEXT)
     },
-    seek_key = function(key) {
+
+    move_to = function(key) {
       self$.cursor_get(cursor_op$SET_KEY, key)
     },
     seek = function(key) {
-      self$.cursor_get(cursor_op$SET_KEY_RANGE, key)
+      self$.cursor_get(cursor_op$SET_RANGE, key)
     },
 
     del = function(dupdata = TRUE) {
-      res <- mdb_cursor_del(self$.ptr, dupdata)
-      self$.txn$.mutations <- self$.txn$.mutations + 1L
-      self$.cursor_get(cursor_op$GET_CURRENT)
-      res
+      if (self$.valid) {
+        res <- mdb_cursor_del(self$.ptr, dupdata)
+        self$.txn$.mutations <- self$.txn$.mutations + 1L
+        self$.cursor_get(cursor_op$GET_CURRENT)
+        TRUE
+      } else {
+        FALSE
+      }
     },
     put = function(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE) {
       res <- mdb_cursor_put(self$.ptr, key, value, dupdata, overwrite, append)
@@ -510,12 +533,32 @@ R6_cursor <- R6::R6Class(
       self$.cursor_get(cursor_op$GET_CURRENT)
       res
     },
-    get = function(key, as_proxy = FALSE, as_raw = NULL, default = NULL) {
-      if (self$.cursor_get(cursor_op$SET_KEY, key)) {
-        self$value(as_proxy, as_raw) # needs to take default *here*
-      } else {
-        default
+
+    replace = function(key, value, as_raw = NULL) {
+      res <- mdb_cursor_put(self$.ptr, key, value, TRUE, FALSE, FALSE)
+      if (res) {
+        ## No value existed previously
+        return(NULL)
       }
+      old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL)
+      old <- mdb_proxy_copy(old_ptr[[2L]], as_raw)
+      self$put(key, value, TRUE, TRUE, FALSE)
+      old
+    },
+
+    pop = function(key, as_raw = NULL) {
+      if (self$move_to(key)) {
+        old <- self$.cur_value$value(as_raw)
+        self$del()
+        old
+      } else {
+        NULL
+      }
+    },
+
+    get = function(key, as_proxy = FALSE, as_raw = NULL) {
+      self$move_to(key)
+      self$value(as_proxy, as_raw)
     }
   ))
 
@@ -556,12 +599,12 @@ invalidate_dependencies <- function(x) {
   }
 }
 
-mdb_val_proxy <- function(txn, data) {
-  is_missing <- is.null(data)
+mdb_val_proxy <- function(txn, ptr) {
+  is_missing <- is.null(ptr)
 
   ## NOTE: a zero size for midding key makes sense because a
   ## zero-length value is not allowed (I believe).
-  size <- if (is_missing) 0L else attr(data, "size", TRUE)
+  size <- if (is_missing) 0L else attr(ptr, "size", TRUE)
 
   mutations <- txn$.mutations
   assert_valid <- function() {
@@ -584,7 +627,7 @@ mdb_val_proxy <- function(txn, data) {
       if (is_missing) {
         NULL
       } else {
-        mdb_proxy_copy(data, as_raw)
+        mdb_proxy_copy(ptr, as_raw)
       }
     })
   class(ret) <- "mdb_val_proxy"

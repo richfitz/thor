@@ -366,7 +366,7 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
     sexp_to_mdb_val(r_data, "data", &data);
   }
   int rc = mdb_del(txn, dbi, &key, &data);
-  return ScalarLogical(no_error2(rc, "mdb_del"));
+  return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
 }
 
 SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
@@ -375,7 +375,7 @@ SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_val key, data;
   sexp_to_mdb_val(r_key, "key", &key);
   int rc = mdb_get(txn, dbi, &key, &data);
-  return ScalarLogical(no_error2(rc, "mdb_exists"));
+  return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_exists"));
 }
 
 // --- cursors ---
@@ -411,8 +411,9 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
 
   if (r_key != R_NilValue) {
-    if (cursor_op != MDB_SET_KEY) { // should not be needed when we're done
-      Rf_error("key is allowed only with MDB_SET");
+    // TODO: this will come out eventually:
+    if (!(cursor_op == MDB_SET_KEY || cursor_op == MDB_SET_RANGE)) {
+      Rf_error("key is allowed only with SET_KEY, SET_RANGE");
     }
     sexp_to_mdb_val(r_key, "key", &key);
   }
@@ -449,8 +450,8 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
     sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
-  no_error(mdb_cursor_put(cursor, &key, &data, flags), "mdb_cursor_put");
-  return R_NilValue;
+  int rc = mdb_cursor_put(cursor, &key, &data, flags);
+  return ScalarLogical(no_error2(rc, MDB_KEYEXIST, "mdb_cursor_put"));
 }
 
 SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_dupdata) {

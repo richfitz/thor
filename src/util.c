@@ -6,11 +6,11 @@ void no_error(int rc, const char* str) {
   }
 }
 
-bool no_error2(int rc, const char* str) {
+bool no_error2(int rc, int false_flag, const char* str) {
   bool found = false;
   if (rc == MDB_SUCCESS) {
     found = true;
-  } else if (rc != MDB_NOTFOUND) {
+  } else if (rc != false_flag) {
     Rf_error("Error in mdb: %s: %s", mdb_strerror(rc), str);
   }
   return found;

@@ -256,3 +256,23 @@ test_that("exists", {
   expect_false(txn$exists("A"))
   env$close()
 })
+
+test_that("replace", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  expect_equal(txn$replace("g", "giraffe"), "G")
+  expect_equal(txn$get("g"), "giraffe")
+})
+
+test_that("pop", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  expect_equal(txn$pop("g"), "G")
+  expect_null(txn$pop("g"))
+})
