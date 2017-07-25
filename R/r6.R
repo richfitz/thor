@@ -103,7 +103,6 @@ R6_dbenv <- R6::R6Class(
     },
 
     finalize = function() {
-      message("[GC] env")
       self$close()
     },
 
@@ -311,7 +310,6 @@ R6_transaction <- R6::R6Class(
     },
 
     finalize = function() {
-      message("[GC] transaction")
       if (!is.null(self$.ptr)) {
         self$abort()
       }
@@ -327,7 +325,6 @@ R6_transaction <- R6::R6Class(
       mdb_stat(self$.ptr, self$.db$.ptr)
     },
     commit = function() {
-      message("...committing transaction")
       invalidate_dependencies(self)
       if (!self$.cache_spare()) {
         mdb_txn_commit(self$.ptr)
@@ -336,7 +333,6 @@ R6_transaction <- R6::R6Class(
     },
     abort = function(cache = TRUE) {
       if (!is.null(self$.ptr)) {
-        message("...aborting transaction")
         invalidate_dependencies(self)
         if (!(cache && self$.cache_spare())) {
           mdb_txn_abort(self$.ptr, FALSE)
@@ -439,7 +435,6 @@ R6_cursor <- R6::R6Class(
     },
 
     finalize = function() {
-      message("[GC] cursor")
       self$invalidate()
     },
 
@@ -585,17 +580,12 @@ with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
 }
 
 invalidate_dependencies <- function(x) {
-  message(sprintf("invalidating deps for a %s", class(x)[[1]]))
   if (!is.null(x$.deps)) {
     deps <- x$.deps$get()
-    message(sprintf("%d deps", length(deps)))
     for (d in rev(deps)) {
-      message(sprintf("...invalidating a %s", class(d)[[1]]))
       d$invalidate()
     }
     x$.deps <- NULL
-  } else {
-    message("(null deps)")
   }
 }
 
