@@ -77,10 +77,6 @@ mdb_txn_id <- function(txn) {
   .Call(Cmdb_txn_id, txn)
 }
 
-mdb_txn_env <- function(txn) {
-  .Call(Cmdb_txn_env, txn)
-}
-
 mdb_txn_commit <- function(txn) {
   .Call(Cmdb_txn_commit, txn)
 }
@@ -109,11 +105,6 @@ mdb_dbi_flags <- function(txn, dbi) {
   .Call(Cmdb_dbi_flags, txn, dbi)
 }
 
-mdb_dbi_close <- function(env, dbi) {
-  stop("Don't call this")
-  .Call(Cmdb_dbi_close, env, dbi)
-}
-
 mdb_drop <- function(txn, dbi, del) {
   .Call(Cmdb_drop, txn, dbi, del)
 }
@@ -140,14 +131,6 @@ mdb_cursor_open <- function(txn, dbi) {
 
 mdb_cursor_close <- function(cursor) {
   .Call(Cmdb_cursor_close, cursor)
-}
-
-mdb_cursor_txn <- function(cursor) {
-  .Call(Cmdb_cursor_txn, cursor)
-}
-
-mdb_cursor_dbi <- function(cursor) {
-  .Call(Cmdb_cursor_dbi, cursor)
 }
 
 mdb_cursor_get <- function(cursor, op, key, data) {

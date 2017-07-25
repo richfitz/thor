@@ -22,7 +22,6 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_txn_begin",               (DL_FUNC) &r_mdb_txn_begin,             5},
   {"Cmdb_txn_id",                  (DL_FUNC) &r_mdb_txn_id,                1},
-  {"Cmdb_txn_env",                 (DL_FUNC) &r_mdb_txn_env,               1},
   {"Cmdb_txn_commit",              (DL_FUNC) &r_mdb_txn_commit,            1},
   {"Cmdb_txn_abort",               (DL_FUNC) &r_mdb_txn_abort,             2},
   {"Cmdb_txn_reset",               (DL_FUNC) &r_mdb_txn_reset,             1},
@@ -31,7 +30,6 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              5},
   {"Cmdb_stat",                    (DL_FUNC) &r_mdb_stat,                  2},
   {"Cmdb_dbi_flags",               (DL_FUNC) &r_mdb_dbi_flags,             2},
-  {"Cmdb_dbi_close",               (DL_FUNC) &r_mdb_dbi_close,             2},
   {"Cmdb_drop",                    (DL_FUNC) &r_mdb_drop,                  3},
 
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   7},
@@ -41,8 +39,6 @@ static const R_CallMethodDef call_methods[] = {
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
-  {"Cmdb_cursor_txn",              (DL_FUNC) &r_mdb_cursor_txn,            1},
-  {"Cmdb_cursor_dbi",              (DL_FUNC) &r_mdb_cursor_dbi,            1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            4},
   {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            6},
   {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},

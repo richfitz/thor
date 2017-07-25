@@ -218,12 +218,6 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
   return r_txn;
 }
 
-SEXP r_mdb_txn_env(SEXP r_txn) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_env * env = mdb_txn_env(txn);
-  return r_mdb_env_wrap(env, true);
-}
-
 SEXP r_mdb_txn_id(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   return ScalarInteger(mdb_txn_id(txn));
@@ -300,14 +294,6 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
   setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
   return ret;
-}
-
-// "Normally unnecessary. Use with care"
-SEXP r_mdb_dbi_close(SEXP r_env, SEXP r_dbi) {
-  MDB_env * env = r_mdb_get_env(r_env, true);
-  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  mdb_dbi_close(env, dbi);
-  return R_NilValue;
 }
 
 SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del) {
@@ -392,17 +378,6 @@ SEXP r_mdb_cursor_close(SEXP r_cursor) {
   mdb_cursor_close(cursor);
   R_ClearExternalPtr(r_cursor);
   return R_NilValue;
-}
-
-SEXP r_mdb_cursor_txn(SEXP r_cursor) {
-  Rf_error("don't call this"); // TODO
-  return R_NilValue;
-}
-
-SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  MDB_dbi dbi = mdb_cursor_dbi(cursor);
-  return r_mdb_dbi_wrap(dbi);
 }
 
 SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) {
