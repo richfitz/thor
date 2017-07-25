@@ -48,9 +48,6 @@ test_that("basic use", {
   expect_true(cur$move_next())
   expect_identical(cur$key(), "g")
 
-  mdb_cursor_get(cur$.ptr, cursor_op$FIRST, NULL)
-  mdb_cursor_get(cur$.ptr, cursor_op$GET_CURRENT, NULL)
-
   env$close()
 })
 

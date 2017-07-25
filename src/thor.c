@@ -405,22 +405,31 @@ SEXP r_mdb_cursor_dbi(SEXP r_cursor) {
   return r_mdb_dbi_wrap(dbi);
 }
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, data;
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
 
   if (r_key != R_NilValue) {
     // TODO: this will come out eventually:
-    if (!(cursor_op == MDB_SET_KEY || cursor_op == MDB_SET_RANGE)) {
-      Rf_error("key is allowed only with SET_KEY, SET_RANGE");
+    if (!(cursor_op == MDB_SET_KEY ||
+          cursor_op == MDB_SET_RANGE ||
+          cursor_op == MDB_GET_BOTH ||
+          cursor_op == MDB_GET_BOTH_RANGE)) {
+      Rf_error("key is allowed only with SET_KEY, SET_RANGE, etc");
     }
     sexp_to_mdb_val(r_key, "key", &key);
   }
+  if (r_data != R_NilValue) {
+    // TODO: this will come out eventually:
+    if (!(cursor_op == MDB_GET_BOTH ||
+          cursor_op == MDB_GET_BOTH_RANGE)) {
+      Rf_error("key is allowed only with GET_BOTH, GET_BOTH_RANGE, etc");
+    }
+    sexp_to_mdb_val(r_data, "data", &data);
+  }
 
   int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
-  // Possibly this would be nicer to do if we store something to
-  // indicate if the cursor has ever been positioned?
 
   SEXP ret = PROTECT(allocVector(VECSXP, 2));
 

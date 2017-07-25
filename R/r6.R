@@ -211,6 +211,8 @@ R6_database <- R6::R6Class(
   cloneable = FALSE,
   public = list(
     .ptr = NULL,
+    ## TODO: other options here include dupfixed, integerkey,
+    ## integerdup, reversedup
     initialize = function(env, txn_ptr, name, reversekey, dupsort, create) {
       self$.ptr <- mdb_dbi_open(txn_ptr, name, reversekey, dupsort, create)
       env$.deps$add(self)
@@ -456,14 +458,14 @@ R6_cursor <- R6::R6Class(
       self$.ptr <- NULL
     },
 
-    .cursor_get = function(cursor_op, key = NULL) {
+    .cursor_get = function(cursor_op, key = NULL, data = NULL) {
       ## This should/could be done in one move _each_ (perhaps) but
       ## this way works too.  It will do perhaps too much and we
       ## should split this into two bits (key, value).  Other issues;
       ## there is no null proxy object (boo) and there is work needed
       ## on the R side to build a proxy object; we should save the bit
       ## required to build the proxy only as that's very cheap.
-      x <- mdb_cursor_get(self$.ptr, cursor_op, key)
+      x <- mdb_cursor_get(self$.ptr, cursor_op, key, data)
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
       self$.valid <- !is.null(x[[2L]])
@@ -535,7 +537,7 @@ R6_cursor <- R6::R6Class(
         ## No value existed previously
         return(NULL)
       }
-      old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL)
+      old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL, NULL)
       old <- mdb_proxy_copy(old_ptr[[2L]], as_raw)
       self$put(key, value, TRUE, TRUE, FALSE)
       old
@@ -554,6 +556,48 @@ R6_cursor <- R6::R6Class(
     get = function(key, as_proxy = FALSE, as_raw = NULL) {
       self$move_to(key)
       self$value(as_proxy, as_raw)
+    },
+
+    ## These ones are only valid for databases with duplicates.  I
+    ## think that I should be careful how I expose this.  One option
+    ## is to use inheritance; a bit crap but might at least keep the
+    ## interface fairly simple.
+    first_dup = function() {
+      key <- self$.cur_key
+      v <- self$.cursor_get(cursor_op$FIRST_DUP)
+      if (v) {
+        self$.cur_key <- key
+      }
+      invisible(v)
+    },
+    last_dup = function() {
+      key <- self$.cur_key
+      v <- self$.cursor_get(cursor_op$LAST_DUP)
+      if (v) {
+        self$.cur_key <- key
+      }
+      invisible(v)
+    },
+    move_prev_dup = function() {
+      self$.cursor_get(cursor_op$PREV_DUP)
+    },
+    move_next_dup = function() {
+      self$.cursor_get(cursor_op$NEXT_DUP)
+    },
+    move_to_dup = function(key, value) {
+      self$.cursor_get(cursor_op$GET_BOTH, key, value)
+    },
+    seek_dup = function(key, value) {
+      self$.cursor_get(cursor_op$GET_BOTH_RANGE, key, value)
+    },
+    move_prev_nodup = function() {
+      self$.cursor_get(cursor_op$PREV_NODUP)
+    },
+    move_next_nodup = function() {
+      self$.cursor_get(cursor_op$NEXT_NODUP)
+    },
+    count = function() {
+      mdb_cursor_count(self$.ptr)
     }
   ))
 

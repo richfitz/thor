@@ -150,8 +150,8 @@ mdb_cursor_dbi <- function(cursor) {
   .Call(Cmdb_cursor_dbi, cursor)
 }
 
-mdb_cursor_get <- function(cursor, op, key) {
-  .Call(Cmdb_cursor_get, cursor, op, key)
+mdb_cursor_get <- function(cursor, op, key, data) {
+  .Call(Cmdb_cursor_get, cursor, op, key, data)
 }
 
 mdb_cursor_put <- function(cursor, key, data, dupdata, overwrite, append) {
