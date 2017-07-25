@@ -179,3 +179,26 @@ test_that("begin - one write transaction only", {
   expect_error(env$begin(write = TRUE),
                "Write transaction is already active for this environment")
 })
+
+test_that("sync", {
+  env <- dbenv(tempfile())
+  expect_null(env$sync())
+})
+
+test_that("maxreaders", {
+  env <- dbenv(tempfile())
+  n <- env$info()[["maxreaders"]]
+  env$close()
+  m <- n * 2L
+  env <- dbenv(tempfile(), maxreaders = m)
+  expect_identical(env$info()[["maxreaders"]], m)
+})
+
+test_that("mapsize", {
+  env <- dbenv(tempfile())
+  sz <- env$info()[["mapsize"]]
+  env$close()
+  sz2 <- sz * 2L
+  env <- dbenv(tempfile(), mapsize = sz2)
+  expect_identical(env$info()[["mapsize"]], sz2)
+})
