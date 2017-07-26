@@ -77,7 +77,7 @@ bool is_raw_string(const char* str, size_t len, return_as as_raw) {
   } else {
     bool has_raw = memchr(str, '\0', len) != NULL;
     if (has_raw && as_raw == AS_STRING) {
-      Rf_error("Value contains embedded nul bytes; cannot return string");
+      Rf_error("value contains embedded nul bytes; cannot return string");
     }
     return has_raw;
   }

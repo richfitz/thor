@@ -34,7 +34,7 @@ test_that("basic use", {
 
   cur <- txn$cursor()
   expect_null(cur$key())
-  expect_null(cur$key(TRUE)$value())
+  expect_null(cur$key(TRUE)$data())
 
   expect_true(cur$first())
   expect_identical(cur$key(), "a")
@@ -80,13 +80,13 @@ test_that("cursor get", {
   expect_identical(cur$key(), "z")
   p <- cur$key(TRUE)
   expect_is(p, "mdb_val_proxy")
-  expect_identical(p$value(), "z")
+  expect_identical(p$data(), "z")
 
   ## Then we modify the data
   txn$del("g")
 
   expect_false(p$is_valid())
-  expect_error(p$value(), "transaction has modified database")
+  expect_error(p$data(), "transaction has modified database")
   expect_identical(cur$key(), "z")
 })
 
@@ -226,5 +226,5 @@ test_that("get", {
 
   p <- cur$get("h", as_proxy = TRUE)
   expect_is(p, "mdb_val_proxy")
-  expect_identical(p$value(), "H")
+  expect_identical(p$data(), "H")
 })

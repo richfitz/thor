@@ -114,12 +114,12 @@ mdb_get <- function(txn, dbi, key, missing_is_error, as_proxy, as_raw) {
   .Call(Cmdb_get, txn, dbi, key, missing_is_error, as_proxy, as_raw)
 }
 
-mdb_put <- function(txn, dbi, key, data, dupdata, overwrite, append) {
-  .Call(Cmdb_put, txn, dbi, key, data, dupdata, overwrite, append)
+mdb_put <- function(txn, dbi, key, value, dupdata, overwrite, append) {
+  .Call(Cmdb_put, txn, dbi, key, value, dupdata, overwrite, append)
 }
 
-mdb_del <- function(txn, dbi, key, data) {
-  .Call(Cmdb_del, txn, dbi, key, data)
+mdb_del <- function(txn, dbi, key, value) {
+  .Call(Cmdb_del, txn, dbi, key, value)
 }
 
 mdb_exists <- function(txn, dbi, key) {
@@ -134,12 +134,12 @@ mdb_cursor_close <- function(cursor) {
   .Call(Cmdb_cursor_close, cursor)
 }
 
-mdb_cursor_get <- function(cursor, op, key, data) {
-  .Call(Cmdb_cursor_get, cursor, op, key, data)
+mdb_cursor_get <- function(cursor, op, key, value) {
+  .Call(Cmdb_cursor_get, cursor, op, key, value)
 }
 
-mdb_cursor_put <- function(cursor, key, data, dupdata, overwrite, append) {
-  .Call(Cmdb_cursor_put, cursor, key, data,
+mdb_cursor_put <- function(cursor, key, value, dupdata, overwrite, append) {
+  .Call(Cmdb_cursor_put, cursor, key, value,
         dupdata, overwrite, append)
 }
 

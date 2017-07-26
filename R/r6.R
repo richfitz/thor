@@ -362,14 +362,14 @@ R6_transaction <- R6::R6Class(
         res
       }
     },
-    put = function(key, data, dupdata = TRUE, overwrite = TRUE,
+    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
                    append = FALSE) {
       self$.mutations = self$.mutations + 1L
-      mdb_put(self$.ptr, self$.db$.ptr, key, data, dupdata, overwrite, append)
+      mdb_put(self$.ptr, self$.db$.ptr, key, value, dupdata, overwrite, append)
     },
-    del = function(key, data = NULL) {
+    del = function(key, value = NULL) {
       self$.mutations = self$.mutations + 1L
-      mdb_del(self$.ptr, self$.db$.ptr, key, data)
+      mdb_del(self$.ptr, self$.db$.ptr, key, value)
     },
 
     exists = function(key) {
@@ -447,14 +447,14 @@ R6_cursor <- R6::R6Class(
       self$.ptr <- NULL
     },
 
-    .cursor_get = function(cursor_op, key = NULL, data = NULL) {
+    .cursor_get = function(cursor_op, key = NULL, value = NULL) {
       ## This should/could be done in one move _each_ (perhaps) but
       ## this way works too.  It will do perhaps too much and we
       ## should split this into two bits (key, value).  Other issues;
       ## there is no null proxy object (boo) and there is work needed
       ## on the R side to build a proxy object; we should save the bit
       ## required to build the proxy only as that's very cheap.
-      x <- mdb_cursor_get(self$.ptr, cursor_op, key, data)
+      x <- mdb_cursor_get(self$.ptr, cursor_op, key, value)
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
       self$.valid <- !is.null(x[[2L]])
@@ -468,7 +468,7 @@ R6_cursor <- R6::R6Class(
       if (as_proxy) {
         self$.cur_key
       } else {
-        self$.cur_key$value(as_raw)
+        self$.cur_key$data(as_raw)
       }
     },
 
@@ -479,7 +479,7 @@ R6_cursor <- R6::R6Class(
       if (as_proxy) {
         self$.cur_value
       } else {
-        self$.cur_value$value(as_raw)
+        self$.cur_value$data(as_raw)
       }
     },
 
@@ -534,7 +534,7 @@ R6_cursor <- R6::R6Class(
 
     pop = function(key, as_raw = NULL) {
       if (self$move_to(key)) {
-        old <- self$.cur_value$value(as_raw)
+        old <- self$.cur_value$data(as_raw)
         self$del()
         old
       } else {
@@ -626,7 +626,7 @@ mdb_val_proxy <- function(txn, ptr) {
   is_missing <- is.null(ptr)
 
   ## NOTE: a zero size for midding key makes sense because a
-  ## zero-length value is not allowed (I believe).
+  ## zero-length data is not allowed (I believe).
   size <- if (is_missing) 0L else attr(ptr, "size", TRUE)
 
   mutations <- txn$.mutations
@@ -645,7 +645,7 @@ mdb_val_proxy <- function(txn, ptr) {
       assert_valid()
       size
     },
-    value = function(as_raw = NULL) {
+    data = function(as_raw = NULL) {
       assert_valid()
       if (is_missing) {
         NULL

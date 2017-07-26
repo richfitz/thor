@@ -309,58 +309,58 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                SEXP r_missing_is_error, SEXP r_as_proxy, SEXP r_as_raw) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val key, data;
+  MDB_val key, value;
   const bool
     missing_is_error = scalar_logical(r_missing_is_error, "missing_is_error"),
     as_proxy = scalar_logical(r_as_proxy, "as_proxy");
   return_as as_raw = to_return_as(r_as_raw);
   sexp_to_mdb_val(r_key, "key", &key);
 
-  int rc = mdb_get(txn, dbi, &key, &data);
+  int rc = mdb_get(txn, dbi, &key, &value);
   if (rc == MDB_NOTFOUND) {
     return mdb_missing_to_sexp(missing_is_error, r_key);
   } else {
     no_error(rc, "mdb_get");
-    return mdb_val_to_sexp(&data, as_proxy, as_raw);
+    return mdb_val_to_sexp(&value, as_proxy, as_raw);
   }
 }
 
-SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data,
+SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
                SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val key, data;
+  MDB_val key, value;
   const unsigned int flags =
     sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   sexp_to_mdb_val(r_key, "key", &key);
-  sexp_to_mdb_val(r_data, "data", &data);
-  no_error(mdb_put(txn, dbi, &key, &data, flags), "mdb_put");
+  sexp_to_mdb_val(r_value, "value", &value);
+  no_error(mdb_put(txn, dbi, &key, &value, flags), "mdb_put");
   return R_NilValue;
 }
 
-SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_data) {
+SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val key, data;
+  MDB_val key, value;
   sexp_to_mdb_val(r_key, "key", &key);
-  if (r_data == R_NilValue) {
-    data.mv_size = 0;
-    data.mv_data = "";
+  if (r_value == R_NilValue) {
+    value.mv_size = 0;
+    value.mv_data = "";
   } else {
-    sexp_to_mdb_val(r_data, "data", &data);
+    sexp_to_mdb_val(r_value, "value", &value);
   }
-  int rc = mdb_del(txn, dbi, &key, &data);
+  int rc = mdb_del(txn, dbi, &key, &value);
   return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
 }
 
 SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val key, data;
+  MDB_val key, value;
   sexp_to_mdb_val(r_key, "key", &key);
-  int rc = mdb_get(txn, dbi, &key, &data);
+  int rc = mdb_get(txn, dbi, &key, &value);
   return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_exists"));
 }
 
@@ -380,9 +380,10 @@ SEXP r_mdb_cursor_close(SEXP r_cursor) {
   return R_NilValue;
 }
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) {
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
+                      SEXP r_value) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  MDB_val key, data;
+  MDB_val key, value;
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
 
   if (r_key != R_NilValue) {
@@ -395,16 +396,16 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) 
     }
     sexp_to_mdb_val(r_key, "key", &key);
   }
-  if (r_data != R_NilValue) {
+  if (r_value != R_NilValue) {
     // TODO: this will come out eventually:
     if (!(cursor_op == MDB_GET_BOTH ||
           cursor_op == MDB_GET_BOTH_RANGE)) {
       Rf_error("key is allowed only with GET_BOTH, GET_BOTH_RANGE, etc");
     }
-    sexp_to_mdb_val(r_data, "data", &data);
+    sexp_to_mdb_val(r_value, "value", &value);
   }
 
-  int rc = mdb_cursor_get(cursor, &key, &data, cursor_op);
+  int rc = mdb_cursor_get(cursor, &key, &value, cursor_op);
 
   SEXP ret = PROTECT(allocVector(VECSXP, 2));
 
@@ -412,7 +413,7 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) 
     const bool as_proxy = true;
     const return_as as_raw = AS_ANY;
     SET_VECTOR_ELT(ret, 0, mdb_val_to_sexp(&key, as_proxy, as_raw));
-    SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&data, as_proxy, as_raw));
+    SET_VECTOR_ELT(ret, 1, mdb_val_to_sexp(&value, as_proxy, as_raw));
   } else {
     bool ok = rc == MDB_NOTFOUND ||
       (rc == EINVAL && cursor_op == MDB_GET_CURRENT);
@@ -424,17 +425,17 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key, SEXP r_data) 
   return ret;
 }
 
-SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_data,
+SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_value,
                       SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  MDB_val key, data;
+  MDB_val key, value;
   sexp_to_mdb_val(r_key, "key", &key);
-  sexp_to_mdb_val(r_data, "data", &data);
+  sexp_to_mdb_val(r_value, "value", &value);
   const unsigned int flags =
     sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
-  int rc = mdb_cursor_put(cursor, &key, &data, flags);
+  int rc = mdb_cursor_put(cursor, &key, &value, flags);
   return ScalarLogical(no_error2(rc, MDB_KEYEXIST, "mdb_cursor_put"));
 }
 
