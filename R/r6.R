@@ -352,12 +352,6 @@ R6_transaction <- R6::R6Class(
       self$.mutations <- Inf
     },
 
-    ## TODO: some work to do here:
-    ##   - append, overwrite, dupdata on put
-    ##   - replace, pop
-    ##
-    ## For rleveldb I implemented `error_if_missing` and did not
-    ## implement `missing_value` (then for mget the reverse).
     get = function(key, missing_is_error = TRUE,
                    as_proxy = FALSE, as_raw = NULL) {
       res <- mdb_get(self$.ptr, self$.db$.ptr, key, missing_is_error,

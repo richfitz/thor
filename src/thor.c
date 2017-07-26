@@ -318,7 +318,7 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
 
   int rc = mdb_get(txn, dbi, &key, &data);
   if (rc == MDB_NOTFOUND) {
-    return mdb_missing_to_sexp(as_proxy, missing_is_error, R_NilValue, r_key);
+    return mdb_missing_to_sexp(missing_is_error, r_key);
   } else {
     no_error(rc, "mdb_get");
     return mdb_val_to_sexp(&data, as_proxy, as_raw);
@@ -651,8 +651,7 @@ SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy, return_as as_raw) {
   return as_proxy ? mdb_val_to_sexp_proxy(x) : mdb_val_to_sexp_copy(x, as_raw);
 }
 
-SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
-                         SEXP r_missing_value, SEXP r_key) {
+SEXP mdb_missing_to_sexp(bool missing_is_error, SEXP r_key) {
   if (missing_is_error) {
     if (TYPEOF(r_key) == STRSXP) {
       Rf_error("Key '%s' not found in database",
@@ -661,7 +660,7 @@ SEXP mdb_missing_to_sexp(bool as_proxy, bool missing_is_error,
       Rf_error("Key not found in database");
     }
   }
-  return as_proxy ? R_NilValue : r_missing_value;
+  return R_NilValue;
 }
 
 SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw) {

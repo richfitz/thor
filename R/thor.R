@@ -110,8 +110,8 @@ mdb_drop <- function(txn, dbi, del) {
   .Call(Cmdb_drop, txn, dbi, del)
 }
 
-mdb_get <- function(txn, dbi, key, missing_value, as_proxy, as_raw) {
-  .Call(Cmdb_get, txn, dbi, key, missing_value, as_proxy, as_raw)
+mdb_get <- function(txn, dbi, key, missing_is_error, as_proxy, as_raw) {
+  .Call(Cmdb_get, txn, dbi, key, missing_is_error, as_proxy, as_raw)
 }
 
 mdb_put <- function(txn, dbi, key, data, dupdata, overwrite, append) {
