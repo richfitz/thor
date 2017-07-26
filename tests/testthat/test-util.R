@@ -44,3 +44,9 @@ test_that("assert_is", {
   expect_error(assert_is(x, c("foo", "bar")),
                "'x' must be a foo / bar")
 })
+
+test_that("as_integer", {
+  expect_identical(as_integer(1L), 1L)
+  expect_identical(as_integer(1.0), 1L)
+  expect_error(as_integer(pi), "'pi' must be an integer", fixed = TRUE)
+})

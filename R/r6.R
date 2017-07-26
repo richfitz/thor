@@ -79,16 +79,15 @@ R6_dbenv <- R6::R6Class(
 
       ## TODO: throughout here, nicer conversion to integer
       if (!is.null(maxreaders)) {
-        ## assert_integer_like(maxreaders)
-        mdb_env_set_maxreaders(self$.ptr, as.integer(maxreaders))
+        mdb_env_set_maxreaders(self$.ptr, as_integer(maxreaders))
       }
       if (!is.null(maxdbs)) {
         ## assert_integer_like(maxdbs)
-        mdb_env_set_maxdbs(self$.ptr, as.integer(maxdbs))
+        mdb_env_set_maxdbs(self$.ptr, as_integer(maxdbs))
       }
       if (!is.null(mapsize)) {
         ## assert_integer_like(mapsize)
-        mdb_env_set_mapsize(self$.ptr, as.integer(mapsize))
+        mdb_env_set_mapsize(self$.ptr, as_integer(mapsize))
       }
 
       ## Be more user-friendly
@@ -127,7 +126,7 @@ R6_dbenv <- R6::R6Class(
 
     set_mapsize = function(size) {
       ## assert_integer_like(size)
-      mdb_env_set_mapsize(self$.ptr, as.integer(size))
+      mdb_env_set_mapsize(self$.ptr, as_integer(size))
     },
 
     readers = function() {

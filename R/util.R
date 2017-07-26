@@ -66,6 +66,19 @@ assert_is <- function(x, what, name = deparse(substitute(x))) {
   }
 }
 
+as_integer <- function(x, name = deparse(substitute(x))) {
+  if (is.integer(x)) {
+    x
+  } else {
+    ret <- as.integer(x)
+    if (ret != x) {
+      stop(sprintf("'%s' must be an integer, or integer-like", name),
+           call. = FALSE)
+    }
+    ret
+  }
+}
+
 list_to_fixed_env <- function(x, env) {
   for (i in names(x)) {
     env[[i]] <- x[[i]]
