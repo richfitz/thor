@@ -94,7 +94,7 @@ R6_dbenv <- R6::R6Class(
                    subdir, sync, rdonly,
                    metasync, writemap, lock,
                    mapasync, rdahead, meminit)
-      self$open_database(NULL, NULL, reversekey, dupsort, create)
+      self$open_database(NULL, reversekey, dupsort, create)
     },
 
     finalize = function() {
@@ -158,21 +158,25 @@ R6_dbenv <- R6::R6Class(
       }
     },
 
-    open_database = function(key = NULL, txn = NULL, reversekey = FALSE,
-                             dupsort = FALSE, create = TRUE) {
+    ## NOTE: The python interface allowed re-using a write transaction
+    ## here.  However doing that risks leaving a broken db floating
+    ## around in the case of an aborted transaction.  A possible
+    ## solution would be to add the db to the transaction's
+    ## dependencies in this case but that's not quite right either
+    ## because then commit would invalidate the db.  So the simplest
+    ## case is to require that the db is created and commited before
+    ## anyone uses it.
+    open_database = function(key = NULL, reversekey = FALSE, dupsort = FALSE,
+                             create = TRUE) {
       db <- if (is.null(key)) self$.db else self$.dbs[[key]]
       if (!is.null(db)) {
         return(db)
       }
 
-      newdb <- function(txn) {
-        R6_database$new(self, txn, key, reversekey, dupsort, create)
+      newdb <- function(txn_ptr) {
+        R6_database$new(self, txn_ptr, key, reversekey, dupsort, create)
       }
-      if (is.null(txn)) {
-        db <- with_new_txn(self, newdb, write = TRUE)
-      } else {
-        db <- newdb(txn)
-      }
+      db <- with_new_txn(self, newdb, write = TRUE)
 
       if (is.null(key)) {
         self$.db <- db
@@ -597,18 +601,18 @@ with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
       ## This just needs to send out a decent error message
       stop("FIXME")
     }
-    txn <- mdb_txn_begin(env$.ptr, parent, FALSE)
+    txn_ptr <- mdb_txn_begin(env$.ptr, parent, FALSE)
     withCallingHandlers({
-      ret <- f(txn)
-      mdb_txn_commit(txn)
+      ret <- f(txn_ptr)
+      mdb_txn_commit(txn_ptr)
       ret
-    }, error = function(e) mdb_txn_abort(txn, FALSE))
+    }, error = function(e) mdb_txn_abort(txn_ptr, FALSE))
   } else {
     ## Consider using the pool system in env?
-    txn <- mdb_txn_begin(env$.ptr, parent, TRUE)
+    txn_ptr <- mdb_txn_begin(env$.ptr, parent, TRUE)
     withCallingHandlers({
-      f(txn)
-    }, finally = function(e) mdb_txn_abort(txn, FALSE))
+      f(txn_ptr)
+    }, finally = function(e) mdb_txn_abort(txn_ptr, FALSE))
   }
 }
 
