@@ -67,7 +67,7 @@ void R_init_thor(DllInfo *info) {
   thor_init();
   R_registerRoutines(info, NULL, call_methods, NULL, NULL);
 #if defined(R_VERSION) && R_VERSION >= R_Version(3, 3, 0)
-  /* R_useDynamicSymbols(info, FALSE); */
-  /* R_forceSymbols(info, TRUE); */
+  R_useDynamicSymbols(info, FALSE);
+  R_forceSymbols(info, TRUE);
 #endif
 }
