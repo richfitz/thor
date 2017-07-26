@@ -289,3 +289,85 @@ test_that("cmp", {
                "dcmp() is not meaningful on database with dupsort = FALSE",
                fixed = TRUE)
 })
+
+test_that("drop; invalidate as we go", {
+  env <- dbenv(tempfile(), maxdbs = 10)
+  db2 <- env$open_database("foo")
+  expect_identical(db2$id(), 2L)
+
+  txn <- env$begin(db = db2, write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  txn$commit()
+
+  txn_read <- env$begin(db = db2)
+  expect_identical(txn_read$get("a"), "A")
+  cur <- txn_read$cursor()
+  cur$move_to("g")
+  p <- cur$value(as_proxy = TRUE)
+
+  env$drop_database(db2)
+
+  expect_false(p$is_valid())
+  expect_null(cur$.ptr)
+  expect_null(txn_read$.ptr)
+  expect_null(db2$.ptr)
+  expect_error(cur$first(), "cursor has been cleaned up; can't use!")
+  expect_error(txn_read$cursor(), "txn has been cleaned up; can't use!")
+  expect_error(db2$id(), "dbi has been cleaned up; can't use")
+
+  expect_identical(env$.deps$get(), list(env$.db))
+  expect_null(txn_read$.deps)
+
+  expect_error(env$open_database("foo", create = FALSE),
+               "MDB_NOTFOUND")
+})
+
+test_that("drop but no delete", {
+  env <- dbenv(tempfile(), maxdbs = 10)
+  db2 <- env$open_database("foo")
+
+  expect_identical(db2$id(), 2L)
+
+  txn <- env$begin(db = db2, write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  txn$commit()
+
+  txn_read <- env$begin(db = db2)
+  expect_identical(txn_read$get("a"), "A")
+  cur <- txn_read$cursor()
+  cur$move_to("g")
+  p <- cur$value(as_proxy = TRUE)
+
+  env$drop_database(db2, FALSE)
+
+  expect_false(p$is_valid())
+  expect_null(cur$.ptr)
+  expect_null(txn_read$.ptr)
+  expect_null(db2$.ptr)
+  expect_error(cur$first(), "cursor has been cleaned up; can't use!")
+  expect_error(txn_read$cursor(), "txn has been cleaned up; can't use!")
+  expect_error(db2$id(), "dbi has been cleaned up; can't use")
+
+  db3 <- env$open_database("foo", create = FALSE)
+  txn_read2 <- env$begin(db = db3)
+  expect_null(txn_read2$get("a", FALSE))
+})
+
+test_that("drop; root database", {
+  env <- dbenv(tempfile(), maxdbs = 10)
+  db <- env$open_database()
+  expect_error(env$drop_database(db), "Can't delete root database")
+})
+
+test_that("drop; other environment's database", {
+  env1 <- dbenv(tempfile(), maxdbs = 10)
+  env2 <- dbenv(tempfile(), maxdbs = 10)
+  db1 <- env1$open_database("foo")
+  db2 <- env2$open_database("foo")
+  expect_error(env2$drop_database(db1),
+               "this is not our database")
+})

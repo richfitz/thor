@@ -516,7 +516,7 @@ MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error) {
 }
 
 MDB_dbi r_mdb_get_dbi(SEXP r_dbi) {
-  MDB_dbi* data = (MDB_dbi*) r_pointer_addr(r_dbi, THOR_DBI, "txn", true);
+  MDB_dbi* data = (MDB_dbi*) r_pointer_addr(r_dbi, THOR_DBI, "dbi", true);
   return *data;
 }
 

@@ -186,6 +186,32 @@ R6_dbenv <- R6::R6Class(
       invisible(db)
     },
 
+    drop_database = function(db, delete = TRUE) {
+      assert_is(db, "database")
+      name <- db$.name
+      if (is.null(name)) {
+        stop("Can't delete root database")
+      }
+      if (!identical(self$.dbs[[name]], db)) {
+        stop("this is not our database")
+      }
+
+      dropdb <- function(txn_ptr) {
+        for (x in self$.deps$get()) {
+          if (inherits(x, "transaction") && identical(x$.db, db)) {
+            x$invalidate()
+            self$.deps$discard(x)
+          }
+        }
+        mdb_drop(txn_ptr, db$.ptr, delete)
+        rm(list = name, envir = self$.dbs)
+        self$.deps$discard(db)
+        db$invalidate()
+      }
+
+      with_new_txn(self, dropdb, write = TRUE)
+    },
+
     begin = function(db = NULL, parent = NULL, write = FALSE) {
       R6_transaction$new(self, db, parent, write)
     }
@@ -211,12 +237,14 @@ R6_database <- R6::R6Class(
   public = list(
     .ptr = NULL,
     .dupsort = NULL,
+    .name = NULL,
     ## TODO: other options here include dupfixed, integerkey,
     ## integerdup, reversedup
     initialize = function(env, txn_ptr, name, reversekey, dupsort, create) {
       self$.ptr <- mdb_dbi_open(txn_ptr, name, reversekey, dupsort, create)
       env$.deps$add(self)
       self$.dupsort <- dupsort
+      self$.name <- name
     },
     invalidate = function() {
       ## NOTE: We don't explicitly call close here, following the
@@ -431,15 +459,6 @@ R6_cursor <- R6::R6Class(
       self$.db <- txn$.db
       self$.ptr <- mdb_cursor_open(self$.txn$.ptr, self$.db$.ptr)
       txn$.deps$add(self)
-      ## TODO: To implement mdb_drop we need to keep track of
-      ## db->cursor links too
-      ##   self$.db$.deps$add(self)
-      ##
-      ## though drop might be rare enough that we could try to find
-      ## all cursors that point at that database through the
-      ## dependencies that we have up through env (so go db -> env
-      ## then loop over all env dependencies and through its tree
-      ## until we find all cursors.
     },
 
     finalize = function() {
