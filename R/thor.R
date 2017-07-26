@@ -10,6 +10,7 @@ mdb_env_open <- function(env, path, mode,
                          subdir, sync, rdonly,
                          metasync, writemap, lock,
                          mapasync, rdahead, meminit) {
+  assert_is(mode, "octmode")
   .Call(Cmdb_env_open, env, path, mode,
         subdir, sync, rdonly,
         metasync, writemap, lock,
@@ -45,11 +46,11 @@ mdb_env_get_path <- function(env) {
 }
 
 mdb_env_set_mapsize <- function(env, mapsize) {
-  .Call(Cmdb_env_set_mapsize, env, mapsize)
+  .Call(Cmdb_env_set_mapsize, env, as_integer(mapsize))
 }
 
 mdb_env_set_maxreaders <- function(env, maxreaders) {
-  .Call(Cmdb_env_set_maxreaders, env, maxreaders)
+  .Call(Cmdb_env_set_maxreaders, env, as_integer(maxreaders))
 }
 
 mdb_env_get_maxreaders <- function(env) {
@@ -57,7 +58,7 @@ mdb_env_get_maxreaders <- function(env) {
 }
 
 mdb_env_set_maxdbs <- function(env, maxdbs) {
-  .Call(Cmdb_env_set_maxdbs, env, maxdbs)
+  .Call(Cmdb_env_set_maxdbs, env, as_integer(maxdbs))
 }
 
 mdb_env_get_maxkeysize <- function(env) {
