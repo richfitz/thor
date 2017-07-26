@@ -210,11 +210,13 @@ R6_database <- R6::R6Class(
   cloneable = FALSE,
   public = list(
     .ptr = NULL,
+    .dupsort = NULL,
     ## TODO: other options here include dupfixed, integerkey,
     ## integerdup, reversedup
     initialize = function(env, txn_ptr, name, reversekey, dupsort, create) {
       self$.ptr <- mdb_dbi_open(txn_ptr, name, reversekey, dupsort, create)
       env$.deps$add(self)
+      self$.dupsort <- dupsort
     },
     invalidate = function() {
       ## NOTE: We don't explicitly call close here, following the
@@ -400,6 +402,17 @@ R6_transaction <- R6::R6Class(
     ##   keys_len
     cursor = function() {
       R6_cursor$new(self)
+    },
+
+    cmp = function(a, b) {
+      mdb_cmp(self$.ptr, self$.db$.ptr, a, b)
+    },
+    dcmp = function(a, b) {
+      if (self$.db$.dupsort) {
+        mdb_dcmp(self$.ptr, self$.db$.ptr, a, b)
+      } else {
+        stop("dcmp() is not meaningful on database with dupsort = FALSE")
+      }
     }
   ))
 

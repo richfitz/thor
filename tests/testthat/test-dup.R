@@ -20,7 +20,15 @@ test_that("Basic duplicate use", {
 
   expect_true(cur$move_next_dup())
   expect_identical(cur$value(), "B")
-  expect_false(cur$move_next())
+  expect_false(cur$move_next_dup())
+  expect_null(cur$key())
+  expect_null(cur$value())
+
+  cur$last()
+  expect_true(cur$move_prev_dup())
+  expect_identical(cur$key(), "a")
+  expect_identical(cur$value(), "A")
+  expect_false(cur$move_prev_dup())
   expect_null(cur$key())
   expect_null(cur$value())
 
@@ -73,4 +81,12 @@ test_that("Basic duplicate use", {
   expect_false(cur$seek_dup("c", "a"))
   expect_null(cur$key())
   expect_null(cur$value())
+})
+
+test_that("dcmp", {
+  env <- dbenv(tempfile(), dupsort = TRUE)
+  txn <- env$begin(write = TRUE)
+  expect_identical(txn$dcmp("a", "b"), -1L)
+  expect_identical(txn$dcmp("b", "a"),  1L)
+  expect_identical(txn$dcmp("a", "a"),  0L)
 })

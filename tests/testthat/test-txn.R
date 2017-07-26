@@ -276,3 +276,16 @@ test_that("pop", {
   expect_equal(txn$pop("g"), "G")
   expect_null(txn$pop("g"))
 })
+
+test_that("cmp", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = FALSE)
+
+  expect_identical(txn$cmp("a", "b"), -1L)
+  expect_identical(txn$cmp("b", "a"),  1L)
+  expect_identical(txn$cmp("a", "a"),  0L)
+
+  expect_error(txn$dcmp("a", "b"),
+               "dcmp() is not meaningful on database with dupsort = FALSE",
+               fixed = TRUE)
+})

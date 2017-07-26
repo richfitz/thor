@@ -90,6 +90,19 @@ test_that("cursor get", {
   expect_identical(cur$key(), "z")
 })
 
+test_that("value() refreshes proxy", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  cur <- txn$cursor()
+  txn$put("a", "A")
+
+  expect_null(cur$value())
+  cur$first()
+  expect_equal(cur$value(), "A")
+  txn$put("a", "B")
+  expect_equal(cur$value(), "B")
+})
+
 test_that("iteration", {
   env <- dbenv(tempfile())
   txn <- env$begin(write = TRUE)
