@@ -371,3 +371,12 @@ test_that("drop; other environment's database", {
   expect_error(env2$drop_database(db1),
                "this is not our database")
 })
+
+test_that("serialisation does not crash", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  expect_false(is_null_pointer(txn$.ptr))
+  txn2 <- unserialize(serialize(txn, NULL))
+  expect_true(is_null_pointer(txn2$.ptr))
+  expect_error(txn2$id(), "txn has been freed; can't use")
+})

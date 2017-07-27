@@ -202,3 +202,31 @@ test_that("mapsize", {
   env <- dbenv(tempfile(), mapsize = sz2)
   expect_identical(env$info()[["mapsize"]], sz2)
 })
+
+test_that("serialisation does not crash", {
+  env <- dbenv(tempfile())
+  expect_false(is_null_pointer(env$.ptr))
+  env2 <- unserialize(serialize(env, NULL))
+  expect_true(is_null_pointer(env2$.ptr))
+  expect_error(env2$info(), "env has been freed; can't use")
+})
+
+## These tests exist to ensure that if something happens and the R6
+## object does not completely build the cleanup is safe
+test_that("naked environment can be garbage collected", {
+  path <- tempfile()
+  dir.create(path)
+  env_ptr <- mdb_env_create()
+  mdb_env_open(env_ptr, path, as.octmode("0644"),
+               NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+  rm(env_ptr)
+  gc()
+})
+
+test_that("naked unintialised environment can be garbage collected", {
+  path <- tempfile()
+  dir.create(path)
+  env_ptr <- mdb_env_create()
+  rm(env_ptr)
+  gc()
+})

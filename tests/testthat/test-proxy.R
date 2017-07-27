@@ -22,3 +22,14 @@ test_that("NULL proxy", {
   expect_error(p$size(),
                "mdb_val_proxy is invalid: transaction has been closed")
 })
+
+test_that("serialisation does not crash", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  txn$put("a", "A")
+  p <- txn$get("a", as_proxy = TRUE)
+  expect_false(is_null_pointer(environment(p$data)$ptr))
+  p2 <- unserialize(serialize(p, NULL))
+  expect_true(is_null_pointer(environment(p2$data)$ptr))
+  expect_error(p2$data(), "proxy has been invalidated")
+})

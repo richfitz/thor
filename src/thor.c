@@ -628,8 +628,6 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
 static void r_mdb_cursor_finalize(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, false);
   if (cursor != NULL) {
-    // These can definitely be garbage collected directly I think;
-    // once they're out of scope we can't get it back.
     mdb_cursor_close(cursor);
     R_ClearExternalPtr(r_cursor);
   }

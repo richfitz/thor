@@ -241,3 +241,23 @@ test_that("get", {
   expect_is(p, "mdb_val_proxy")
   expect_identical(p$data(), "H")
 })
+
+test_that("serialisation does not crash", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  cur <- txn$cursor()
+  expect_false(is_null_pointer(cur$.ptr))
+  cur2 <- unserialize(serialize(cur, NULL))
+  expect_true(is_null_pointer(cur2$.ptr))
+  expect_error(cur2$key(), "cursor has been freed; can't use")
+})
+
+## This test exists to ensure that if something happens and the R6
+## object does not completely build the cleanup is safe
+test_that("naked cursor can be garbage collected", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  cur_ptr <- mdb_cursor_open(txn$.ptr, txn$.db$.ptr)
+  rm(cur_ptr)
+  gc()
+})
