@@ -104,3 +104,25 @@ test_that("is_null_pointer", {
   expect_false(is_null_pointer(env))
   expect_true(is_null_pointer(unserialize(serialize(env, NULL))))
 })
+
+test_that("error detection", {
+  no_error <- function(rc, str) {
+    .Call(Ctest_error, rc, NULL, str)
+  }
+  no_error2 <- function(rc, false_flag, str) {
+    .Call(Ctest_error, rc, false_flag, str)
+  }
+
+  SUCCESS <- 0L
+  NOTFOUND <- -30798L
+  KEYEXIST <- -30799L
+
+  expect_true(no_error(SUCCESS, "foo"))
+  expect_error(no_error(KEYEXIST, "foo"),
+               "MDB_KEYEXIST: Key/data pair already exists: foo")
+
+  expect_true(no_error2(SUCCESS, NOTFOUND, "foo"))
+  expect_false(no_error2(NOTFOUND, NOTFOUND, "foo"))
+  expect_error(no_error2(KEYEXIST, NOTFOUND, "foo"),
+               "MDB_KEYEXIST: Key/data pair already exists: foo")
+})

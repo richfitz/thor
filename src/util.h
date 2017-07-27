@@ -25,3 +25,4 @@ return_as to_return_as(SEXP x);
 bool is_raw_string(const char* str, size_t len, return_as as_raw);
 SEXP raw_string_to_sexp(const char *str, size_t len, return_as as_raw);
 size_t sexp_get_data(SEXP data, const char **data_contents, const char* name);
+SEXP r_test_error(SEXP r_rc, SEXP r_false_flag, SEXP r_str);

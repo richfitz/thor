@@ -120,3 +120,16 @@ size_t sexp_get_data(SEXP data, const char **data_contents, const char* name) {
     Rf_error("Invalid data type for '%s'; expected string or raw", name);
   }
 }
+
+SEXP r_test_error(SEXP r_rc, SEXP r_false_flag, SEXP r_str) {
+  int rc = scalar_int(r_rc, "rc");
+  const char * str = scalar_character(r_str, "str");
+  bool ret = true;
+  if (r_false_flag == R_NilValue) {
+    no_error(rc, str);
+  } else {
+    int false_flag = scalar_int(r_false_flag, "false_flag");
+    ret = no_error2(rc, false_flag, str);
+  }
+  return ScalarLogical(ret);
+}
