@@ -212,8 +212,8 @@ R6_dbenv <- R6::R6Class(
       with_new_txn(self, dropdb, write = TRUE)
     },
 
-    begin = function(db = NULL, parent = NULL, write = FALSE) {
-      R6_transaction$new(self, db, parent, write)
+    begin = function(db = NULL, write = FALSE) {
+      R6_transaction$new(self, db, write)
     }
 
     ## this might be nice - not quite there though
@@ -276,11 +276,10 @@ R6_transaction <- R6::R6Class(
     .ptr = NULL,
     .db = NULL,
     .deps = NULL,
-    .parent = NULL,
     .write = NULL,
     .mutations = 0L,
 
-    initialize = function(env, db, parent, write) {
+    initialize = function(env, db, write) {
       ## If the R6 issue is not a bug then we don't have to store
       ## upstream references for GC purposes - just if we need to use
       ## them!
@@ -296,22 +295,19 @@ R6_transaction <- R6::R6Class(
       self$.deps <- stack()
       self$.write <- write
 
-      if (!is.null(parent)) {
-        assert_is(parent, "transaction")
-        self$.parent = parent
-        parent$.deps$add(self) # possibly should come after possible abort?
-      }
+      ## NOTE: Parent transactions are not supported yet
+      parent <- NULL
 
       if (write) {
         if (!is.null(env$.write_txn)) {
           stop("Write transaction is already active for this environment")
         }
-        self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = FALSE)
+        self$.ptr <- mdb_txn_begin(env$.ptr, parent, rdonly = FALSE)
         env$.write_txn <- self
       } else {
         ptr <- env$.spare_txns$pop()
         if (is.null(ptr)) {
-          self$.ptr <- mdb_txn_begin(env$.ptr, parent$.ptr, rdonly = TRUE)
+          self$.ptr <- mdb_txn_begin(env$.ptr, parent, rdonly = TRUE)
         } else {
           mdb_txn_renew(ptr)
           self$.ptr <- ptr
@@ -372,10 +368,6 @@ R6_transaction <- R6::R6Class(
       }
     },
     .cleanup = function() {
-      if (!is.null(self$.parent)) {
-        self$.parent$.deps$discard(self) # needed?
-        self$.parent <- NULL
-      }
       self$.env$.deps$discard(self)
       if (self$.write) {
         self$.env$.write_txn <- NULL
@@ -627,13 +619,13 @@ R6_cursor <- R6::R6Class(
   ))
 
 ## Helper function
-with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
+with_new_txn <- function(env, f, write = FALSE) {
   if (write) {
     if (!is.null(env$.write_txn)) {
       ## This just needs to send out a decent error message
       stop("FIXME")
     }
-    txn_ptr <- mdb_txn_begin(env$.ptr, parent, FALSE)
+    txn_ptr <- mdb_txn_begin(env$.ptr, NULL, FALSE)
     withCallingHandlers({
       ret <- f(txn_ptr)
       mdb_txn_commit(txn_ptr)
@@ -641,7 +633,7 @@ with_new_txn <- function(env, f, parent = NULL, write = FALSE) {
     }, error = function(e) mdb_txn_abort(txn_ptr, FALSE))
   } else {
     ## Consider using the pool system in env?
-    txn_ptr <- mdb_txn_begin(env$.ptr, parent, TRUE)
+    txn_ptr <- mdb_txn_begin(env$.ptr, NULL, TRUE)
     withCallingHandlers({
       f(txn_ptr)
     }, finally = function(e) mdb_txn_abort(txn_ptr, FALSE))
