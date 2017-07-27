@@ -70,6 +70,12 @@ as_integer <- function(x, name = deparse(substitute(x))) {
   if (is.integer(x)) {
     x
   } else {
+    if (length(x) != 1L) {
+      ## protect from the if below because we only use this for
+      ## scalars.  The check for the previous clause is done in the C
+      ## handling code.
+      stop(sprintf("'%s' must be a scalar", name))
+    }
     ret <- as.integer(x)
     if (ret != x) {
       stop(sprintf("'%s' must be an integer, or integer-like", name),

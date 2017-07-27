@@ -88,6 +88,8 @@ R6_dbenv <- R6::R6Class(
 
       ## Be more user-friendly
       if (create && subdir && !file.exists(path)) {
+        ## TODO: here we get silly error messages if path is not a
+        ## reasonable thing.
         dir.create(path, FALSE, TRUE)
       }
       mdb_env_open(self$.ptr, path, mode,

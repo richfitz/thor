@@ -115,6 +115,10 @@ test_that("get: raw raw handling", {
   expect_identical(txn$get("foo", as_raw = TRUE), bytes)
   expect_error(txn$get("foo", as_raw = FALSE),
                "value contains embedded nul bytes; cannot return string")
+
+  p <- txn$get("foo", as_proxy = TRUE)
+  expect_identical(p$data(as_raw = NULL), bytes)
+  expect_identical(p$data(as_raw = NULL), bytes)
 })
 
 test_that("get: raw key", {

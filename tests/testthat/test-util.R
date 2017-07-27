@@ -49,4 +49,58 @@ test_that("as_integer", {
   expect_identical(as_integer(1L), 1L)
   expect_identical(as_integer(1.0), 1L)
   expect_error(as_integer(pi), "'pi' must be an integer", fixed = TRUE)
+  expect_error(as_integer(c(.1, .2)), "must be a scalar", fixed = TRUE)
+})
+
+test_that("scalar_character (C)", {
+  expect_error(dbenv(character(0), create = FALSE),
+               "Expected a scalar character for 'path'")
+  expect_error(dbenv(letters, create = FALSE),
+               "Expected a scalar character for 'path'")
+  expect_error(dbenv(NULL, create = FALSE),
+               "Expected a scalar character for 'path'")
+  expect_error(dbenv(1L, create = FALSE),
+               "Expected a scalar character for 'path'")
+})
+
+test_that("scalar_int (C)", {
+  expect_error(dbenv(tempfile(), maxdbs = integer(0)),
+               "Expected a scalar integer for 'dbs'")
+  expect_error(dbenv(tempfile(), maxdbs = seq_len(2)),
+               "Expected a scalar integer for 'dbs'")
+  expect_error(dbenv(tempfile(), maxdbs = -5L),
+               "Expected a positive size for 'dbs'")
+})
+
+test_that("scalar_logical (C)", {
+  expect_error(dbenv(tempfile(), subdir = NA, create = FALSE),
+               "Expected a non-missing scalar logical for 'subdir'")
+  expect_error(dbenv(tempfile(), subdir = "why not", create = FALSE),
+               "Expected a scalar logical for 'subdir'")
+})
+
+test_that("to_return_as (C)", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  expect_error(txn$get("a", as_raw = NA),
+               "Expected a non-missing logical scalar (or NULL) for 'as_raw'",
+               fixed = TRUE)
+  expect_error(txn$get("a", as_raw = 1),
+               "Expected a logical scalar (or NULL) for 'as_raw'",
+               fixed = TRUE)
+})
+
+test_that("to_return_as (C)", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  expect_error(txn$get(c("a", "b")), "'key' must be a scalar character")
+  expect_error(txn$get(character()), "'key' must be a scalar character")
+  expect_error(txn$get(1L), "Invalid data type for 'key'")
+})
+
+test_that("is_null_pointer", {
+  expect_error(is_null_pointer(NULL), "Expected an external pointer", fixed = TRUE)
+  env <- mdb_env_create()
+  expect_false(is_null_pointer(env))
+  expect_true(is_null_pointer(unserialize(serialize(env, NULL))))
 })

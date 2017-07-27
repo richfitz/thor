@@ -18,14 +18,14 @@ bool no_error2(int rc, int false_flag, const char* str) {
 
 const char * scalar_character(SEXP x, const char * name) {
   if (TYPEOF(x) != STRSXP || length(x) != 1) {
-    Rf_error("Expected a scalar character for %s", name);
+    Rf_error("Expected a scalar character for '%s'", name);
   }
   return CHAR(STRING_ELT(x, 0));
 }
 
 int scalar_int(SEXP x, const char * name) {
   if (TYPEOF(x) != INTSXP || length(x) != 1) {
-    Rf_error("Expected a scalar integer for %s", name);
+    Rf_error("Expected a scalar integer for '%s'", name);
   }
   return INTEGER(x)[0];
 }
@@ -33,18 +33,18 @@ int scalar_int(SEXP x, const char * name) {
 size_t scalar_size(SEXP x, const char * name) {
   int ret = scalar_int(x, name);
   if (ret < 0) {
-    Rf_error("Expected a size for %s", name);
+    Rf_error("Expected a positive size for '%s'", name);
   }
   return (size_t)ret;
 }
 
 bool scalar_logical(SEXP x, const char * name) {
   if (TYPEOF(x) != LGLSXP || length(x) != 1) {
-    Rf_error("Expected a scalar logical for %s", name);
+    Rf_error("Expected a scalar logical for '%s'", name);
   }
   int ret = INTEGER(x)[0];
   if (ret == NA_LOGICAL) {
-    Rf_error("Expected a non-missing scalar logical for %s", name);
+    Rf_error("Expected a non-missing scalar logical for '%s'", name);
   }
   return ret == 1;
 }
@@ -62,11 +62,11 @@ return_as to_return_as(SEXP x) {
   } else if (TYPEOF(x) == LGLSXP && LENGTH(x) == 1) {
     int as_raw = INTEGER(x)[0];
     if (as_raw == NA_LOGICAL) {
-      Rf_error("Expected a non-missing logical scalar (or NULL)");
+      Rf_error("Expected a non-missing logical scalar (or NULL) for 'as_raw'");
     }
     return as_raw ? AS_RAW : AS_STRING;
   } else {
-    Rf_error("Expected a logical scalar (or NULL)");
+    Rf_error("Expected a logical scalar (or NULL) for 'as_raw'");
     return AS_ANY;
   }
 }
@@ -100,13 +100,14 @@ SEXP raw_string_to_sexp(const char *str, size_t len, return_as as_raw) {
 
 size_t sexp_get_data(SEXP data, const char **data_contents, const char* name) {
   switch (TYPEOF(data)) {
-  case CHARSXP:
-    *data_contents = CHAR(data);
-    return length(data);
-    break;
+    // Evenually this might be useful:
+    // case CHARSXP:
+    // *data_contents = CHAR(data);
+    // return length(data);
+    // break;
   case STRSXP:
     if (length(data) != 1) {
-      Rf_error("%s must be a scalar character", name);
+      Rf_error("'%s' must be a scalar character", name);
     }
     SEXP el = STRING_ELT(data, 0);
     *data_contents = CHAR(el);
@@ -116,6 +117,6 @@ size_t sexp_get_data(SEXP data, const char **data_contents, const char* name) {
     *data_contents = (const char*) RAW(data);
     return length(data);
   default:
-    Rf_error("Invalid data type for %s; expected string or raw", name);
+    Rf_error("Invalid data type for '%s'; expected string or raw", name);
   }
 }
