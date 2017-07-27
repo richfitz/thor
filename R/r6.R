@@ -462,9 +462,6 @@ R6_cursor <- R6::R6Class(
 
     invalidate = function() {
       if (!is.null(self$.ptr)) {
-        if (is_null_pointer(self$.txn$.ptr)) {
-          stop("This should not happen!")
-        }
         self$close()
       }
     },
