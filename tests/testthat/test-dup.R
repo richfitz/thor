@@ -90,3 +90,22 @@ test_that("dcmp", {
   expect_identical(txn$dcmp("b", "a"),  1L)
   expect_identical(txn$dcmp("a", "a"),  0L)
 })
+
+test_that("del: with value", {
+  env <- dbenv(tempfile(), dupsort = TRUE)
+  txn <- env$begin(write = TRUE)
+  cur <- txn$cursor()
+
+  txn$put("a", "apple")
+  txn$put("a", "avocado")
+  txn$put("b", "banana")
+  txn$put("b", "berry")
+
+  expect_equal(txn$get("a"), "apple")
+  expect_true(cur$move_to_dup("a", "avocado"))
+
+  expect_true(txn$del("a", "avocado"))
+  expect_false(txn$del("a", "avocado"))
+  expect_equal(txn$get("a"), "apple")
+  expect_false(cur$move_to_dup("a", "avocado"))
+})

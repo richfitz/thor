@@ -246,6 +246,17 @@ test_that("del", {
   env$close()
 })
 
+test_that("del: with value", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  expect_error(txn$del("a", "A"),
+               "'value' is not allowed for databases with dupsort = FALSE",
+               fixed = TRUE)
+})
+
 test_that("exists", {
   env <- dbenv(tempfile())
   txn <- env$begin(write = TRUE)

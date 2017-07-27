@@ -394,6 +394,9 @@ R6_transaction <- R6::R6Class(
       mdb_put(self$.ptr, self$.db$.ptr, key, value, dupdata, overwrite, append)
     },
     del = function(key, value = NULL) {
+      if (!is.null(value) && !self$.db$.dupsort) {
+        stop("'value' is not allowed for databases with dupsort = FALSE")
+      }
       self$.mutations = self$.mutations + 1L
       mdb_del(self$.ptr, self$.db$.ptr, key, value)
     },
