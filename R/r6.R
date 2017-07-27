@@ -622,8 +622,7 @@ R6_cursor <- R6::R6Class(
 with_new_txn <- function(env, f, write = FALSE) {
   if (write) {
     if (!is.null(env$.write_txn)) {
-      ## This just needs to send out a decent error message
-      stop("FIXME")
+      stop("Write transaction is already active for this environment")
     }
     txn_ptr <- mdb_txn_begin(env$.ptr, NULL, FALSE)
     withCallingHandlers({

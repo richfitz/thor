@@ -380,3 +380,19 @@ test_that("serialisation does not crash", {
   expect_true(is_null_pointer(txn2$.ptr))
   expect_error(txn2$id(), "txn has been freed; can't use")
 })
+
+test_that("with_new_txn", {
+  env <- dbenv(tempfile())
+  expect_error(with_new_txn(env, function(t) stop("banana"), TRUE), "banana")
+  expect_null(env$.write_txn)
+  txn <- env$begin(write = TRUE)
+  expect_error(with_new_txn(env, function(t) 1, TRUE),
+               "Write transaction is already active for this environment")
+  txn$put("a", "apple")
+  txn$commit()
+  txn <- env$begin(write = TRUE)
+  db_ptr <- env$.db$.ptr
+  expect_equal(with_new_txn(env, function(t)
+    mdb_get(t, db_ptr, "a", FALSE, FALSE, FALSE)), "apple")
+  expect_error(with_new_txn(env, function(t) stop("banana"), FALSE), "banana")
+})
