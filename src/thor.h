@@ -8,13 +8,6 @@ typedef enum thor_flag_group {
   THOR_CURSOR_OP
 } thor_flag_group;
 
-typedef enum thor_ptr_type {
-  THOR_ENV,
-  THOR_DBI,
-  THOR_TXN,
-  THOR_CURSOR
-} thor_ptr_type;
-
 typedef struct thor_val_proxy {
   size_t size;
   const void * data;
@@ -91,8 +84,7 @@ MDB_txn * r_mdb_get_txn(SEXP r_txn, bool closed_error);
 MDB_dbi r_mdb_get_dbi(SEXP r_dbi);
 MDB_cursor * r_mdb_get_cursor(SEXP r_cursor, bool closed_error);
 
-void* r_pointer_addr(SEXP r_ptr, thor_ptr_type expected, const char * name,
-                     bool closed_error);
+void* r_pointer_addr(SEXP r_ptr, const char * name, bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP r_mdb_proxy_copy(SEXP r_ptr, SEXP r_as_raw);
