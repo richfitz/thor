@@ -803,10 +803,25 @@ SEXP r_mdb_dbi_id(SEXP r_dbi) {
 // look the size up.
 //
 // work is needed here if we want to support binary keys.
-SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size) {
+SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
+                 SEXP r_size) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+
+  bool filter = r_starts_with != R_NilValue;
+  MDB_val starts_with;
+  if (filter) {
+    sexp_to_mdb_val(r_starts_with, "starts_with", &starts_with);
+    if (starts_with.mv_size == 0) {
+      filter = false;
+    }
+  }
+
+  return_as as_raw = to_return_as(r_as_raw);
+  bool out_str = as_raw == AS_STRING;
+  SEXPTYPE out_type = out_str ? STRSXP : VECSXP;
+
   size_t size;
-  if (r_size == R_NilValue) {
+  if (!filter || r_size == R_NilValue) {
     MDB_txn * txn = mdb_cursor_txn(cursor);
     MDB_dbi dbi = mdb_cursor_dbi(cursor);
     MDB_stat stat;
@@ -815,30 +830,39 @@ SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size) {
   } else {
     size = scalar_size(r_size, "size");
   }
-  return_as as_raw = to_return_as(r_as_raw);
 
   MDB_val key, value;
 
-  bool out_str = as_raw == AS_STRING;
-  SEXPTYPE out_type = out_str ? STRSXP : VECSXP;
-
   SEXP ret = PROTECT(allocVector(out_type, size));
-  SEXP add = ret;
+  SEXP acc = ret; // 'accumulator'
 
   size_t i = 0, n = 0;
-  int rc = mdb_cursor_get(cursor, &key, &value, MDB_FIRST);
+  int rc;
+  if (true && filter) {
+    key.mv_size = starts_with.mv_size;
+    key.mv_data = starts_with.mv_data;
+    rc = mdb_cursor_get(cursor, &key, &value, MDB_SET_RANGE);
+  } else {
+    rc = mdb_cursor_get(cursor, &key, &value, MDB_FIRST);
+  }
+
   while (rc == MDB_SUCCESS) {
     if (i == size) {
       SEXP tmp = PROTECT(allocVector(out_type, size));
-      setAttrib(add, install("next"), tmp);
+      setAttrib(acc, install("next"), tmp);
       UNPROTECT(1);
-      add = tmp;
+      acc = tmp;
       i = 0;
     }
+
+    if (filter && !mdb_val_starts_with(&key, &starts_with)) {
+      break;
+    }
+
     if (out_str) {
-      SET_STRING_ELT(add, i++, mdb_val_to_sexp(&key, false, AS_CHAR));
+      SET_STRING_ELT(acc, i++, mdb_val_to_sexp(&key, false, AS_CHAR));
     } else {
-      SET_VECTOR_ELT(add, i++, mdb_val_to_sexp(&key, false, as_raw));
+      SET_VECTOR_ELT(acc, i++, mdb_val_to_sexp(&key, false, as_raw));
     }
     n++;
     rc = mdb_cursor_get(cursor, &key, &value, MDB_NEXT);
@@ -848,4 +872,9 @@ SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size) {
   ret = combine_vector(ret, n);
   UNPROTECT(1);
   return ret;
+}
+
+bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix) {
+  return x->mv_size >= prefix->mv_size &&
+    memcmp(x->mv_data, prefix->mv_data, prefix->mv_size) == 0;
 }

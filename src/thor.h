@@ -113,4 +113,8 @@ void cleanup_txn(SEXP r_txn);
 
 // Extra:
 SEXP r_mdb_dbi_id(SEXP r_dbi);
-SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size);
+SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
+                 SEXP r_size);
+
+// Utility
+bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix);

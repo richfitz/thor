@@ -417,26 +417,15 @@ test_that("list", {
 
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
-  expect_identical(thor_list(cur$.ptr, FALSE, 10L), character(0))
+  expect_identical(thor_list(cur$.ptr, NULL, FALSE, 10L), character(0))
 
   for (i in letters) {
     txn$put(i, toupper(i))
   }
 
-  expect_identical(thor_list(cur$.ptr, FALSE, 10L), letters)
-  expect_identical(thor_list(cur$.ptr, FALSE, 26L), letters)
-  expect_identical(thor_list(cur$.ptr, FALSE, 30L), letters)
-  expect_identical(thor_list(cur$.ptr, FALSE, NULL), letters)
-  expect_identical(thor_list(cur$.ptr, TRUE, 10L), lapply(letters, charToRaw))
-  expect_identical(thor_list(cur$.ptr, TRUE, 30L), lapply(letters, charToRaw))
-  expect_identical(thor_list(cur$.ptr, TRUE, NULL), lapply(letters, charToRaw))
-  expect_identical(thor_list(cur$.ptr, NULL, 10L), as.list(letters))
-  expect_identical(thor_list(cur$.ptr, NULL, 30L), as.list(letters))
-  expect_identical(thor_list(cur$.ptr, NULL, NULL), as.list(letters))
-
-  expect_identical(txn$list(FALSE), letters)
-  expect_identical(txn$list(TRUE), lapply(letters, charToRaw))
-  expect_identical(txn$list(NULL), as.list(letters))
+  expect_identical(txn$list(as_raw = FALSE), letters)
+  expect_identical(txn$list(as_raw = TRUE), lapply(letters, charToRaw))
+  expect_identical(txn$list(as_raw = NULL), as.list(letters))
 
   txn$abort()
 
@@ -451,19 +440,40 @@ test_that("list", {
   cur <- txn$cursor()
   vv <- lapply(v, function(x) if (is.raw(x)) x else charToRaw(x))
 
-  expect_error(thor_list(cur$.ptr, FALSE, 10L),
-               "value contains embedded nul bytes; cannot return string")
-  expect_error(thor_list(cur$.ptr, FALSE, 30L),
-               "value contains embedded nul bytes; cannot return string")
-  expect_identical(thor_list(cur$.ptr, TRUE, 10L), vv)
-  expect_identical(thor_list(cur$.ptr, TRUE, 30L), vv)
-  expect_identical(thor_list(cur$.ptr, TRUE, NULL), vv)
-  expect_identical(thor_list(cur$.ptr, NULL, 10L), v)
-  expect_identical(thor_list(cur$.ptr, NULL, 30L), v)
-  expect_identical(thor_list(cur$.ptr, NULL, NULL), v)
-
-  expect_identical(txn$list(TRUE), vv)
-  expect_identical(txn$list(NULL), v)
+  expect_identical(txn$list(as_raw = TRUE), vv)
+  expect_identical(txn$list(as_raw = NULL), v)
   expect_error(txn$list(),
                "value contains embedded nul bytes; cannot return string")
+})
+
+test_that("list & filter", {
+  env <- dbenv(tempfile())
+
+  txn <- env$begin(write = TRUE)
+  cur <- txn$cursor()
+
+  txn$put("apple", "1")
+  txn$put("ape", "1")
+  txn$put("avocado", "1")
+  txn$put("banana", "1")
+  txn$put("pear", "1")
+
+  expect_identical(txn$list("a"), c("ape", "apple", "avocado"))
+  expect_identical(txn$list("ap"), c("ape", "apple"))
+  expect_identical(txn$list("app"), "apple")
+  expect_identical(txn$list("b"), "banana")
+  expect_identical(txn$list("c"), character(0))
+  expect_identical(txn$list(""), c("ape", "apple", "avocado", "banana", "pear"))
+
+  ## More esoteric options:
+  expect_identical(txn$list("a", size = 1L), c("ape", "apple", "avocado"))
+  expect_identical(txn$list("a", size = 10L), c("ape", "apple", "avocado"))
+  expect_identical(txn$list("a", as_raw = TRUE, size = 1L),
+                   lapply(c("ape", "apple", "avocado"), charToRaw))
+  expect_identical(txn$list("a", as_raw = TRUE, size = 10L),
+                   lapply(c("ape", "apple", "avocado"), charToRaw))
+  expect_identical(txn$list("a", as_raw = NULL, size = 1L),
+                   as.list(c("ape", "apple", "avocado")))
+  expect_identical(txn$list("a", as_raw = NULL, size = 10L),
+                   as.list(c("ape", "apple", "avocado")))
 })
