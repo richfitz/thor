@@ -201,14 +201,14 @@ R6_dbenv <- R6::R6Class(
       dropdb <- function(txn_ptr) {
         for (x in self$.deps$get()) {
           if (inherits(x, "transaction") && identical(x$.db, db)) {
-            x$invalidate()
+            x$.invalidate()
             self$.deps$discard(x)
           }
         }
         mdb_drop(txn_ptr, db$.ptr, delete)
         rm(list = name, envir = self$.dbs)
         self$.deps$discard(db)
-        db$invalidate()
+        db$.invalidate()
       }
 
       with_new_txn(self, dropdb, write = TRUE)
@@ -248,7 +248,7 @@ R6_database <- R6::R6Class(
       self$.dupsort <- dupsort
       self$.name <- name
     },
-    invalidate = function() {
+    .invalidate = function() {
       ## NOTE: We don't explicitly call close here, following the
       ## docs.  I think we could consider doing better though - if we
       ## have a situation where there are no depenendents in the
@@ -328,7 +328,7 @@ R6_transaction <- R6::R6Class(
       }
     },
 
-    invalidate = function() {
+    .invalidate = function() {
       ## Remove ourselves from upstream things
 
       ## TODO: This is a very different approach taken to the python
@@ -464,10 +464,10 @@ R6_cursor <- R6::R6Class(
     },
 
     finalize = function() {
-      self$invalidate()
+      self$.invalidate()
     },
 
-    invalidate = function() {
+    .invalidate = function() {
       if (!is.null(self$.ptr)) {
         self$close()
       }
@@ -650,7 +650,7 @@ invalidate_dependencies <- function(x) {
   if (!is.null(x$.deps)) {
     deps <- x$.deps$get()
     for (d in rev(deps)) {
-      d$invalidate()
+      d$.invalidate()
     }
     x$.deps <- NULL
   }
