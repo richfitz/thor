@@ -186,6 +186,6 @@ mdb_proxy_copy <- function(x, as_raw) {
   .Call(Cmdb_proxy_copy, x, as_raw)
 }
 
-thor_list <- function(cur, size) {
-  .Call(Cthor_list, cur, as_integer(size))
+thor_list <- function(cur, as_raw, size) {
+  .Call(Cthor_list, cur, as_raw, as_integer(size))
 }

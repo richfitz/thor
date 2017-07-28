@@ -802,32 +802,40 @@ SEXP r_mdb_dbi_id(SEXP r_dbi) {
 // Growth is linear (not geometric).
 //
 // work is needed here if we want to support binary keys.
-SEXP r_thor_list(SEXP r_cursor, SEXP r_size) {
+SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size) {
   size_t size = scalar_size(r_size, "size");
+  return_as as_raw = to_return_as(r_as_raw);
 
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, value;
 
-  SEXP ret = PROTECT(allocVector(STRSXP, size));
+  bool out_str = as_raw == AS_STRING;
+  SEXPTYPE out_type = out_str ? STRSXP : VECSXP;
+
+  SEXP ret = PROTECT(allocVector(out_type, size));
   SEXP add = ret;
 
   size_t i = 0, n = 0;
   int rc = mdb_cursor_get(cursor, &key, &value, MDB_FIRST);
   while (rc == MDB_SUCCESS) {
     if (i == size) {
-      SEXP tmp = PROTECT(allocVector(STRSXP, size));
+      SEXP tmp = PROTECT(allocVector(out_type, size));
       setAttrib(add, install("next"), tmp);
       UNPROTECT(1);
       add = tmp;
       i = 0;
     }
-    SET_STRING_ELT(add, i++, mdb_val_to_sexp(&key, false, AS_CHAR));
+    if (out_str) {
+      SET_STRING_ELT(add, i++, mdb_val_to_sexp(&key, false, AS_CHAR));
+    } else {
+      SET_VECTOR_ELT(add, i++, mdb_val_to_sexp(&key, false, as_raw));
+    }
     n++;
     rc = mdb_cursor_get(cursor, &key, &value, MDB_NEXT);
   }
   no_error2(rc, MDB_NOTFOUND, "thor_list");
 
-  ret = shorten_vector(ret, n);
+  ret = combine_vector(ret, n);
   UNPROTECT(1);
   return ret;
 }

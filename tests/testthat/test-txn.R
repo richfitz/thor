@@ -414,15 +414,41 @@ test_that("with_new_txn", {
 
 test_that("list", {
   env <- dbenv(tempfile())
-  txn <- env$begin(write = TRUE)
 
+  txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
-  expect_identical(thor_list(cur$.ptr, 10L), character(0))
+  expect_identical(thor_list(cur$.ptr, FALSE, 10L), character(0))
 
   for (i in letters) {
     txn$put(i, toupper(i))
   }
 
-  expect_identical(thor_list(cur$.ptr, 10L), letters)
-  expect_identical(thor_list(cur$.ptr, 30L), letters)
+  expect_identical(thor_list(cur$.ptr, FALSE, 10L), letters)
+  expect_identical(thor_list(cur$.ptr, FALSE, 26L), letters)
+  expect_identical(thor_list(cur$.ptr, FALSE, 30L), letters)
+  expect_identical(thor_list(cur$.ptr, TRUE, 10L), lapply(letters, charToRaw))
+  expect_identical(thor_list(cur$.ptr, TRUE, 30L), lapply(letters, charToRaw))
+  expect_identical(thor_list(cur$.ptr, NULL, 10L), as.list(letters))
+  expect_identical(thor_list(cur$.ptr, NULL, 30L), as.list(letters))
+  txn$abort()
+
+  ## Then with some raw bytes:
+  v <- as.list(letters)
+  v[[15]] <- c(charToRaw(v[[15]]), as.raw(c(0, 255, 6)))
+  txn <- env$begin(write = TRUE)
+  for (i in v) {
+    txn$put(i, i)
+  }
+
+  cur <- txn$cursor()
+  vv <- lapply(v, function(x) if (is.raw(x)) x else charToRaw(x))
+
+  expect_error(thor_list(cur$.ptr, FALSE, 10L),
+               "value contains embedded nul bytes; cannot return string")
+  expect_error(thor_list(cur$.ptr, FALSE, 30L),
+               "value contains embedded nul bytes; cannot return string")
+  expect_identical(thor_list(cur$.ptr, TRUE, 10L), vv)
+  expect_identical(thor_list(cur$.ptr, TRUE, 30L), vv)
+  expect_identical(thor_list(cur$.ptr, NULL, 10L), v)
+  expect_identical(thor_list(cur$.ptr, NULL, 30L), v)
 })

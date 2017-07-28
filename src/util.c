@@ -135,11 +135,12 @@ SEXP r_test_error(SEXP r_rc, SEXP r_false_flag, SEXP r_str) {
   return ScalarLogical(ret);
 }
 
-SEXP shorten_vector(SEXP x, size_t len) {
+SEXP combine_vector(SEXP x, size_t len) {
   if (len == (size_t)length(x)) {
     return x;
   }
-  SEXP ret = PROTECT(allocVector(STRSXP, len));
+  bool out_str = TYPEOF(x) == STRSXP;
+  SEXP ret = PROTECT(allocVector(TYPEOF(x), len));
   size_t n = length(x);
   for (size_t i = 0, j = 0; i < len; ++i, ++j) {
     if (j == n) {
@@ -147,7 +148,11 @@ SEXP shorten_vector(SEXP x, size_t len) {
       n = length(x);
       j = 0;
     }
-    SET_STRING_ELT(ret, i, STRING_ELT(x, j));
+    if (out_str) {
+      SET_STRING_ELT(ret, i, STRING_ELT(x, j));
+    } else {
+      SET_VECTOR_ELT(ret, i, VECTOR_ELT(x, j));
+    }
   }
   UNPROTECT(1);
   return ret;
