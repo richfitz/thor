@@ -795,3 +795,39 @@ SEXP r_mdb_dbi_id(SEXP r_dbi) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   return ScalarInteger((int) dbi);
 }
+
+// NOTE: because we do not in general know the size of the output I am
+// using a cheeky system in which I use an _attribute_ of a vector
+// 'next' to indicate the place to continue reading that vector.
+// Growth is linear (not geometric).
+//
+// work is needed here if we want to support binary keys.
+SEXP r_thor_list(SEXP r_cursor, SEXP r_size) {
+  size_t size = scalar_size(r_size, "size");
+
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  MDB_val key, value;
+
+  SEXP ret = PROTECT(allocVector(STRSXP, size));
+  SEXP add = ret;
+
+  size_t i = 0, n = 0;
+  int rc = mdb_cursor_get(cursor, &key, &value, MDB_FIRST);
+  while (rc == MDB_SUCCESS) {
+    if (i == size) {
+      SEXP tmp = PROTECT(allocVector(STRSXP, size));
+      setAttrib(add, install("next"), tmp);
+      UNPROTECT(1);
+      add = tmp;
+      i = 0;
+    }
+    SET_STRING_ELT(add, i++, mdb_val_to_sexp(&key, false, AS_CHAR));
+    n++;
+    rc = mdb_cursor_get(cursor, &key, &value, MDB_NEXT);
+  }
+  no_error2(rc, MDB_NOTFOUND, "thor_list");
+
+  ret = shorten_vector(ret, n);
+  UNPROTECT(1);
+  return ret;
+}

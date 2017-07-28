@@ -113,3 +113,4 @@ void cleanup_txn(SEXP r_txn);
 
 // Extra:
 SEXP r_mdb_dbi_id(SEXP r_dbi);
+SEXP r_thor_list(SEXP r_cursor, SEXP r_size);

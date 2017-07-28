@@ -185,3 +185,7 @@ mdb_dbi_id <- function(dbi) {
 mdb_proxy_copy <- function(x, as_raw) {
   .Call(Cmdb_proxy_copy, x, as_raw)
 }
+
+thor_list <- function(cur, size) {
+  .Call(Cthor_list, cur, as_integer(size))
+}

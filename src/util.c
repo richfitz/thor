@@ -76,20 +76,21 @@ bool is_raw_string(const char* str, size_t len, return_as as_raw) {
     return true;
   } else {
     bool has_raw = memchr(str, '\0', len) != NULL;
-    if (has_raw && as_raw == AS_STRING) {
+    if (has_raw && as_raw != AS_ANY) {
       Rf_error("value contains embedded nul bytes; cannot return string");
     }
     return has_raw;
   }
 }
 
-// This is the same strategy as redux.
 SEXP raw_string_to_sexp(const char *str, size_t len, return_as as_raw) {
   bool is_raw = is_raw_string(str, len, as_raw);
   SEXP ret;
   if (is_raw) {
     ret = PROTECT(allocVector(RAWSXP, len));
     memcpy(RAW(ret), str, len);
+  } else if (as_raw == AS_CHAR) {
+    ret = PROTECT(mkCharLen(str, len));
   } else {
     ret = PROTECT(allocVector(STRSXP, 1));
     SET_STRING_ELT(ret, 0, mkCharLen(str, len));
@@ -132,4 +133,22 @@ SEXP r_test_error(SEXP r_rc, SEXP r_false_flag, SEXP r_str) {
     ret = no_error2(rc, false_flag, str);
   }
   return ScalarLogical(ret);
+}
+
+SEXP shorten_vector(SEXP x, size_t len) {
+  if (len == (size_t)length(x)) {
+    return x;
+  }
+  SEXP ret = PROTECT(allocVector(STRSXP, len));
+  size_t n = length(x);
+  for (size_t i = 0, j = 0; i < len; ++i, ++j) {
+    if (j == n) {
+      x = getAttrib(x, install("next"));
+      n = length(x);
+      j = 0;
+    }
+    SET_STRING_ELT(ret, i, STRING_ELT(x, j));
+  }
+  UNPROTECT(1);
+  return ret;
 }

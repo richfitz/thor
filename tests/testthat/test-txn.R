@@ -411,3 +411,18 @@ test_that("with_new_txn", {
     mdb_get(t, db_ptr, "a", FALSE, FALSE, FALSE)), "apple")
   expect_error(with_new_txn(env, function(t) stop("banana"), FALSE), "banana")
 })
+
+test_that("list", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+
+  cur <- txn$cursor()
+  expect_identical(thor_list(cur$.ptr, 10L), character(0))
+
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+
+  expect_identical(thor_list(cur$.ptr, 10L), letters)
+  expect_identical(thor_list(cur$.ptr, 30L), letters)
+})
