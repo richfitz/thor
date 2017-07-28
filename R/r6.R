@@ -216,6 +216,17 @@ R6_dbenv <- R6::R6Class(
 
     begin = function(db = NULL, write = FALSE) {
       R6_transaction$new(self, db, write)
+    },
+
+    destroy = function() {
+      path <- self$path()
+      subdir <- self$flags()[["subdir"]]
+      self$close()
+      if (subdir) {
+        unlink(path, recursive = TRUE)
+      } else {
+        file.remove(c(path, paste0(path, "-lock")))
+      }
     }
 
     ## this might be nice - not quite there though

@@ -230,3 +230,21 @@ test_that("naked unintialised environment can be garbage collected", {
   rm(env_ptr)
   gc()
 })
+
+test_that("destroy: subdir", {
+  env <- dbenv(tempfile())
+  path <- env$path()
+  env$destroy()
+  expect_false(file.exists(path))
+})
+
+test_that("destroy: file", {
+  path <- tempfile()
+  dir.create(path)
+  path_db <- file.path(path, "mydb")
+  env <- dbenv(path_db, subdir = FALSE)
+  env$destroy()
+  expect_false(file.exists(path_db))
+  expect_true(file.exists(path))
+  expect_equal(dir(path), character(0))
+})
