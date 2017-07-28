@@ -799,14 +799,24 @@ SEXP r_mdb_dbi_id(SEXP r_dbi) {
 // NOTE: because we do not in general know the size of the output I am
 // using a cheeky system in which I use an _attribute_ of a vector
 // 'next' to indicate the place to continue reading that vector.
-// Growth is linear (not geometric).
+// Growth is linear (not geometric).  However, we can usually just
+// look the size up.
 //
 // work is needed here if we want to support binary keys.
 SEXP r_thor_list(SEXP r_cursor, SEXP r_as_raw, SEXP r_size) {
-  size_t size = scalar_size(r_size, "size");
+  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
+  size_t size;
+  if (r_size == R_NilValue) {
+    MDB_txn * txn = mdb_cursor_txn(cursor);
+    MDB_dbi dbi = mdb_cursor_dbi(cursor);
+    MDB_stat stat;
+    no_error(mdb_stat(txn, dbi, &stat), "thor_list -> mdb_env_stat");
+    size = stat.ms_entries;
+  } else {
+    size = scalar_size(r_size, "size");
+  }
   return_as as_raw = to_return_as(r_as_raw);
 
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, value;
 
   bool out_str = as_raw == AS_STRING;

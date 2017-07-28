@@ -426,10 +426,18 @@ test_that("list", {
   expect_identical(thor_list(cur$.ptr, FALSE, 10L), letters)
   expect_identical(thor_list(cur$.ptr, FALSE, 26L), letters)
   expect_identical(thor_list(cur$.ptr, FALSE, 30L), letters)
+  expect_identical(thor_list(cur$.ptr, FALSE, NULL), letters)
   expect_identical(thor_list(cur$.ptr, TRUE, 10L), lapply(letters, charToRaw))
   expect_identical(thor_list(cur$.ptr, TRUE, 30L), lapply(letters, charToRaw))
+  expect_identical(thor_list(cur$.ptr, TRUE, NULL), lapply(letters, charToRaw))
   expect_identical(thor_list(cur$.ptr, NULL, 10L), as.list(letters))
   expect_identical(thor_list(cur$.ptr, NULL, 30L), as.list(letters))
+  expect_identical(thor_list(cur$.ptr, NULL, NULL), as.list(letters))
+
+  expect_identical(txn$list(FALSE), letters)
+  expect_identical(txn$list(TRUE), lapply(letters, charToRaw))
+  expect_identical(txn$list(NULL), as.list(letters))
+
   txn$abort()
 
   ## Then with some raw bytes:
@@ -449,6 +457,13 @@ test_that("list", {
                "value contains embedded nul bytes; cannot return string")
   expect_identical(thor_list(cur$.ptr, TRUE, 10L), vv)
   expect_identical(thor_list(cur$.ptr, TRUE, 30L), vv)
+  expect_identical(thor_list(cur$.ptr, TRUE, NULL), vv)
   expect_identical(thor_list(cur$.ptr, NULL, 10L), v)
   expect_identical(thor_list(cur$.ptr, NULL, 30L), v)
+  expect_identical(thor_list(cur$.ptr, NULL, NULL), v)
+
+  expect_identical(txn$list(TRUE), vv)
+  expect_identical(txn$list(NULL), v)
+  expect_error(txn$list(),
+               "value contains embedded nul bytes; cannot return string")
 })
