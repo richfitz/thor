@@ -442,21 +442,20 @@ R6_transaction <- R6::R6Class(
         res
       }
     },
-
     mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
                     append = FALSE) {
       self$.mutations = self$.mutations + 1L
       thor_mput(self$.ptr, self$.db$.ptr, key, value,
                 dupdata, overwrite, append)
     },
+    mdel = function(key, value = NULL) {
+      if (!is.null(value) && !self$.db$.dupsort) {
+        stop("'value' is not allowed for databases with dupsort = FALSE")
+      }
+      self$.mutations = self$.mutations + 1L
+      thor_mdel(self$.ptr, self$.db$.ptr, key, value)
+    },
 
-    ## TODO: For rleveldb I also implemented:
-    ##
-    ##   mget, mput
-    ##   vectorised del (as delete)
-    ##   exists
-    ##   keys
-    ##   keys_len
     cursor = function() {
       R6_cursor$new(self)
     },

@@ -946,6 +946,50 @@ SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
   return R_NilValue;
 }
 
+SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  MDB_val *key, *value;
+  size_t len_key = sexp_to_mdb_vals(r_key, "key", &key);
+  if (r_value == R_NilValue) {
+    value = (MDB_val*)R_alloc(len_key, sizeof(MDB_val));
+    for (size_t i = 0; i < len_key; ++i) {
+      value[i].mv_data = "";
+      value[i].mv_size = 0;
+    }
+  } else {
+    size_t len_value = sexp_to_mdb_vals(r_value, "value", &value);
+    if (len_key != len_value) {
+      Rf_error("Expected %d values but recieved %d", len_key, len_value);
+    }
+  }
+
+  MDB_env *env = mdb_txn_env(txn);
+  MDB_txn *txn_sub;
+
+  SEXP ret = PROTECT(allocVector(LGLSXP, len_key));
+  int * ret_data = INTEGER(ret);
+
+  // No R api calls here; this must not throw:
+  no_error(mdb_txn_begin(env, txn, 0, &txn_sub), "thor_mdel -> txn_begin");
+  for (size_t i = 0; i < len_key; ++i) {
+    int rc = mdb_del(txn_sub, dbi, key + i, value + i);
+    if (rc == MDB_SUCCESS) {
+      ret_data[i] = 1;
+    } else if (rc == MDB_NOTFOUND) {
+      ret_data[i] = 0;
+    } else {
+      mdb_txn_abort(txn_sub);
+      no_error(rc, "thor_mput -> mdb_put");
+    }
+  }
+  mdb_txn_commit(txn_sub);
+  // Below here is OK though
+
+  UNPROTECT(1);
+  return ret;
+}
+
 size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x_ptr) {
   const size_t len = TYPEOF(r_x) == RAWSXP ? 1 : (size_t)length(r_x);
 

@@ -119,6 +119,7 @@ SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                  SEXP r_as_proxy, SEXP r_as_raw);
 SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
                  SEXP r_dupdata, SEXP r_overwrite, SEXP r_append);
+SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value);
 
 // Utility
 bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix);

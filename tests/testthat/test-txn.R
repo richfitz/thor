@@ -573,3 +573,30 @@ test_that("mput: atomicity", {
   cmp <- txn$mget(v2, as_raw = FALSE)
   expect_identical(cmp, ifelse(v2 %in% v1, toupper(v2), ""))
 })
+
+test_that("mdel", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  txn$mput(letters, LETTERS)
+
+  expect_identical(txn$mdel(letters), rep(TRUE, length(letters)))
+  expect_identical(txn$mdel(letters), rep(FALSE, length(letters)))
+  expect_identical(txn$mdel(character(0)), logical(0))
+  expect_identical(txn$mdel(list()), logical(0))
+
+  v <- sample(letters, 12)
+  txn$mput(v, toupper(v))
+  expect_identical(txn$mdel(letters), letters %in% v)
+
+  expect_error(txn$mdel(letters, "a"),
+               "'value' is not allowed for databases with dupsort = FALSE")
+})
+
+test_that("mdel: atomic", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  txn$mput(letters, LETTERS)
+  v <- c(letters[1:5], "", letters[6:10])
+  expect_error(txn$mdel(v), "MDB_BAD_VALSIZE")
+  expect_identical(txn$mget(letters, as_raw = FALSE), LETTERS)
+})

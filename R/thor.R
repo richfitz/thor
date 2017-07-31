@@ -197,3 +197,7 @@ thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {
 thor_mput <- function(txn, dbi, key, value, dupdata, overwrite, append) {
   .Call(Cthor_mput, txn, dbi, key, value, dupdata, overwrite, append)
 }
+
+thor_mdel <- function(txn, dbi, key, value) {
+  .Call(Cthor_mdel, txn, dbi, key, value)
+}

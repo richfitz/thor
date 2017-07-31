@@ -56,6 +56,7 @@ static const R_CallMethodDef call_methods[] = {
   {"Cthor_list",                   (DL_FUNC) &r_thor_list,                 4},
   {"Cthor_mget",                   (DL_FUNC) &r_thor_mget,                 5},
   {"Cthor_mput",                   (DL_FUNC) &r_thor_mput,                 7},
+  {"Cthor_mdel",                   (DL_FUNC) &r_thor_mdel,                 4},
 
   // Other
   {"Cmdb_proxy_copy",              (DL_FUNC) &r_mdb_proxy_copy,            2},

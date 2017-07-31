@@ -109,3 +109,24 @@ test_that("del: with value", {
   expect_equal(txn$get("a"), "apple")
   expect_false(cur$move_to_dup("a", "avocado"))
 })
+
+test_that("mdel: with value", {
+  env <- dbenv(tempfile(), dupsort = TRUE)
+  txn <- env$begin(write = TRUE)
+  cur <- txn$cursor()
+
+  txn$put("a", "apple")
+  txn$put("a", "avocado")
+  txn$put("b", "banana")
+  txn$put("b", "berry")
+
+  expect_equal(txn$mdel(c("a", "b"), c("apple", "banana")), c(TRUE, TRUE))
+  expect_equal(txn$mdel(c("a", "b"), c("apple", "banana")), c(FALSE, FALSE))
+
+  expect_identical(txn$mget(c("a", "b")), list("avocado", "berry"))
+
+  expect_error(txn$mdel(c("a", "b"), "avocado"),
+               "Expected 2 values but recieved 1")
+  expect_identical(txn$mdel(c("a", "b"), rep("avocado", 2)),
+                   c(TRUE, FALSE))
+})
