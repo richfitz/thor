@@ -189,3 +189,7 @@ mdb_proxy_copy <- function(x, as_raw) {
 thor_list <- function(cur, starts_with, as_raw, size) {
   .Call(Cthor_list, cur, starts_with, as_raw, if (!is.null(size)) as_integer(size))
 }
+
+thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {
+  .Call(Cthor_mget, txn, dbi, key, as_proxy, as_raw)
+}

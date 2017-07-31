@@ -54,6 +54,7 @@ static const R_CallMethodDef call_methods[] = {
   // Extensions
   {"Cmdb_dbi_id",                  (DL_FUNC) &r_mdb_dbi_id,                1},
   {"Cthor_list",                   (DL_FUNC) &r_thor_list,                 4},
+  {"Cthor_mget",                   (DL_FUNC) &r_thor_mget,                 5},
 
   // Other
   {"Cmdb_proxy_copy",              (DL_FUNC) &r_mdb_proxy_copy,            2},

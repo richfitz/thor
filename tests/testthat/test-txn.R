@@ -477,3 +477,61 @@ test_that("list & filter", {
   expect_identical(txn$list("a", as_raw = NULL, size = 10L),
                    as.list(c("ape", "apple", "avocado")))
 })
+
+test_that("mget", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  txn$commit()
+  txn <- env$begin(write = FALSE)
+
+  ## as_raw = NULL
+  expect_identical(txn$mget(character(0)), list())
+  expect_identical(txn$mget("a"), list("A"))
+  expect_identical(txn$mget(c("a", "b")), list("A", "B"))
+  expect_identical(txn$mget(c("a", "xyz", "b")), list("A", NULL, "B"))
+
+  ## as_raw = FALSE
+  expect_identical(txn$mget(character(0), as_raw = FALSE), character(0))
+  expect_identical(txn$mget("a", as_raw = FALSE), "A")
+  expect_identical(txn$mget(c("a", "b"), as_raw = FALSE), c("A", "B"))
+  expect_identical(txn$mget(c("a", "xyz", "b"), as_raw = FALSE), c("A", "", "B"))
+  ## TODO: decide if "" or NA is better to return in this case.
+
+  ## as_proxy = TRUE
+  expect_identical(txn$mget(character(0), as_proxy = TRUE), list())
+
+  p <- txn$mget("a", as_proxy = TRUE)
+  expect_is(p, "list")
+  expect_equal(lapply(p, function(el) el$data()), list("A"))
+
+  p <- txn$mget(c("a", "b"), as_proxy = TRUE)
+  expect_is(p, "list")
+  expect_equal(lapply(p, function(el) el$data()), list("A", "B"))
+
+  p <- txn$mget(c("a", "xyz", "b"), as_proxy = TRUE)
+  expect_is(p, "list")
+  expect_equal(lapply(p, function(el) el$data()), list("A", NULL, "B"))
+})
+
+test_that("mget: raw keys", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  for (i in letters) {
+    txn$put(i, toupper(i))
+  }
+  txn$commit()
+  txn <- env$begin(write = FALSE)
+
+  expect_equal(txn$mget(charToRaw("a")), list("A"))
+  expect_equal(txn$mget(charToRaw("abc")), list(NULL))
+  expect_equal(txn$mget(as.list(charToRaw("abc"))), list("A", "B", "C"))
+})
+
+test_that("mget: invalid input", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  expect_error(txn$mget(1), "Invalid type; expected a character or raw vector")
+})

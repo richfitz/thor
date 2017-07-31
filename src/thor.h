@@ -56,7 +56,7 @@ SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
                SEXP r_dupdata, SEXP r_overwrite, SEXP r_append);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
-               SEXP r_missing_is_error, SEXP r_proxy, SEXP r_as_raw);
+               SEXP r_missing_is_error, SEXP r_as_proxy, SEXP r_as_raw);
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value);
 
 // Additional thing
@@ -115,6 +115,8 @@ void cleanup_txn(SEXP r_txn);
 SEXP r_mdb_dbi_id(SEXP r_dbi);
 SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
                  SEXP r_size);
+SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
+                 SEXP r_as_proxy, SEXP r_as_raw);
 
 // Utility
 bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix);

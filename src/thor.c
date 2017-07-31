@@ -878,3 +878,61 @@ bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix) {
   return x->mv_size >= prefix->mv_size &&
     memcmp(x->mv_data, prefix->mv_data, prefix->mv_size) == 0;
 }
+
+size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x);
+
+SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
+                 SEXP r_as_proxy, SEXP r_as_raw) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  const bool as_proxy = scalar_logical(r_as_proxy, "as_proxy");
+  const return_as as_raw = to_return_as(r_as_raw);
+  MDB_val *key, value;
+  size_t len = sexp_to_mdb_vals(r_key, "key", &key);
+
+  bool out_str = !as_proxy && as_raw == AS_STRING;
+
+  // TODO: in theory we could return a character vector here where
+  // as_raw == AS_STRING because that is totally type stable.
+  SEXP ret = PROTECT(allocVector(out_str ? STRSXP : VECSXP, len));
+
+  for (size_t i = 0; i < len; ++i) {
+    int rc = mdb_get(txn, dbi, key + i, &value);
+    if (no_error2(rc, MDB_NOTFOUND, "mdb_get")) {
+      if (out_str) {
+        SET_STRING_ELT(ret, i, mdb_val_to_sexp(&value, false, AS_CHAR));
+      } else {
+        SET_VECTOR_ELT(ret, i, mdb_val_to_sexp(&value, as_proxy, as_raw));
+      }
+    }
+  }
+
+  UNPROTECT(1);
+  return ret;
+}
+
+size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x_ptr) {
+  const size_t len = TYPEOF(r_x) == RAWSXP ? 1 : (size_t)length(r_x);
+
+  *x_ptr = (MDB_val*)R_alloc(len, sizeof(MDB_val));
+  MDB_val *x = *x_ptr;
+
+  if (TYPEOF(r_x) == RAWSXP) {
+    x[0].mv_size = length(r_x);
+    x[0].mv_data = RAW(r_x);
+  } else if (TYPEOF(r_x) == STRSXP) {
+    for (size_t i = 0; i < len; ++i) {
+      SEXP el = STRING_ELT(r_x, i);
+      x[i].mv_size = length(el);
+      x[i].mv_data = (void *) CHAR(el);
+    }
+  } else if (TYPEOF(r_x) == VECSXP) {
+    for (size_t i = 0; i < len; ++i) {
+      sexp_to_mdb_val(VECTOR_ELT(r_x, i), name, x + i);
+    }
+  } else {
+    Rf_error("Invalid type; expected a character or raw vector");
+  }
+
+  return len;
+}

@@ -434,6 +434,15 @@ R6_transaction <- R6::R6Class(
       cur$pop(key, as_raw)
     },
 
+    mget = function(key, as_proxy = FALSE, as_raw = NULL) {
+      res <- thor_mget(self$.ptr, self$.db$.ptr, key, as_proxy, as_raw)
+      if (as_proxy) {
+        lapply(res, mdb_val_proxy, txn = self)
+      } else {
+        res
+      }
+    },
+
     ## TODO: For rleveldb I also implemented:
     ##
     ##   mget, mput
