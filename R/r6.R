@@ -443,6 +443,13 @@ R6_transaction <- R6::R6Class(
       }
     },
 
+    mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
+                    append = FALSE) {
+      self$.mutations = self$.mutations + 1L
+      thor_mput(self$.ptr, self$.db$.ptr, key, value,
+                dupdata, overwrite, append)
+    },
+
     ## TODO: For rleveldb I also implemented:
     ##
     ##   mget, mput

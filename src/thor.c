@@ -911,6 +911,41 @@ SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
   return ret;
 }
 
+SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
+                 SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  MDB_val *key, *value;
+  const unsigned int flags =
+    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
+    sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
+    sexp_to_flag(r_append, MDB_APPEND, "append", false);
+
+  size_t
+    len_key = sexp_to_mdb_vals(r_key, "key", &key),
+    len_value = sexp_to_mdb_vals(r_value, "value", &value);
+  if (len_key != len_value) {
+    Rf_error("Expected %d values but recieved %d", len_key, len_value);
+  }
+
+  MDB_env *env = mdb_txn_env(txn);
+  MDB_txn *txn_sub;
+  no_error(mdb_txn_begin(env, txn, 0, &txn_sub), "thor_mput -> txn_begin");
+
+  // No R api calls here; this must not throw:
+  for (size_t i = 0; i < len_key; ++i) {
+    int rc = mdb_put(txn_sub, dbi, key + i, value + i, flags);
+    if (rc != MDB_SUCCESS) {
+      mdb_txn_abort(txn_sub);
+      no_error(rc, "thor_mput -> mdb_put");
+    }
+  }
+  mdb_txn_commit(txn_sub);
+  // Below here is OK though
+
+  return R_NilValue;
+}
+
 size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x_ptr) {
   const size_t len = TYPEOF(r_x) == RAWSXP ? 1 : (size_t)length(r_x);
 

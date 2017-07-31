@@ -193,3 +193,7 @@ thor_list <- function(cur, starts_with, as_raw, size) {
 thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {
   .Call(Cthor_mget, txn, dbi, key, as_proxy, as_raw)
 }
+
+thor_mput <- function(txn, dbi, key, value, dupdata, overwrite, append) {
+  .Call(Cthor_mput, txn, dbi, key, value, dupdata, overwrite, append)
+}

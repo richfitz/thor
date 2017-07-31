@@ -535,3 +535,41 @@ test_that("mget: invalid input", {
   txn <- env$begin(write = TRUE)
   expect_error(txn$mget(1), "Invalid type; expected a character or raw vector")
 })
+
+test_that("mput: basic", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  expect_null(txn$mput(character(0), character(0)))
+  expect_null(txn$mput(letters, LETTERS))
+  expect_identical(txn$mget(letters, as_raw = FALSE), LETTERS)
+})
+
+test_that("mput: lengths", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+
+  expect_error(txn$mput("a", letters),
+               "Expected 1 values but recieved 26")
+  expect_error(txn$mput("a", as.list(letters)),
+               "Expected 1 values but recieved 26")
+  expect_error(txn$mput(list("a"), letters),
+               "Expected 1 values but recieved 26")
+  expect_error(txn$mput(list(charToRaw("a")), letters),
+               "Expected 1 values but recieved 26")
+  expect_error(txn$mput(charToRaw(paste(letters, collapse = "")), letters),
+               "Expected 1 values but recieved 26")
+})
+
+test_that("mput: atomicity", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  ## Test that a failure part way along the extraction causes the
+  ## entire insertion to fail atomically.
+  v1 <- letters[1:5]
+  v2 <- c(letters[c(6:10, 4, 11:20)])
+  txn$mput(v1, toupper(v1))
+  expect_error(txn$mput(v2, v2, overwrite = FALSE), "MDB_KEYEXIST")
+  expect_identical(txn$mget(v1, as_raw = FALSE), toupper(v1))
+  cmp <- txn$mget(v2, as_raw = FALSE)
+  expect_identical(cmp, ifelse(v2 %in% v1, toupper(v2), ""))
+})
