@@ -355,15 +355,6 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
   return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
 }
 
-SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val key, value;
-  sexp_to_mdb_val(r_key, "key", &key);
-  int rc = mdb_get(txn, dbi, &key, &value);
-  return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_exists"));
-}
-
 // --- cursors ---
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
@@ -880,6 +871,22 @@ bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix) {
 }
 
 size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x);
+
+SEXP r_thor_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
+  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
+  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
+  MDB_val *key, value;
+  size_t len = sexp_to_mdb_vals(r_key, "key", &key);
+  SEXP ret = PROTECT(allocVector(LGLSXP, len));
+  int * ret_data = INTEGER(ret);
+  for (size_t i = 0; i < len; ++i) {
+    int rc = mdb_get(txn, dbi, key + i, &value);
+    ret_data[i] = rc == MDB_SUCCESS;
+    no_error2(rc, MDB_NOTFOUND, "thor_exists");
+  }
+  UNPROTECT(1);
+  return ret;
+}
 
 SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                  SEXP r_as_proxy, SEXP r_as_raw) {

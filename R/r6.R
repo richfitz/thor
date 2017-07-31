@@ -415,7 +415,7 @@ R6_transaction <- R6::R6Class(
     },
 
     exists = function(key) {
-      mdb_exists(self$.ptr, self$.db$.ptr, key)
+      thor_exists(self$.ptr, self$.db$.ptr, key)
     },
     list = function(starts_with = NULL, as_raw = FALSE, size = NULL) {
       cur_ptr <- mdb_cursor_open(self$.ptr, self$.db$.ptr)

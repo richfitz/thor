@@ -59,9 +59,6 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                SEXP r_missing_is_error, SEXP r_as_proxy, SEXP r_as_raw);
 SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value);
 
-// Additional thing
-SEXP r_mdb_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key);
-
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_cursor_close(SEXP r_cursor);
 
@@ -115,6 +112,8 @@ void cleanup_txn(SEXP r_txn);
 SEXP r_mdb_dbi_id(SEXP r_dbi);
 SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
                  SEXP r_size);
+
+SEXP r_thor_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key);
 SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                  SEXP r_as_proxy, SEXP r_as_raw);
 SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,

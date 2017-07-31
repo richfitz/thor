@@ -122,10 +122,6 @@ mdb_del <- function(txn, dbi, key, value) {
   .Call(Cmdb_del, txn, dbi, key, value)
 }
 
-mdb_exists <- function(txn, dbi, key) {
-  .Call(Cmdb_exists, txn, dbi, key)
-}
-
 mdb_cursor_open <- function(txn, dbi) {
   .Call(Cmdb_cursor_open, txn, dbi)
 }
@@ -188,6 +184,10 @@ mdb_proxy_copy <- function(x, as_raw) {
 
 thor_list <- function(cur, starts_with, as_raw, size) {
   .Call(Cthor_list, cur, starts_with, as_raw, if (!is.null(size)) as_integer(size))
+}
+
+thor_exists <- function(txn, dbi, key) {
+  .Call(Cthor_exists, txn, dbi, key)
 }
 
 thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {

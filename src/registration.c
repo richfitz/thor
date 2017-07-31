@@ -35,7 +35,6 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   7},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   6},
   {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
-  {"Cmdb_exists",                  (DL_FUNC) &r_mdb_exists,                3},
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
@@ -54,6 +53,7 @@ static const R_CallMethodDef call_methods[] = {
   // Extensions
   {"Cmdb_dbi_id",                  (DL_FUNC) &r_mdb_dbi_id,                1},
   {"Cthor_list",                   (DL_FUNC) &r_thor_list,                 4},
+  {"Cthor_exists",                 (DL_FUNC) &r_thor_exists,               3},
   {"Cthor_mget",                   (DL_FUNC) &r_thor_mget,                 5},
   {"Cthor_mput",                   (DL_FUNC) &r_thor_mput,                 7},
   {"Cthor_mdel",                   (DL_FUNC) &r_thor_mdel,                 4},

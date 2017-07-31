@@ -269,6 +269,9 @@ test_that("exists", {
   }
   expect_true(txn$exists("a"))
   expect_false(txn$exists("A"))
+
+  expect_identical(txn$exists(character(0)), logical(0))
+  expect_identical(txn$exists(letters), rep(TRUE, length(letters)))
   env$close()
 })
 
