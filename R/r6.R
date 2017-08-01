@@ -54,6 +54,9 @@ dbenv <- function(path, ..., mode = as.octmode("644"),
 ## because we'd need to be very careful about close.  So a proxy
 ## object (like the deps) would need to be kept around that keeps
 ## track of the write transaction bit.  For now it's not done.
+
+write_txns <- new.env(parent = emptyenv())
+
 R6_dbenv <- R6::R6Class(
   "dbenv",
   cloneable = FALSE,
@@ -64,6 +67,7 @@ R6_dbenv <- R6::R6Class(
     .deps = NULL,
     .write_txn = NULL,
     .spare_txns = NULL,
+    .path = NULL,
 
     initialize = function(path, mode,
                           subdir, sync, rdonly,
@@ -96,7 +100,19 @@ R6_dbenv <- R6::R6Class(
                    subdir, sync, rdonly,
                    metasync, writemap, lock,
                    mapasync, rdahead, meminit)
+
+      self$.path <- normalizePath(self$path(), mustWork = TRUE)
       self$open_database(NULL, reversekey, dupsort, create)
+    },
+
+    .check_write = function() {
+      if (exists(self$.path, write_txns)) {
+        if (!is.null(self$.write_txn)) {
+          stop("Write transaction is already active for this environment")
+        } else {
+          stop("Write transaction is already active for this path")
+        }
+      }
     },
 
     finalize = function() {
@@ -375,10 +391,9 @@ R6_transaction <- R6::R6Class(
       parent <- NULL
 
       if (write) {
-        if (!is.null(env$.write_txn)) {
-          stop("Write transaction is already active for this environment")
-        }
+        env$.check_write()
         self$.ptr <- mdb_txn_begin(env$.ptr, parent, rdonly = FALSE)
+        write_txns[[env$.path]] <- self$.ptr
         env$.write_txn <- self
       } else {
         ptr <- env$.spare_txns$pop()
@@ -450,6 +465,7 @@ R6_transaction <- R6::R6Class(
     .cleanup = function() {
       self$.env$.deps$discard(self)
       if (self$.write) {
+        rm(list = self$.env$.path, envir = write_txns)
         self$.env$.write_txn <- NULL
       }
       self$.db <- NULL
@@ -719,9 +735,7 @@ R6_cursor <- R6::R6Class(
 ## Helper function
 with_new_txn <- function(env, write, f) {
   if (write) {
-    if (!is.null(env$.write_txn)) {
-      stop("Write transaction is already active for this environment")
-    }
+    env$.check_write()
     txn_ptr <- mdb_txn_begin(env$.ptr, NULL, FALSE)
     withCallingHandlers({
       ret <- f(txn_ptr)

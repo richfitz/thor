@@ -296,3 +296,38 @@ test_that("mput, mget, mdel (vector)", {
                "'value' is not allowed for databases with dupsort = FALSE",
                fixed = TRUE)
 })
+
+test_that("global environment lock", {
+  path <- tempfile()
+  env1 <- dbenv(path)
+  env2 <- dbenv(normalizePath(path))
+  expect_identical(env1$.path, env2$.path)
+
+  txn1 <- env1$begin(write = TRUE)
+  expect_error(env2$begin(write = TRUE),
+               "Write transaction is already active for this path")
+  expect_true(env1$.path %in% names(write_txns))
+  txn1$abort()
+  expect_false(env1$.path %in% names(write_txns))
+
+  txn2 <- env2$begin(write = TRUE)
+  expect_error(env1$begin(write = TRUE),
+               "Write transaction is already active for this path")
+  txn2$abort()
+
+  if (.Platform$OS.type == "unix") {
+    path3 <- tempfile()
+    if (file.symlink(path, path3)) {
+      env3 <- dbenv(path3)
+      expect_identical(env3$.path, env1$.path)
+
+      txn3 <- env3$begin(write = TRUE)
+      expect_error(env1$begin(write = TRUE),
+                   "Write transaction is already active for this path")
+      txn3$abort()
+      env3$close()
+    }
+  }
+  env2$close()
+  env1$destroy()
+})
