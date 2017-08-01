@@ -11,7 +11,7 @@ test_that("begin/abort", {
   expect_identical(txn$.db, env$.db)
   expect_identical(env$.deps$get(), list(env$.db, txn))
 
-  expect_identical(env$.write_txn, txn)
+  expect_identical(env$.write_txn, txn$.ptr)
   expect_true(txn$.write)
 
   expect_identical(txn$.db$id(), 1L)

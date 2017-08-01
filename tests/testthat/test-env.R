@@ -297,6 +297,15 @@ test_that("mput, mget, mdel (vector)", {
                fixed = TRUE)
 })
 
+test_that("convenience functions use pool", {
+  env <- dbenv(tempfile())
+  expect_equal(env$.spare_txns$length(), 0L)
+  expect_null(env$get("a", FALSE))
+  expect_equal(env$.spare_txns$length(), 1L)
+  expect_null(env$get("a", FALSE))
+  expect_equal(env$.spare_txns$length(), 1L)
+})
+
 test_that("global environment lock", {
   path <- tempfile()
   env1 <- dbenv(path)

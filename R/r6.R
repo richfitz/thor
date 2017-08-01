@@ -115,6 +115,25 @@ R6_dbenv <- R6::R6Class(
       }
     },
 
+    .new_txn_ptr = function(write, parent_ptr, temporary = FALSE) {
+      if (write) {
+        self$.check_write()
+        ptr <- mdb_txn_begin(self$.ptr, parent_ptr, rdonly = FALSE)
+        if (!temporary) {
+          write_txns[[self$.path]] <- self$.ptr
+          self$.write_txn <- ptr
+        }
+      } else {
+        ptr <- self$.spare_txns$pop()
+        if (is.null(ptr)) {
+          ptr <- mdb_txn_begin(self$.ptr, parent_ptr, rdonly = TRUE)
+        } else {
+          mdb_txn_renew(ptr)
+        }
+      }
+      ptr
+    },
+
     finalize = function() {
       self$close()
     },
@@ -389,21 +408,7 @@ R6_transaction <- R6::R6Class(
 
       ## NOTE: Parent transactions are not supported yet
       parent <- NULL
-
-      if (write) {
-        env$.check_write()
-        self$.ptr <- mdb_txn_begin(env$.ptr, parent, rdonly = FALSE)
-        write_txns[[env$.path]] <- self$.ptr
-        env$.write_txn <- self
-      } else {
-        ptr <- env$.spare_txns$pop()
-        if (is.null(ptr)) {
-          self$.ptr <- mdb_txn_begin(env$.ptr, parent, rdonly = TRUE)
-        } else {
-          mdb_txn_renew(ptr)
-          self$.ptr <- ptr
-        }
-      }
+      self$.ptr <- env$.new_txn_ptr(write, parent)
     },
 
     .cache_spare = function() {
@@ -734,20 +739,19 @@ R6_cursor <- R6::R6Class(
 
 ## Helper function
 with_new_txn <- function(env, write, f) {
+  txn_ptr <- env$.new_txn_ptr(write, NULL, TRUE)
   if (write) {
-    env$.check_write()
-    txn_ptr <- mdb_txn_begin(env$.ptr, NULL, FALSE)
     withCallingHandlers({
       ret <- f(txn_ptr)
       mdb_txn_commit(txn_ptr)
       ret
     }, error = function(e) mdb_txn_abort(txn_ptr, FALSE))
   } else {
-    ## Consider using the pool system in env?
-    txn_ptr <- mdb_txn_begin(env$.ptr, NULL, TRUE)
-    withCallingHandlers({
-      f(txn_ptr)
-    }, finally = function(e) mdb_txn_abort(txn_ptr, FALSE))
+    on.exit({
+      mdb_txn_reset(txn_ptr)
+      env$.spare_txns$push(txn_ptr)
+    })
+    f(txn_ptr)
   }
 }
 
