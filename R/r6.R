@@ -182,7 +182,7 @@ R6_dbenv <- R6::R6Class(
       newdb <- function(txn_ptr) {
         R6_database$new(self, txn_ptr, key, reversekey, dupsort, create)
       }
-      db <- with_new_txn(self, newdb, write = TRUE)
+      db <- with_new_txn(self, TRUE, newdb)
 
       if (is.null(key)) {
         self$.db <- db
@@ -215,7 +215,7 @@ R6_dbenv <- R6::R6Class(
         db$.invalidate()
       }
 
-      with_new_txn(self, dropdb, write = TRUE)
+      with_new_txn(self, TRUE, dropdb)
     },
 
     begin = function(db = NULL, write = FALSE) {
@@ -231,18 +231,74 @@ R6_dbenv <- R6::R6Class(
       } else {
         file.remove(c(path, paste0(path, "-lock")))
       }
-    }
+    },
 
-    ## this might be nice - not quite there though
-    ## get = function(...) {
-    ##   with_new_txn(self, function(txn) txn$get(...), write = FALSE)
-    ## },
-    ## put = function(...) {
-    ##   with_new_txn(self$.ptr, function(txn) txn$put(...))
-    ## },
-    ## del = function(...) {
-    ##   with_new_txn(self$.ptr, function(txn) txn$del(...))
-    ## }
+    ## Big group of helper methods; these will not necessarily be as
+    ## efficient as using a slightly longer lived transaction.
+    get = function(key, missing_is_error = TRUE, as_raw = NULL, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, FALSE, function(txn_ptr)
+        mdb_get(txn_ptr, db$.ptr, key, missing_is_error, FALSE, as_raw))
+    },
+    mget = function(key, as_raw = NULL, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, FALSE, function(txn_ptr)
+        thor_mget(txn_ptr, db$.ptr, key, FALSE, as_raw))
+    },
+    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
+                   append = FALSE, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, TRUE, function(txn_ptr)
+        mdb_put(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
+    },
+    mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
+                   append = FALSE, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, TRUE, function(txn_ptr)
+        thor_mput(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
+    },
+    del = function(key, value = NULL, db = NULL) {
+      db <- db %||% self$.db
+      if (!is.null(value) && !db$.dupsort) {
+        stop("'value' is not allowed for databases with dupsort = FALSE")
+      }
+      with_new_txn(self, TRUE, function(txn_ptr)
+        mdb_del(txn_ptr, db$.ptr, key, value))
+
+    },
+    mdel = function(key, value = NULL, db = NULL) {
+      db <- db %||% self$.db
+      if (!is.null(value) && !db$.dupsort) {
+        stop("'value' is not allowed for databases with dupsort = FALSE")
+      }
+      with_new_txn(self, TRUE, function(txn_ptr)
+        thor_mdel(txn_ptr, db$.ptr, key, value))
+
+    },
+    exists = function(key, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, FALSE, function(txn_ptr)
+        thor_exists(txn_ptr, db$.ptr, key))
+    },
+    list = function(starts_with = NULL, as_raw = FALSE, size = NULL,
+                    db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn(self, FALSE, function(txn_ptr) {
+        cur_ptr <- mdb_cursor_open(txn_ptr, db$.ptr)
+        on.exit(mdb_cursor_close(cur_ptr))
+        thor_list(cur_ptr, starts_with, as_raw, size)
+      })
+    },
+    replace = function(key, value, as_raw = NULL, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn_object(self, db, TRUE, function(txn)
+        txn$replace(key, value, as_raw))
+    },
+    pop = function(key, as_raw = NULL, db = NULL) {
+      db <- db %||% self$.db
+      with_new_txn_object(self, db, TRUE, function(txn)
+        txn$pop(key, as_raw))
+    }
   ))
 
 ## TODO: Add to the above wrappers for get/put/etc that use a
@@ -661,7 +717,7 @@ R6_cursor <- R6::R6Class(
   ))
 
 ## Helper function
-with_new_txn <- function(env, f, write = FALSE) {
+with_new_txn <- function(env, write, f) {
   if (write) {
     if (!is.null(env$.write_txn)) {
       stop("Write transaction is already active for this environment")
@@ -679,6 +735,15 @@ with_new_txn <- function(env, f, write = FALSE) {
       f(txn_ptr)
     }, finally = function(e) mdb_txn_abort(txn_ptr, FALSE))
   }
+}
+
+with_new_txn_object <- function(env, db, write, f) {
+  txn <- env$begin(db, write)
+  withCallingHandlers({
+    ret <- f(txn)
+    txn$commit()
+    ret
+  }, error = function(e) txn$abort())
 }
 
 invalidate_dependencies <- function(x) {

@@ -99,3 +99,7 @@ capture_args <- function(f, name) {
   sub("function ", name,
       trimws(paste(args[-length(args)], collapse = "\n")))
 }
+
+`%||%` <- function(a, b) {
+  if (is.null(a)) b else a
+}

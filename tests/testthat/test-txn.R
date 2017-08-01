@@ -401,18 +401,18 @@ test_that("serialisation does not crash", {
 
 test_that("with_new_txn", {
   env <- dbenv(tempfile())
-  expect_error(with_new_txn(env, function(t) stop("banana"), TRUE), "banana")
+  expect_error(with_new_txn(env, TRUE, function(t) stop("banana")), "banana")
   expect_null(env$.write_txn)
   txn <- env$begin(write = TRUE)
-  expect_error(with_new_txn(env, function(t) 1, TRUE),
+  expect_error(with_new_txn(env, TRUE, function(t) 1),
                "Write transaction is already active for this environment")
   txn$put("a", "apple")
   txn$commit()
   txn <- env$begin(write = TRUE)
   db_ptr <- env$.db$.ptr
-  expect_equal(with_new_txn(env, function(t)
+  expect_equal(with_new_txn(env, FALSE, function(t)
     mdb_get(t, db_ptr, "a", FALSE, FALSE, FALSE)), "apple")
-  expect_error(with_new_txn(env, function(t) stop("banana"), FALSE), "banana")
+  expect_error(with_new_txn(env, FALSE, function(t) stop("banana")), "banana")
 })
 
 test_that("list", {

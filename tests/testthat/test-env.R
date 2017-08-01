@@ -256,3 +256,43 @@ test_that("format", {
   expect_true(grepl("<dbenv>", str, fixed = TRUE))
   expect_true(grepl("set_mapsize", str, fixed = TRUE))
 })
+
+## Convenience wrappers:
+test_that("put, get, del (scalar)", {
+  env <- dbenv(tempfile())
+  expect_null(env$get("a", FALSE))
+  expect_false(env$exists("a"))
+  expect_null(env$put("a", "A"))
+  expect_equal(env$list(), "a")
+  expect_true(env$exists("a"))
+  expect_equal(env$get("a"), "A")
+  expect_equal(env$replace("a", "B"), "A")
+  expect_true(env$del("a"))
+  expect_false(env$del("a"))
+
+  env$put("c", "C")
+  expect_true(env$exists("c"))
+  expect_equal(env$pop("c"), "C")
+  expect_false(env$exists("c"))
+
+  expect_error(env$del("a", "B"),
+               "'value' is not allowed for databases with dupsort = FALSE",
+               fixed = TRUE)
+})
+
+test_that("mput, mget, mdel (vector)", {
+  env <- dbenv(tempfile())
+  expect_equal(env$mget(letters), vector("list", 26))
+  expect_equal(env$exists(letters), rep(FALSE, 26))
+  expect_null(env$mput(letters, LETTERS))
+  expect_equal(env$exists(letters), rep(TRUE, 26))
+  expect_equal(env$list(), letters)
+  expect_equal(env$mget(letters, as_raw = FALSE), LETTERS)
+  expect_equal(env$mget(letters, as_raw = NULL), as.list(LETTERS))
+  expect_equal(env$mdel(letters), rep(TRUE, 26))
+  expect_equal(env$mdel(letters), rep(FALSE, 26))
+
+  expect_error(env$mdel("a", "B"),
+               "'value' is not allowed for databases with dupsort = FALSE",
+               fixed = TRUE)
+})
