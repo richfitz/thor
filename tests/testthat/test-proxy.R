@@ -33,3 +33,13 @@ test_that("serialisation does not crash", {
   expect_true(is_null_pointer(environment(p2$data)$ptr))
   expect_error(p2$data(), "proxy has been invalidated")
 })
+
+test_that("print", {
+  env <- dbenv(tempfile())
+  txn <- env$begin(write = TRUE)
+  txn$put("a", "A")
+  p <- txn$get("a", as_proxy = TRUE)
+  str <- paste(capture.output(print(p)), collapse = "\n")
+  expect_true(grepl("<mdb_val_proxy>", str, fixed = TRUE))
+  expect_true(grepl("is_valid", str, fixed = TRUE))
+})

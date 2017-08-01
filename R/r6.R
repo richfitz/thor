@@ -736,3 +736,8 @@ format_thor <- function(x) {
           sprintf("    %s", methods)),
         collapse = "\n")
 }
+
+##' @export
+print.mdb_val_proxy <- function(x, ...) {
+  cat(paste0(format_thor(x), "\n"))
+}
