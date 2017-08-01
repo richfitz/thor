@@ -103,6 +103,10 @@ R6_dbenv <- R6::R6Class(
       self$close()
     },
 
+    format = function() {
+      format_thor(self)
+    },
+
     path = function() {
       mdb_env_get_path(self$.ptr)
     },
@@ -269,6 +273,9 @@ R6_database <- R6::R6Class(
       ## not perfect.
       self$.ptr <- NULL
     },
+    format = function() {
+      format_thor(self)
+    },
     id = function() {
       mdb_dbi_id(self$.ptr)
     },
@@ -353,6 +360,10 @@ R6_transaction <- R6::R6Class(
       if (!is.null(self$.ptr)) {
         self$abort()
       }
+    },
+
+    format = function() {
+      format_thor(self)
     },
 
     ## NOTE: the python version allowed alternative dbs to be passed
@@ -493,6 +504,10 @@ R6_cursor <- R6::R6Class(
       self$.invalidate()
     },
 
+    format = function() {
+      format_thor(self)
+    },
+
     .invalidate = function() {
       if (!is.null(self$.ptr)) {
         self$close()
@@ -509,12 +524,6 @@ R6_cursor <- R6::R6Class(
     },
 
     .cursor_get = function(cursor_op, key = NULL, value = NULL) {
-      ## This should/could be done in one move _each_ (perhaps) but
-      ## this way works too.  It will do perhaps too much and we
-      ## should split this into two bits (key, value).  Other issues;
-      ## there is no null proxy object (boo) and there is work needed
-      ## on the R side to build a proxy object; we should save the bit
-      ## required to build the proxy only as that's very cheap.
       x <- mdb_cursor_get(self$.ptr, cursor_op, key, value)
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
@@ -715,4 +724,15 @@ mdb_val_proxy <- function(txn, ptr) {
     })
   class(ret) <- "mdb_val_proxy"
   ret
+}
+
+format_thor <- function(x) {
+  exclude <- c("initialize", "finalize", "format")
+  method_names <- setdiff(ls(x, pattern = "^[^.]"), exclude)
+  methods <- vapply(method_names, function(i) capture_args(x[[i]], i),
+                    character(1), USE.NAMES = FALSE)
+  paste(c(sprintf("<%s>", class(x)[[1]]),
+          "  Public:",
+          sprintf("    %s", methods)),
+        collapse = "\n")
 }

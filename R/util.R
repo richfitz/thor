@@ -93,3 +93,9 @@ list_to_fixed_env <- function(x, env) {
   lockEnvironment(env)
   invisible(env)
 }
+
+capture_args <- function(f, name) {
+  args <- capture.output(args(f))
+  sub("function ", name,
+      trimws(paste(args[-length(args)], collapse = "\n")))
+}

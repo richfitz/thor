@@ -603,3 +603,12 @@ test_that("mdel: atomic", {
   expect_error(txn$mdel(v), "MDB_BAD_VALSIZE")
   expect_identical(txn$mget(letters, as_raw = FALSE), LETTERS)
 })
+
+test_that("format", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  str <- format(txn)
+  expect_false(grepl("initialze", str))
+  expect_true(grepl("<transaction>", str, fixed = TRUE))
+  expect_true(grepl("cursor", str, fixed = TRUE))
+})

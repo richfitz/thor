@@ -248,3 +248,11 @@ test_that("destroy: file", {
   expect_true(file.exists(path))
   expect_equal(dir(path), character(0))
 })
+
+test_that("format", {
+  env <- dbenv(tempfile())
+  str <- format(env)
+  expect_false(grepl("initialze", str))
+  expect_true(grepl("<dbenv>", str, fixed = TRUE))
+  expect_true(grepl("set_mapsize", str, fixed = TRUE))
+})

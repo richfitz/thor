@@ -261,3 +261,13 @@ test_that("naked cursor can be garbage collected", {
   rm(cur_ptr)
   gc()
 })
+
+test_that("format", {
+  env <- dbenv(tempfile())
+  txn <- env$begin()
+  cur <- txn$cursor()
+  str <- format(cur)
+  expect_false(grepl("initialze", str))
+  expect_true(grepl("<cursor>", str, fixed = TRUE))
+  expect_true(grepl("first_dup", str, fixed = TRUE))
+})

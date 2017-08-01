@@ -21,3 +21,12 @@ test_that("flags", {
   expect_equal(as.list(formals(env$open_database)[names(flags)]),
                as.list(flags))
 })
+
+test_that("format", {
+  env <- dbenv(tempfile())
+  dbi <- env$open_database()
+  str <- format(dbi)
+  expect_false(grepl("initialze", str))
+  expect_true(grepl("<database>", str, fixed = TRUE))
+  expect_true(grepl("id", str, fixed = TRUE))
+})
