@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 others
+inst/doc
+vignettes/*.html

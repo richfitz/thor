@@ -1,0 +1,251 @@
+---
+title: "thor"
+author: "Rich FitzJohn"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{thor}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## The environment
+
+The first step is to create an "environment"; this holds one or
+more "databases" (though in the most simple case you can forget
+that detail and just treat the environment as a database).
+``` {r }
+env <- thor::mdb_env(tempfile())
+```
+
+## Transactions
+
+lmdb is _transactional_; everything that happens to the database,
+read or write, happens as a transaction.  For a write transaction
+either the whole transaction happens or none of it happens.  For
+both read and write transactions, the "view" of the database is
+consistent from the beginning to the end of a transaction.  So if
+you have a read transaction and while it is doing things a write
+transaction writes to the database, the read transaction does not
+"see" these changes.  You can only have one write transaction at
+once, but as many read transactions as you'd like.
+``` {r }
+txn <- env$begin(write = TRUE)
+```
+
+### Simple operations (put, get, del, etc)
+
+To insert data into the database, use the `put` method
+``` {r }
+txn$put("key", "value")
+```
+
+...to get it back out again, use the `get` method
+``` {r }
+txn$get("key")
+```
+
+...to delete it, use the `del` method, which returns `TRUE` if
+the object was deleted and `FALSE` if not
+``` {r }
+txn$del("key")
+txn$del("key")
+```
+
+To test if an key exists or not, use the `exists` method (which
+uses a cursor internally - see below)
+``` {r }
+txn$exists("key")
+
+txn$put("key", "value")
+txn$put("key2", "another value")
+txn$put("foo", "bar")
+txn$exists("key")
+```
+
+To list all keys in the database, use the `list` method
+``` {r }
+txn$list()
+```
+
+which takes an argument `starts_with`:
+``` {r }
+txn$list("k")
+txn$list("f")
+txn$list("x")
+```
+
+(the `exists` and `list` methods are extensions to the lmdb api)
+
+Because the database is transactional, we can now either use
+`txn$commit()` to save the changes (writing `key`, `key2` and `foo`
+to the database) or `txn$abort()` to discard the changes.
+``` {r }
+txn$abort()
+```
+
+### Non-string data
+
+thor (and lmdb) can handle two types of data; strings (as above)
+and raw vectors.  Raw vectors can be used to serialise R objects
+using `serialize`, which allows storing of arbitrary data.  This is
+the approach taken by
+[`redux`](https://cran.r-project.org/package=redux) amongst other
+packages.
+
+All strings can be represented in raw vectors but the reverse is
+not true; character strings may not contain the null byte and the
+resulting string may not make sense.  thor uses the presence of a
+null byte as a heuristic when it needs to test if a value is raw or
+not.
+
+So the string "hello" can be converted to raw:
+``` {r }
+charToRaw("hello")
+```
+
+But the set of bytes `2a 00 ff` cannot be:
+``` {r error = TRUE}
+rawToChar(as.raw(c(42, 0, 255)))
+```
+
+This poses some problems for specifying and predicting return
+types, which will be explored below. thor tries hard to set the
+return type predictably; a few boolean arguments to the function
+determine the type rather than the contents of the data.
+``` {r }
+txn <- env$begin(write = TRUE)
+```
+
+First, this is why one might want to store raw data in a database.
+Suppose we want to store the contents of `mtcars` as a value.  It's
+not a string so we can't do
+``` {r error = TRUE}
+txn$put("mtcars", mtcars)
+```
+
+First we should _serialise_ it to raw:
+``` {r }
+mtcars_ser <- serialize(mtcars, NULL)
+```
+
+which creates a fairly long string of bytes
+``` {r }
+str(mtcars_ser)
+```
+
+converting back from this to an R object is easy with `unserialize`
+``` {r }
+identical(unserialize(mtcars_ser), mtcars)
+
+txn$put("mtcars", mtcars_ser)
+txn$list()
+```
+
+When fetching the data, thor will work out that this is raw data
+and return a raw vector:
+``` {r }
+class(txn$get("mtcars"))
+```
+
+So we can now store and retrieve arbitrary R objects into the
+database.
+``` {r }
+identical(unserialize(txn$get("mtcars")), mtcars)
+txn$del("mtcars")
+```
+
+Automatic type detection is a mixed blessing (like pitfalls with
+`sapply`) and thor provides mechanisms for taming it.
+
+Here are two values as raw vectors - one that can be converted to a
+string and one that can't
+``` {r }
+bytes <- as.raw(c(42, 0, 255))
+string <- charToRaw("hello!")
+
+txn$put("bytes", bytes)
+txn$put("string", string)
+```
+
+The value of the return type is determined both by the value of the
+object and by the value of the argument `as_raw`.
+
+| stored  | `as_raw`  | result     |
+|---------|-----------|------------|
+| string  | `NULL`    | character  |
+| string  | `FALSE`   | character  |
+| string  | `TRUE`    | raw        |
+| bytes   | `NULL`    | character  |
+| bytes   | `FALSE`   | error      |
+| bytes   | `TRUE`    | raw        |
+
+for example
+``` {r }
+txn$get("string")
+```
+
+is character because `as_raw` is `NULL` and the value _can_ be
+represented as a string, while
+``` {r }
+txn$get("bytes")
+```
+
+is raw because the value cannot be represented as a string.
+Specifying `as_raw = TRUE` will _always_ return raw because
+everything can be represented as raw.  And specifying `as_raw =
+FALSE` will throw an error for a value that cannot be converted
+into a string.
+
+``` {r }
+txn$abort()
+```
+
+### Multi-value operations
+
+(this whole section is an extension to the lmdb api)
+
+``` {r }
+txn <- env$begin(write = TRUE)
+```
+
+As an multi-value analog to `get`, `put` and `del`, thor implements
+`mget`, `mput` and `mdel` to add, fetch and delete multiple values
+at once.  The names are influenced by Redis.
+
+``` {r }
+keys <- letters[1:8]
+values <- strrep(toupper(keys), 4)
+```
+
+To put these 8 values into the database at once:
+``` {r }
+txn$mput(keys, values)
+```
+
+All 8 values are now in the db:
+``` {r }
+txn$list()
+```
+
+We can fetch all values at once:
+``` {r }
+txn$mget(keys)
+```
+
+`mget` here always returns a list because `as_raw` is applied to
+each element in turn and any one could require storing as raw.  To
+force a string, vector use `as_raw = FALSE`:
+``` {r }
+txn$mget(keys, as_raw = FALSE)
+```
+
+Similarly, to force a raw vector, use `as_raw = TRUE`:
+``` {r }
+txn$mget(keys, as_raw = TRUE)
+```
+
+The `exists` method is also vectorised:
+``` {r }
+txn$exists(letters)
+```
