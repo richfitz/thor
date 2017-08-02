@@ -53,34 +53,34 @@ test_that("as_integer", {
 })
 
 test_that("scalar_character (C)", {
-  expect_error(dbenv(character(0), create = FALSE),
+  expect_error(mdb_env(character(0), create = FALSE),
                "Expected a scalar character for 'path'")
-  expect_error(dbenv(letters, create = FALSE),
+  expect_error(mdb_env(letters, create = FALSE),
                "Expected a scalar character for 'path'")
-  expect_error(dbenv(NULL, create = FALSE),
+  expect_error(mdb_env(NULL, create = FALSE),
                "Expected a scalar character for 'path'")
-  expect_error(dbenv(1L, create = FALSE),
+  expect_error(mdb_env(1L, create = FALSE),
                "Expected a scalar character for 'path'")
 })
 
 test_that("scalar_int (C)", {
-  expect_error(dbenv(tempfile(), maxdbs = integer(0)),
+  expect_error(mdb_env(tempfile(), maxdbs = integer(0)),
                "Expected a scalar integer for 'dbs'")
-  expect_error(dbenv(tempfile(), maxdbs = seq_len(2)),
+  expect_error(mdb_env(tempfile(), maxdbs = seq_len(2)),
                "Expected a scalar integer for 'dbs'")
-  expect_error(dbenv(tempfile(), maxdbs = -5L),
+  expect_error(mdb_env(tempfile(), maxdbs = -5L),
                "Expected a positive size for 'dbs'")
 })
 
 test_that("scalar_logical (C)", {
-  expect_error(dbenv(tempfile(), subdir = NA, create = FALSE),
+  expect_error(mdb_env(tempfile(), subdir = NA, create = FALSE),
                "Expected a non-missing scalar logical for 'subdir'")
-  expect_error(dbenv(tempfile(), subdir = "why not", create = FALSE),
+  expect_error(mdb_env(tempfile(), subdir = "why not", create = FALSE),
                "Expected a scalar logical for 'subdir'")
 })
 
 test_that("to_return_as (C)", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   expect_error(txn$get("a", as_raw = NA),
                "Expected a non-missing logical scalar (or NULL) for 'as_raw'",
@@ -91,7 +91,7 @@ test_that("to_return_as (C)", {
 })
 
 test_that("to_return_as (C)", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   expect_error(txn$get(c("a", "b")), "'key' must be a scalar character")
   expect_error(txn$get(character()), "'key' must be a scalar character")

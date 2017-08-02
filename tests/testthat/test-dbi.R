@@ -1,7 +1,7 @@
 context("dbi")
 
 test_that("id", {
-  env <- dbenv(tempfile(), maxdbs = 10)
+  env <- mdb_env(tempfile(), maxdbs = 10)
 
   db <- env$open_database()
   expect_identical(db$id(), 1L)
@@ -11,7 +11,7 @@ test_that("id", {
 })
 
 test_that("flags", {
-  env <- dbenv(tempfile(), maxdbs = 10)
+  env <- mdb_env(tempfile(), maxdbs = 10)
   txn <- env$begin()
   db <- env$open_database()
   flags <- db$flags(txn)
@@ -23,7 +23,7 @@ test_that("flags", {
 })
 
 test_that("format", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   dbi <- env$open_database()
   str <- format(dbi)
   expect_false(grepl("initialze", str))

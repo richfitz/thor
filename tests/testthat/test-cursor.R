@@ -1,7 +1,7 @@
 context("cursor")
 
 test_that("create", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
   expect_is(cur, "cursor")
@@ -25,7 +25,7 @@ test_that("create", {
 })
 
 test_that("basic use", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   for (i in letters) {
@@ -52,7 +52,7 @@ test_that("basic use", {
 })
 
 test_that("cursor open close", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -69,7 +69,7 @@ test_that("cursor open close", {
 })
 
 test_that("cursor get", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -91,7 +91,7 @@ test_that("cursor get", {
 })
 
 test_that("value() refreshes proxy", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
   txn$put("a", "A")
@@ -104,7 +104,7 @@ test_that("value() refreshes proxy", {
 })
 
 test_that("iteration", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -124,7 +124,7 @@ test_that("iteration", {
 })
 
 test_that("move_to", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   objects <- c("apple", "banana", "carrot", "dog")
   for (i in objects) {
@@ -142,7 +142,7 @@ test_that("move_to", {
 })
 
 test_that("seek", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   objects <- c("apple", "banana", "carrot", "dog")
   for (i in objects) {
@@ -160,7 +160,7 @@ test_that("seek", {
 })
 
 test_that("del", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   cur <- txn$cursor()
@@ -182,7 +182,7 @@ test_that("del", {
 })
 
 test_that("put", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
 
@@ -197,7 +197,7 @@ test_that("put", {
 })
 
 test_that("replace", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
   bytes <- as.raw(c(6, 0, 1))
@@ -207,7 +207,7 @@ test_that("replace", {
 })
 
 test_that("pop", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -224,7 +224,7 @@ test_that("pop", {
 })
 
 test_that("get", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -243,7 +243,7 @@ test_that("get", {
 })
 
 test_that("serialisation does not crash", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   cur <- txn$cursor()
   expect_false(is_null_pointer(cur$.ptr))
@@ -255,7 +255,7 @@ test_that("serialisation does not crash", {
 ## This test exists to ensure that if something happens and the R6
 ## object does not completely build the cleanup is safe
 test_that("naked cursor can be garbage collected", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   cur_ptr <- mdb_cursor_open(txn$.ptr, txn$.db$.ptr)
   rm(cur_ptr)
@@ -263,7 +263,7 @@ test_that("naked cursor can be garbage collected", {
 })
 
 test_that("format", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   cur <- txn$cursor()
   str <- format(cur)

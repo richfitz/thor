@@ -2,12 +2,12 @@ context("env")
 
 test_that("create & close", {
   path <- tempfile()
-  env <- dbenv(path)
+  env <- mdb_env(path)
 
   expect_true(file.exists(path))
   expect_true(file.info(path)$isdir)
 
-  expect_is(env, "dbenv")
+  expect_is(env, "mdb_env")
   expect_is(env, "R6")
   expect_equal(mode(env$.ptr), "externalptr")
 
@@ -36,7 +36,7 @@ test_that("create & close", {
 
 test_that("information", {
   p <- tempfile()
-  env <- dbenv(p)
+  env <- mdb_env(p)
   expect_true(file.exists(p))
   expect_true(file.info(p)$isdir)
 
@@ -61,24 +61,24 @@ test_that("information", {
   ## also going to be useful when we replace all the "no" flags.
   flags <- env$flags()
   expect_is(flags, "logical")
-  expect_true(all(names(flags) %in% names(formals(dbenv))))
-  expect_equal(as.list(formals(dbenv)[names(flags)]),
+  expect_true(all(names(flags) %in% names(formals(mdb_env))))
+  expect_equal(as.list(formals(mdb_env)[names(flags)]),
                as.list(flags))
 })
 
 test_that("no create", {
   p <- tempfile()
-  expect_error(dbenv(p, create = FALSE), "No such file or directory")
+  expect_error(mdb_env(p, create = FALSE), "No such file or directory")
   expect_false(file.exists(p))
 
   ## This surprises me a bit:
   dir.create(p)
-  env <- dbenv(p, create = FALSE)
-  expect_is(env, "dbenv")
+  env <- mdb_env(p, create = FALSE)
+  expect_is(env, "mdb_env")
 })
 
 test_that("list readers", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   cols <- c("pid", "thread", "txnid")
   expect_equal(env$readers(),
                matrix("", 0, 3, dimnames = list(NULL, cols)))
@@ -96,7 +96,7 @@ test_that("list readers", {
 test_that("subdir = FALSE", {
   base <- new_empty_dir()
   path <- tempfile(tmpdir = new_empty_dir())
-  env <- dbenv(path, subdir = FALSE)
+  env <- mdb_env(path, subdir = FALSE)
 
   expect_true(file.exists(path))
   expect_false(file.info(path)$isdir)
@@ -108,15 +108,15 @@ test_that("subdir = FALSE", {
 test_that("some flags", {
   path <- tempfile()
 
-  env1 <- dbenv(path, sync = FALSE)
+  env1 <- mdb_env(path, sync = FALSE)
   expect_false(env1$flags()[["sync"]])
 
-  env2 <- dbenv(path, sync = TRUE)
+  env2 <- mdb_env(path, sync = TRUE)
   expect_true(env2$flags()[["sync"]])
 })
 
 test_that("set_mapsize", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   ms <- env$info()[["mapsize"]]
   size <- ms * 2L
   env$set_mapsize(size)
@@ -124,7 +124,7 @@ test_that("set_mapsize", {
 })
 
 test_that("copy", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$put("a", "A")
   txn$commit()
@@ -133,7 +133,7 @@ test_that("copy", {
   expect_identical(env$copy(path), path)
   expect_true(file.exists(path))
 
-  env2 <- dbenv(path)
+  env2 <- mdb_env(path)
   txn2 <- env2$begin()
   expect_identical(txn2$get("a"), "A")
 })
@@ -141,19 +141,19 @@ test_that("copy", {
 test_that("reader_check with no dead readers", {
   ## TODO: I could write a more ambitious version of this that spawns
   ## a new copy of R, opens the db and then kill the process.
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_identical(env$reader_check(), 0L)
 })
 
 test_that("open_database", {
   path <- tempfile()
-  env <- dbenv(path)
+  env <- mdb_env(path)
   expect_identical(env$open_database(), env$.db)
   ## This needs a much nicer error message!
   expect_error(env$open_database("foo"), "maxdbs limit")
   env$close()
 
-  env <- dbenv(path, maxdbs = 10)
+  env <- mdb_env(path, maxdbs = 10)
   dbi <- env$open_database("foo")
   expect_identical(env$open_database("foo"), dbi)
 
@@ -171,7 +171,7 @@ test_that("open_database", {
 })
 
 test_that("begin - one write transaction only", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   ## TODO: there needs to be some way of recovering from this
   ## situation (and similarly some way of keeping a global cache of
@@ -181,30 +181,30 @@ test_that("begin - one write transaction only", {
 })
 
 test_that("sync", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_null(env$sync())
 })
 
 test_that("maxreaders", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   n <- env$info()[["maxreaders"]]
   env$close()
   m <- n * 2L
-  env <- dbenv(tempfile(), maxreaders = m)
+  env <- mdb_env(tempfile(), maxreaders = m)
   expect_identical(env$info()[["maxreaders"]], m)
 })
 
 test_that("mapsize", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   sz <- env$info()[["mapsize"]]
   env$close()
   sz2 <- sz * 2L
-  env <- dbenv(tempfile(), mapsize = sz2)
+  env <- mdb_env(tempfile(), mapsize = sz2)
   expect_identical(env$info()[["mapsize"]], sz2)
 })
 
 test_that("serialisation does not crash", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_false(is_null_pointer(env$.ptr))
   env2 <- unserialize(serialize(env, NULL))
   expect_true(is_null_pointer(env2$.ptr))
@@ -232,7 +232,7 @@ test_that("naked unintialised environment can be garbage collected", {
 })
 
 test_that("destroy: subdir", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   path <- env$path()
   env$destroy()
   expect_false(file.exists(path))
@@ -242,7 +242,7 @@ test_that("destroy: file", {
   path <- tempfile()
   dir.create(path)
   path_db <- file.path(path, "mydb")
-  env <- dbenv(path_db, subdir = FALSE)
+  env <- mdb_env(path_db, subdir = FALSE)
   env$destroy()
   expect_false(file.exists(path_db))
   expect_true(file.exists(path))
@@ -250,16 +250,16 @@ test_that("destroy: file", {
 })
 
 test_that("format", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   str <- format(env)
   expect_false(grepl("initialze", str))
-  expect_true(grepl("<dbenv>", str, fixed = TRUE))
+  expect_true(grepl("<mdb_env>", str, fixed = TRUE))
   expect_true(grepl("set_mapsize", str, fixed = TRUE))
 })
 
 ## Convenience wrappers:
 test_that("put, get, del (scalar)", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_null(env$get("a", FALSE))
   expect_false(env$exists("a"))
   expect_null(env$put("a", "A"))
@@ -281,7 +281,7 @@ test_that("put, get, del (scalar)", {
 })
 
 test_that("mput, mget, mdel (vector)", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_equal(env$mget(letters), vector("list", 26))
   expect_equal(env$exists(letters), rep(FALSE, 26))
   expect_null(env$mput(letters, LETTERS))
@@ -298,7 +298,7 @@ test_that("mput, mget, mdel (vector)", {
 })
 
 test_that("convenience functions use pool", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_equal(env$.spare_txns$length(), 0L)
   expect_null(env$get("a", FALSE))
   expect_equal(env$.spare_txns$length(), 1L)
@@ -308,8 +308,8 @@ test_that("convenience functions use pool", {
 
 test_that("global environment lock", {
   path <- tempfile()
-  env1 <- dbenv(path)
-  env2 <- dbenv(normalizePath(path))
+  env1 <- mdb_env(path)
+  env2 <- mdb_env(normalizePath(path))
   expect_identical(env1$.path, env2$.path)
 
   txn1 <- env1$begin(write = TRUE)
@@ -327,7 +327,7 @@ test_that("global environment lock", {
   if (.Platform$OS.type == "unix") {
     path3 <- tempfile()
     if (file.symlink(path, path3)) {
-      env3 <- dbenv(path3)
+      env3 <- mdb_env(path3)
       expect_identical(env3$.path, env1$.path)
 
       txn3 <- env3$begin(write = TRUE)

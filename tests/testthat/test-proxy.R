@@ -24,7 +24,7 @@ test_that("NULL proxy", {
 })
 
 test_that("serialisation does not crash", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$put("a", "A")
   p <- txn$get("a", as_proxy = TRUE)
@@ -35,7 +35,7 @@ test_that("serialisation does not crash", {
 })
 
 test_that("print", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$put("a", "A")
   p <- txn$get("a", as_proxy = TRUE)

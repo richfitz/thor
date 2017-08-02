@@ -115,7 +115,7 @@ mdb_get <- function(txn, dbi, key, missing_is_error, as_proxy, as_raw) {
 }
 
 mdb_put <- function(txn, dbi, key, value, dupdata, overwrite, append) {
-  .Call(Cmdb_put, txn, dbi, key, value, dupdata, overwrite, append)
+  invisible(.Call(Cmdb_put, txn, dbi, key, value, dupdata, overwrite, append))
 }
 
 mdb_del <- function(txn, dbi, key, value) {
@@ -195,7 +195,7 @@ thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {
 }
 
 thor_mput <- function(txn, dbi, key, value, dupdata, overwrite, append) {
-  .Call(Cthor_mput, txn, dbi, key, value, dupdata, overwrite, append)
+  invisible(.Call(Cthor_mput, txn, dbi, key, value, dupdata, overwrite, append))
 }
 
 thor_mdel <- function(txn, dbi, key, value) {

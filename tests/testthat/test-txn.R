@@ -1,7 +1,7 @@
 context("transactions")
 
 test_that("begin/abort", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   expect_is(txn, "transaction")
@@ -32,7 +32,7 @@ test_that("begin/abort", {
 })
 
 test_that("basic use", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   expect_null(txn$put("foo", "bar"))
   expect_identical(txn$get("foo"), "bar")
@@ -47,7 +47,7 @@ test_that("basic use", {
 })
 
 test_that("concurent read", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   w1 <- env$begin(write = TRUE)
 
   expect_null(w1$put("foo", "bar"))
@@ -79,7 +79,7 @@ test_that("concurent read", {
 })
 
 test_that("get: missing", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   expect_null(txn$get("foo", FALSE))
@@ -94,7 +94,7 @@ test_that("get: missing", {
 })
 
 test_that("get: string raw handling", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$put("foo", "bar")
 
@@ -104,7 +104,7 @@ test_that("get: string raw handling", {
 })
 
 test_that("get: raw raw handling", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   bytes <- as.raw(c(1, 51, 0, 242))
@@ -122,7 +122,7 @@ test_that("get: raw raw handling", {
 })
 
 test_that("get: raw key", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   key <- as.raw(c(1, 51, 0, 242))
@@ -179,7 +179,7 @@ test_that("get: raw key", {
 })
 
 test_that("get: proxy", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   value <- "bar"
@@ -211,7 +211,7 @@ test_that("get: proxy", {
 })
 
 test_that("transaction caching", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -240,7 +240,7 @@ test_that("transaction caching", {
 })
 
 test_that("del", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -251,7 +251,7 @@ test_that("del", {
 })
 
 test_that("del: with value", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -262,7 +262,7 @@ test_that("del: with value", {
 })
 
 test_that("exists", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -276,7 +276,7 @@ test_that("exists", {
 })
 
 test_that("replace", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -286,7 +286,7 @@ test_that("replace", {
 })
 
 test_that("pop", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -296,7 +296,7 @@ test_that("pop", {
 })
 
 test_that("cmp", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = FALSE)
 
   expect_identical(txn$cmp("a", "b"), -1L)
@@ -309,7 +309,7 @@ test_that("cmp", {
 })
 
 test_that("drop; invalidate as we go", {
-  env <- dbenv(tempfile(), maxdbs = 10)
+  env <- mdb_env(tempfile(), maxdbs = 10)
   db2 <- env$open_database("foo")
   expect_identical(db2$id(), 2L)
 
@@ -343,7 +343,7 @@ test_that("drop; invalidate as we go", {
 })
 
 test_that("drop but no delete", {
-  env <- dbenv(tempfile(), maxdbs = 10)
+  env <- mdb_env(tempfile(), maxdbs = 10)
   db2 <- env$open_database("foo")
 
   expect_identical(db2$id(), 2L)
@@ -376,14 +376,14 @@ test_that("drop but no delete", {
 })
 
 test_that("drop; root database", {
-  env <- dbenv(tempfile(), maxdbs = 10)
+  env <- mdb_env(tempfile(), maxdbs = 10)
   db <- env$open_database()
   expect_error(env$drop_database(db), "Can't delete root database")
 })
 
 test_that("drop; other environment's database", {
-  env1 <- dbenv(tempfile(), maxdbs = 10)
-  env2 <- dbenv(tempfile(), maxdbs = 10)
+  env1 <- mdb_env(tempfile(), maxdbs = 10)
+  env2 <- mdb_env(tempfile(), maxdbs = 10)
   db1 <- env1$open_database("foo")
   db2 <- env2$open_database("foo")
   expect_error(env2$drop_database(db1),
@@ -391,7 +391,7 @@ test_that("drop; other environment's database", {
 })
 
 test_that("serialisation does not crash", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   expect_false(is_null_pointer(txn$.ptr))
   txn2 <- unserialize(serialize(txn, NULL))
@@ -400,7 +400,7 @@ test_that("serialisation does not crash", {
 })
 
 test_that("with_new_txn", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   expect_error(with_new_txn(env, TRUE, function(t) stop("banana")), "banana")
   expect_null(env$.write_txn)
   txn <- env$begin(write = TRUE)
@@ -416,7 +416,7 @@ test_that("with_new_txn", {
 })
 
 test_that("list", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
 
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
@@ -450,7 +450,7 @@ test_that("list", {
 })
 
 test_that("list & filter", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
 
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
@@ -482,7 +482,7 @@ test_that("list & filter", {
 })
 
 test_that("mget", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -520,7 +520,7 @@ test_that("mget", {
 })
 
 test_that("mget: raw keys", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   for (i in letters) {
     txn$put(i, toupper(i))
@@ -534,13 +534,13 @@ test_that("mget: raw keys", {
 })
 
 test_that("mget: invalid input", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   expect_error(txn$mget(1), "Invalid type; expected a character or raw vector")
 })
 
 test_that("mput: basic", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   expect_null(txn$mput(character(0), character(0)))
   expect_null(txn$mput(letters, LETTERS))
@@ -548,7 +548,7 @@ test_that("mput: basic", {
 })
 
 test_that("mput: lengths", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
   expect_error(txn$mput("a", letters),
@@ -564,7 +564,7 @@ test_that("mput: lengths", {
 })
 
 test_that("mput: atomicity", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   ## Test that a failure part way along the extraction causes the
   ## entire insertion to fail atomically.
@@ -578,7 +578,7 @@ test_that("mput: atomicity", {
 })
 
 test_that("mdel", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$mput(letters, LETTERS)
 
@@ -596,7 +596,7 @@ test_that("mdel", {
 })
 
 test_that("mdel: atomic", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   txn$mput(letters, LETTERS)
   v <- c(letters[1:5], "", letters[6:10])
@@ -605,7 +605,7 @@ test_that("mdel: atomic", {
 })
 
 test_that("format", {
-  env <- dbenv(tempfile())
+  env <- mdb_env(tempfile())
   txn <- env$begin()
   str <- format(txn)
   expect_false(grepl("initialze", str))

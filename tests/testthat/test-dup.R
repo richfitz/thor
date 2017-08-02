@@ -1,7 +1,7 @@
 context("duplicates")
 
 test_that("Basic duplicate use", {
-  env <- dbenv(tempfile(), dupsort = TRUE)
+  env <- mdb_env(tempfile(), dupsort = TRUE)
   txn <- env$begin(write = TRUE)
   expect_true(env$.db$flags(txn)[["dupsort"]])
 
@@ -84,7 +84,7 @@ test_that("Basic duplicate use", {
 })
 
 test_that("dcmp", {
-  env <- dbenv(tempfile(), dupsort = TRUE)
+  env <- mdb_env(tempfile(), dupsort = TRUE)
   txn <- env$begin(write = TRUE)
   expect_identical(txn$dcmp("a", "b"), -1L)
   expect_identical(txn$dcmp("b", "a"),  1L)
@@ -92,7 +92,7 @@ test_that("dcmp", {
 })
 
 test_that("del: with value", {
-  env <- dbenv(tempfile(), dupsort = TRUE)
+  env <- mdb_env(tempfile(), dupsort = TRUE)
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
 
@@ -111,7 +111,7 @@ test_that("del: with value", {
 })
 
 test_that("mdel: with value", {
-  env <- dbenv(tempfile(), dupsort = TRUE)
+  env <- mdb_env(tempfile(), dupsort = TRUE)
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
 
