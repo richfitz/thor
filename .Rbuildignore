@@ -4,3 +4,8 @@
 ^README.Rmd$
 ^.travis.yml$
 ^appveyor.yml$
+^\.travis\.yml$
+^appveyor\.yml$
+^scripts$
+^others$
+^TODO\.md$
