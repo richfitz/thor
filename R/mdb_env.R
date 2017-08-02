@@ -347,7 +347,7 @@ R6_mdb_env <- R6::R6Class(
       }
 
       newdb <- function(txn_ptr) {
-        R6_database$new(self, txn_ptr, key, reversekey, dupsort, create)
+        R6_mdb_dbi$new(self, txn_ptr, key, reversekey, dupsort, create)
       }
       db <- with_new_txn(self, TRUE, newdb)
 
@@ -360,7 +360,7 @@ R6_mdb_env <- R6::R6Class(
     },
 
     drop_database = function(db, delete = TRUE) {
-      assert_is(db, "database")
+      assert_is(db, "mdb_dbi")
       name <- db$.name
       if (is.null(name)) {
         stop("Can't delete root database")
@@ -371,7 +371,7 @@ R6_mdb_env <- R6::R6Class(
 
       dropdb <- function(txn_ptr) {
         for (x in self$.deps$get()) {
-          if (inherits(x, "transaction") && identical(x$.db, db)) {
+          if (inherits(x, "mdb_txn") && identical(x$.db, db)) {
             x$.invalidate()
             self$.deps$discard(x)
           }
@@ -386,7 +386,7 @@ R6_mdb_env <- R6::R6Class(
     },
 
     begin = function(db = NULL, write = FALSE) {
-      R6_transaction$new(self, db, write)
+      R6_mdb_txn$new(self, db, write)
     },
 
     destroy = function() {

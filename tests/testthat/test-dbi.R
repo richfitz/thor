@@ -27,6 +27,6 @@ test_that("format", {
   dbi <- env$open_database()
   str <- format(dbi)
   expect_false(grepl("initialze", str))
-  expect_true(grepl("<database>", str, fixed = TRUE))
+  expect_true(grepl("<mdb_dbi>", str, fixed = TRUE))
   expect_true(grepl("id", str, fixed = TRUE))
 })

@@ -4,7 +4,7 @@ test_that("create", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
   cur <- txn$cursor()
-  expect_is(cur, "cursor")
+  expect_is(cur, "mdb_cursor")
 
   expect_identical(env$.deps$get(), list(env$.db, txn))
   expect_identical(txn$.deps$get(), list(cur))
@@ -268,6 +268,6 @@ test_that("format", {
   cur <- txn$cursor()
   str <- format(cur)
   expect_false(grepl("initialze", str))
-  expect_true(grepl("<cursor>", str, fixed = TRUE))
+  expect_true(grepl("<mdb_cursor>", str, fixed = TRUE))
   expect_true(grepl("first_dup", str, fixed = TRUE))
 })

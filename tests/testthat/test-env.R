@@ -11,7 +11,7 @@ test_that("create & close", {
   expect_is(env, "R6")
   expect_equal(mode(env$.ptr), "externalptr")
 
-  expect_is(env$.db, "database")
+  expect_is(env$.db, "mdb_dbi")
   expect_equal(env$.deps$get(), list(env$.db))
 
   expect_equal(ls(env$.dbs, all.names = TRUE), character(0))

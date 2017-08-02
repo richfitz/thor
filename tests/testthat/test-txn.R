@@ -4,7 +4,7 @@ test_that("begin/abort", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
 
-  expect_is(txn, "transaction")
+  expect_is(txn, "mdb_txn")
   expect_equal(mode(txn$.ptr), "externalptr")
 
   expect_identical(txn$.env, env)
@@ -609,6 +609,6 @@ test_that("format", {
   txn <- env$begin()
   str <- format(txn)
   expect_false(grepl("initialze", str))
-  expect_true(grepl("<transaction>", str, fixed = TRUE))
+  expect_true(grepl("<mdb_txn>", str, fixed = TRUE))
   expect_true(grepl("cursor", str, fixed = TRUE))
 })

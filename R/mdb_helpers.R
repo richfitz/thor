@@ -1,0 +1,46 @@
+with_new_txn <- function(env, write, f) {
+  txn_ptr <- env$.new_txn_ptr(write, NULL, TRUE)
+  if (write) {
+    withCallingHandlers({
+      ret <- f(txn_ptr)
+      mdb_txn_commit(txn_ptr)
+      ret
+    }, error = function(e) mdb_txn_abort(txn_ptr, FALSE))
+  } else {
+    on.exit({
+      mdb_txn_reset(txn_ptr)
+      env$.spare_txns$push(txn_ptr)
+    })
+    f(txn_ptr)
+  }
+}
+
+with_new_txn_object <- function(env, db, write, f) {
+  txn <- env$begin(db, write)
+  withCallingHandlers({
+    ret <- f(txn)
+    txn$commit()
+    ret
+  }, error = function(e) txn$abort())
+}
+
+invalidate_dependencies <- function(x) {
+  if (!is.null(x$.deps)) {
+    deps <- x$.deps$get()
+    for (d in rev(deps)) {
+      d$.invalidate()
+    }
+    x$.deps <- NULL
+  }
+}
+
+format_thor <- function(x) {
+  exclude <- c("initialize", "finalize", "format")
+  method_names <- setdiff(ls(x, pattern = "^[^.]"), exclude)
+  methods <- vapply(method_names, function(i) capture_args(x[[i]], i),
+                    character(1), USE.NAMES = FALSE)
+  paste(c(sprintf("<%s>", class(x)[[1]]),
+          "  Public:",
+          sprintf("    %s", methods)),
+        collapse = "\n")
+}
