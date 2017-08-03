@@ -1,5 +1,6 @@
 R6_mdb_txn <- R6::R6Class(
   "mdb_txn",
+  cloneable = FALSE,
   public = list(
     .env = NULL,
     .ptr = NULL,

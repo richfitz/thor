@@ -1,5 +1,6 @@
 R6_mdb_cursor <- R6::R6Class(
   "mdb_cursor",
+  cloneable = FALSE,
   public = list(
     .txn = NULL,
     .db = NULL,
