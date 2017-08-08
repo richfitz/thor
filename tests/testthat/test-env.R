@@ -68,7 +68,7 @@ test_that("information", {
 
 test_that("no create", {
   p <- tempfile()
-  expect_error(mdb_env(p, create = FALSE), "No such file or directory")
+  expect_error(mdb_env(p, create = FALSE))
   expect_false(file.exists(p))
 
   ## This surprises me a bit:

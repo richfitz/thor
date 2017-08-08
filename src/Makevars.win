@@ -1,0 +1,9 @@
+# -*-makefile-*-
+PKG_CFLAGS = -Ilmdb
+PKG_LIBS = -lntdll
+OBJECTS = \
+   lmdb/mdb.o \
+   lmdb/midl.o \
+   registration.o \
+   thor.o \
+   util.o
