@@ -294,11 +294,15 @@ R6_mdb_env <- R6::R6Class(
     },
 
     set_mapsize = function(size) {
+      ## TODO: this is dangerous - requires no transactions active but
+      ## this is not enforced.  I need to check this condition before
+      ## using it
+
       ## assert_integer_like(size)
       mdb_env_set_mapsize(self$.ptr, as_integer(size))
     },
 
-    readers = function() {
+    reader_list = function() {
       mdb_reader_list(self$.ptr)
     },
     reader_check = function() {
@@ -306,6 +310,7 @@ R6_mdb_env <- R6::R6Class(
     },
 
     copy = function(path, compact = FALSE) {
+      assert_scalar_character(path)
       if (!file.exists(path)) {
         dir.create(path, FALSE, TRUE)
       }

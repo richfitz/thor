@@ -80,11 +80,11 @@ test_that("no create", {
 test_that("list readers", {
   env <- mdb_env(tempfile())
   cols <- c("pid", "thread", "txnid")
-  expect_equal(env$readers(),
+  expect_equal(env$reader_list(),
                matrix("", 0, 3, dimnames = list(NULL, cols)))
   t1 <- env$begin()
   t2 <- env$begin()
-  m <- env$readers()
+  m <- env$reader_list()
   expect_is(m, "matrix")
   expect_equal(colnames(m), cols)
   expect_equal(nrow(m), 2L)
