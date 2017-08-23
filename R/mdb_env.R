@@ -151,6 +151,9 @@
 ##'
 ##' @param create If \code{FALSE}, do not create the directory
 ##'   \code{path} if it is missing.
+##'
+##' @template mdb_env
+##'
 ##' @export
 ##' @examples
 ##' # Create a new environment (just using defaults)

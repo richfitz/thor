@@ -9,3 +9,5 @@
 ^scripts$
 ^others$
 ^TODO\.md$
+^man-roxygen$
+^autodoc\.R$

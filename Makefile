@@ -70,3 +70,6 @@ staticdocs:
 	@rmdir inst/staticdocs
 website: staticdocs
 	./update_web.sh
+
+autodoc:
+	${RSCRIPT} autodoc.R process

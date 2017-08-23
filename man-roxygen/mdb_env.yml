@@ -1,0 +1,152 @@
+path:
+  short: >-
+    Print the absolute path to the LMDB store (on disk)
+  value: A string
+  mdb: mdb_env_get_path
+
+flags:
+  short: >-
+    Return flags as used in construction of the LMDB environment
+  value: >-
+    A named logical vector.  Names correspond to arguments to the
+    constructor.
+  mdb: mdb_env_get_flags
+
+stat:
+  short: >-
+    Brief statistics about the LMDB environment.
+  value: >-
+    An integer vector with elements \code{psize} (the size of a
+    database page), \code{depth} (depth of the B-tree),
+    \code{brancb_pages} (number of internal non-leaf) pages),
+    \code{leaf_pages} (number of leaf pages), \code{overflow_pages}
+    (number of overflow pages) and \code{entries} (number of data
+    items).
+  mdb: mdb_env_stat
+
+maxkeysize:
+  short: >-
+    The maximum size of a key (the value can be bigger than this)
+  value: A single integer
+  mdb: mdb_env_get_maxkeysize
+
+maxreaders:
+  short: >-
+    The maximum number of readers
+  value: A single integer
+  mdb: mdb_env_get_maxreaders
+
+# TODO: set_mapsize:
+
+reader_list:
+  short: >-
+    List information about database readers
+  value: >-
+    A character matrix with columns \code{pid} (process ID),
+    \code{thread} (a pointer address), and \code{txnid} (a small
+    integer)
+  mdb: mdb_reader_list
+
+reader_check:
+  short: >-
+    Check for, and remove, stale entries in the reader lock table.
+  value: >-
+    An integer, being the number of stale readers discarded.  However,
+    this function is primarily called for its side effect.
+  mdb: mdb_reader_check
+
+copy:
+  short: >-
+    Copy the entire environment state to a new path.  This can be used
+    to make a backup of the database.
+  params:
+    path: Scalar character; the new path
+    compact: >-
+      Scalar logical; perform compaction while copying?  This omits
+      free pages and sequentially renumbers all pages in output.  This
+      can take longer than the default but produce a smaller database
+  value: Invisibly, the new path (allowing use of \code{$copy(tempfile)})
+  mdb: ["mdb_env_copy", "mdb_env_copy2"]
+
+sync:
+  short: Flush the data buffers to disk.
+  details: >-
+    Data is always written to disk when a transaction is committed,
+    but the operating system may keep it buffered.  LMDB always
+    flushes the OS buffers upon commit as well, unless the environment
+    was opened with \code{sync = FALSE} or in part \code{metasync =
+    FALSE}.  This call is not valid if the environment was opened with
+    \code{rdonly = TRUE}.
+  params:
+    force: >-
+      Scalar logical; force a synchronous flush.  Otherwise if the
+      environment was constructed with \code{sync = FALSE} the flushes
+      will be omitted, and with \code{mapasync = TRUE} they will be
+      asynchronous.
+  mdb: mdb_env_sync
+
+close:
+  short: >-
+    Close the environment.  This closes all cursors and transactions
+    (active write transactions are aborted).
+  value: No return value, called for side effects only
+  mdb: mdb_env_close
+
+open_database:
+  short: Open a named database, or return one if already opened.
+  details: >-
+    LMDB environments can hold multiple databases, provided they have
+    been opened with \code{maxdbs} greater than one.  There is always
+    a "default" database - this is unnamed and cannot be dropped.
+    Other databases have a key (i.e., a name) and can be dropped.
+    These database objects are passed through to other methods,
+    notably \code{drop_database} and \code{begin}
+  params:
+    key: >-
+      Name of the database; if \code{NULL} this returns the default
+      database (always open).
+    reversekey: >-
+      Compare strings in reverse order? See \code{reversekey}
+      documentation above
+    dupsort: >-
+      Allow use of duplicate keys in the database?  See \code{dupsort}
+      above.
+    create: Create database if it does not exist already?
+  mdb: mdb_open
+
+drop_database:
+  short: Drop a database
+  params:
+    db: A database object, as returned by \code{open_database}
+    delete: >-
+      Scalar logical, indicating if the database should be deleted
+      too.  If \code{FALSE}, the values are deleted from the database
+      (i.e., it is emptied). If \code{TRUE} then the actual database
+      is deleted too.
+  value: No return value, called for side effects only
+  mdb: mdb_drop
+
+begin:
+  short: Begin a transaction
+  details: >-
+    Transactions are the key objects for interacting with an LMDB
+    database (aside from the convenience interface below).  They are
+    described in more detail in \code{\link{mdb_txn}}.
+  params:
+    db: >-
+      A database handle, as returned by \code{open_database}.  If
+      \code{NULL} (the default) then the default database will be
+      used.
+    write: >-
+      Scalar logical, indicating if this should be a write
+      transaction.  There can be only one write transaction per
+      database (see \code{\link{mdb_txn}} for more details) - it is an
+      error to try to open more than one.
+  value: A \code{\link{mdb_txn}} object
+  mdb: mdb_begin
+
+destroy:
+  short: >-
+    Totally destroy an LMDB environment.  This closes the database and
+    removes the files.  Use with care!
+  value: No return value, called for side effects only
