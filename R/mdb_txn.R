@@ -1,3 +1,22 @@
+##' Transactions are required for every mdb operation.  Even when
+##' using the convenience functions in \code{\link{mdb_env}}
+##' (\code{get}, etc), a transaction is created and committed each
+##' time.  Within a transaction, either everything happens or nothing
+##' happens, and everything gets a single consistent view of the
+##' database.
+##'
+##' There can be many read transactions per environment, but only one
+##' write transactions.  Because R is single-threaded, that means that
+##' you can only simultaneously write from an mdb environment from a
+##' single object - any further attempts to open write transactions it
+##' would block forever while waiting for a lock that can't be
+##' released because there is only one thread!
+##' @title Use mdb transactions
+##' @rdname mdb_txn
+##' @aliases mdb_txn
+##' @name mdb_txn
+NULL
+
 R6_mdb_txn <- R6::R6Class(
   "mdb_txn",
   cloneable = FALSE,

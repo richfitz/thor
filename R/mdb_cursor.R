@@ -1,3 +1,15 @@
+##' Cursors are required for some advanced queries on an mdb database,
+##' when the basic set of functions in \code{\link{mdb_txn}} is not
+##' sufficient.
+##'
+##' Cursors must be created from within a transaction (which in turn
+##' are created from an environment).
+##' @title Use mdb transactions
+##' @rdname mdb_cursor
+##' @aliases mdb_cursor
+##' @name mdb_cursor
+NULL
+
 R6_mdb_cursor <- R6::R6Class(
   "mdb_cursor",
   cloneable = FALSE,
