@@ -1,6 +1,6 @@
 path:
   short: >-
-    Print the absolute path to the LMDB store (on disk)
+    Return the absolute path to the LMDB store (on disk)
   value: A string
   mdb: mdb_env_get_path
 

@@ -1,3 +1,12 @@
+##' Proxy object
+##'
+##' These may change
+##' @title Proxy values
+##' @rdname mdb_proxy
+##' @aliases mdb_proxy
+##' @name mdb_proxy
+NULL
+
 mdb_val_proxy <- function(txn, ptr) {
   is_missing <- is.null(ptr)
 
