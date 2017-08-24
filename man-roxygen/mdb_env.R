@@ -23,6 +23,17 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_env_get_flags()}
 ##' }
+##' \item{\code{info}}{
+##'   Brief information about the LMDB environment
+##'
+##'   \emph{Usage:}
+##'   \code{info()}
+##'
+##'   \emph{Value}:
+##'   An integer vector with elements \code{mapsize}, \code{last_pgno}, \code{last_txnid}, \code{maxreaders} and \code{numreaders}.
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_env_info()}
+##' }
 ##' \item{\code{stat}}{
 ##'   Brief statistics about the LMDB environment.
 ##'

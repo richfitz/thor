@@ -8,15 +8,21 @@ key:
   short: >-
     Return the current key
   params:
-    as_proxy: Return as an \code{\link{mdb_proxy}} object?
-    as_raw: Return as raw?
+    as_proxy: &as_proxy >-
+      Return as an \code{\link{mdb_proxy}} object?
+    as_raw: &as_raw >-
+      Return the value as raw.  With a value of \code{NULL} it will
+      return a string if possible (i.e., if there are no null bytes)
+      and a raw vector otherwise.  With \code{as_raw = TRUE} we always
+      return a raw vector.  With \code{as_raw = FALSE} we always
+      return a string, or throw an error if this is not possible.
 
 value:
   short: >-
     Return the current value
   params:
-    as_proxy: Return as an \code{\link{mdb_proxy}} object?
-    as_raw: Return as raw?
+    as_proxy: *as_proxy
+    as_raw: *as_raw
 
 first:
   short: >-
@@ -96,9 +102,36 @@ put:
     Logical scalar, indicating if data was previously stored at this key
   mdb: mdb_cursor_put
 
-# replace
-# pop
-# get
+replace:
+  short: >-
+    Replace a key's current value with a new value, returning the old
+    value.  This is like doing a \code{get()} followed by a \code{put}
+    within a transaction.
+  params:
+    key: The key to replace
+    value: The new value to store
+    as_raw: *as_raw
+
+pop:
+  short: >-
+    Delete a key's value, returning the value just before it was
+    deleted.  This is like doing a \code{get} followed by a \code{del}
+    within a transaction.
+  params:
+    key: The key to delete
+    as_raw: *as_raw
+  value: &ret_value >-
+    Depending on \code{as_raw} and if there is a value stored,
+    \code{NULL}, a character string or a raw vector
+
+get:
+  short: >-
+    Move to a key and fetch the value
+  params:
+    key: The key to find (string or raw)
+    as_proxy: *as_proxy
+    as_raw: *as_raw
+  value: *ret_value
 
 # first_dup
 # last_dup

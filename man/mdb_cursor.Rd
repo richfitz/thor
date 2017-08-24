@@ -27,35 +27,87 @@ are created from an environment).
 
   \emph{Note}: In lmdb.h this is \code{mdb_cursor_close()}
 }
-\item{\code{key}}{
-  Return the current key
+\item{\code{put}}{
+  Store data using the cursor
 
   \emph{Usage:}
-  \code{key(as_proxy = FALSE, as_raw = NULL)}
+  \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
 
   \emph{Arguments:}
   \itemize{
-    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    \item{\code{key}:   The key (string or raw)
     }
 
-    \item{\code{as_raw}:   Return as raw?
+    \item{\code{value}:   The value (string or raw)
+    }
+
+    \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+
+    \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+
+    \item{\code{append}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+  }
+
+  \emph{Value}:
+  Logical scalar, indicating if data was previously stored at this key
+
+  \emph{Note}: In lmdb.h this is \code{mdb_cursor_put()}
+}
+\item{\code{del}}{
+  Delete the current key
+
+  \emph{Usage:}
+  \code{del(dupdata = TRUE)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
+    }
+  }
+
+  \emph{Value}:
+  Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.
+
+  \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
+}
+\item{\code{replace}}{
+  Replace a key's current value with a new value, returning the old value.  This is like doing a \code{get()} followed by a \code{put} within a transaction.
+
+  \emph{Usage:}
+  \code{replace(key, value, as_raw = NULL)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{key}:   The key to replace
+    }
+
+    \item{\code{value}:   The new value to store
+    }
+
+    \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
     }
   }
 }
-\item{\code{value}}{
-  Return the current value
+\item{\code{pop}}{
+  Delete a key's value, returning the value just before it was deleted.  This is like doing a \code{get} followed by a \code{del} within a transaction.
 
   \emph{Usage:}
-  \code{value(as_proxy = FALSE, as_raw = NULL)}
+  \code{pop(key, as_raw = NULL)}
 
   \emph{Arguments:}
   \itemize{
-    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    \item{\code{key}:   The key to delete
     }
 
-    \item{\code{as_raw}:   Return as raw?
+    \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
     }
   }
+
+  \emph{Value}:
+  Depending on \code{as_raw} and if there is a value stored, \code{NULL}, a character string or a raw vector
 }
 \item{\code{first}}{
   Move the cursor to the first item in the database
@@ -75,20 +127,20 @@ are created from an environment).
   \emph{Value}:
   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
 }
-\item{\code{move_prev}}{
-  Move the cursor to the previous item in the database.  If called while at the first item in the database, this will invalidate the cursor position.
-
-  \emph{Usage:}
-  \code{move_prev()}
-
-  \emph{Value}:
-  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
-}
 \item{\code{move_next}}{
   Move the cursor to the next item in the database.  If called while at the last item in the database, this will invalidate the cursor position.
 
   \emph{Usage:}
   \code{move_next()}
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{move_prev}}{
+  Move the cursor to the previous item in the database.  If called while at the first item in the database, this will invalidate the cursor position.
+
+  \emph{Usage:}
+  \code{move_prev()}
 
   \emph{Value}:
   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
@@ -123,51 +175,56 @@ are created from an environment).
   \emph{Value}:
   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
 }
-\item{\code{del}}{
-  Delete the current key
+\item{\code{get}}{
+  Move to a key and fetch the value
 
   \emph{Usage:}
-  \code{del(dupdata = TRUE)}
+  \code{get(key, as_proxy = FALSE, as_raw = NULL)}
 
   \emph{Arguments:}
   \itemize{
-    \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
+    \item{\code{key}:   The key to find (string or raw)
+    }
+
+    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    }
+
+    \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
     }
   }
 
   \emph{Value}:
-  Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.
-
-  \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
+  Depending on \code{as_raw} and if there is a value stored, \code{NULL}, a character string or a raw vector
 }
-\item{\code{put}}{
-  Store data using the cursor
+\item{\code{key}}{
+  Return the current key
 
   \emph{Usage:}
-  \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+  \code{key(as_proxy = FALSE, as_raw = NULL)}
 
   \emph{Arguments:}
   \itemize{
-    \item{\code{key}:   The key (string or raw)
+    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
     }
 
-    \item{\code{value}:   The value (string or raw)
-    }
-
-    \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
-    }
-
-    \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
-    }
-
-    \item{\code{append}:   As for \code{\link{mdb_txn}} \code{$put}
+    \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
     }
   }
+}
+\item{\code{value}}{
+  Return the current value
 
-  \emph{Value}:
-  Logical scalar, indicating if data was previously stored at this key
+  \emph{Usage:}
+  \code{value(as_proxy = FALSE, as_raw = NULL)}
 
-  \emph{Note}: In lmdb.h this is \code{mdb_cursor_put()}
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    }
+
+    \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
+    }
+  }
 }
 }
 }

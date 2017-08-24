@@ -58,6 +58,42 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
 ##' }
+##' \item{\code{replace}}{
+##'   Replace a key's current value with a new value, returning the old value.  This is like doing a \code{get()} followed by a \code{put} within a transaction.
+##'
+##'   \emph{Usage:}
+##'   \code{replace(key, value, as_raw = NULL)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{key}:   The key to replace
+##'     }
+##'
+##'     \item{\code{value}:   The new value to store
+##'     }
+##'
+##'     \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
+##'     }
+##'   }
+##' }
+##' \item{\code{pop}}{
+##'   Delete a key's value, returning the value just before it was deleted.  This is like doing a \code{get} followed by a \code{del} within a transaction.
+##'
+##'   \emph{Usage:}
+##'   \code{pop(key, as_raw = NULL)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{key}:   The key to delete
+##'     }
+##'
+##'     \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
+##'     }
+##'   }
+##'
+##'   \emph{Value}:
+##'   Depending on \code{as_raw} and if there is a value stored, \code{NULL}, a character string or a raw vector
+##' }
 ##' \item{\code{first}}{
 ##'   Move the cursor to the first item in the database
 ##'
@@ -124,6 +160,27 @@
 ##'   \emph{Value}:
 ##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
 ##' }
+##' \item{\code{get}}{
+##'   Move to a key and fetch the value
+##'
+##'   \emph{Usage:}
+##'   \code{get(key, as_proxy = FALSE, as_raw = NULL)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{key}:   The key to find (string or raw)
+##'     }
+##'
+##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+##'     }
+##'
+##'     \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
+##'     }
+##'   }
+##'
+##'   \emph{Value}:
+##'   Depending on \code{as_raw} and if there is a value stored, \code{NULL}, a character string or a raw vector
+##' }
 ##' \item{\code{key}}{
 ##'   Return the current key
 ##'
@@ -135,7 +192,7 @@
 ##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
 ##'     }
 ##'
-##'     \item{\code{as_raw}:   Return as raw?
+##'     \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
 ##'     }
 ##'   }
 ##' }
@@ -150,7 +207,7 @@
 ##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
 ##'     }
 ##'
-##'     \item{\code{as_raw}:   Return as raw?
+##'     \item{\code{as_raw}:   Return the value as raw.  With a value of \code{NULL} it will return a string if possible (i.e., if there are no null bytes) and a raw vector otherwise.  With \code{as_raw = TRUE} we always return a raw vector.  With \code{as_raw = FALSE} we always return a string, or throw an error if this is not possible.
 ##'     }
 ##'   }
 ##' }

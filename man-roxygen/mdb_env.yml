@@ -24,6 +24,13 @@ stat:
     items).
   mdb: mdb_env_stat
 
+info:
+  short: Brief information about the LMDB environment
+  value: >-
+    An integer vector with elements \code{mapsize}, \code{last_pgno},
+    \code{last_txnid}, \code{maxreaders} and \code{numreaders}.
+  mdb: mdb_env_info
+
 maxkeysize:
   short: >-
     The maximum size of a key (the value can be bigger than this)
