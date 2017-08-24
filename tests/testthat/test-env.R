@@ -1,5 +1,9 @@
 context("env")
 
+test_that("methods", {
+  expect_object_docs(R6_mdb_env)
+})
+
 test_that("create & close", {
   path <- tempfile()
   env <- mdb_env(path)

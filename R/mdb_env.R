@@ -203,6 +203,15 @@ R6_mdb_env <- R6::R6Class(
     .write_txn = NULL,
     .spare_txns = NULL,
     .path = NULL,
+    .methods = list(
+      Informational = c("path", "flags", "info", "stat",
+                        "maxkeysize", "maxreaders"),
+      Transactions = "begin",
+      Databases = c("open_database", "drop_database"),
+      Management = c("sync", "copy", "close", "destroy",
+                     "reader_list", "reader_check"),
+      Helpers = c("get", "put", "del", "exists", "list",
+                  "mget", "mput", "mdel")),
 
     initialize = function(path, mode,
                           subdir, sync, rdonly,

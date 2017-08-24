@@ -1,5 +1,9 @@
 context("transactions")
 
+test_that("methods", {
+  expect_object_docs(R6_mdb_txn)
+})
+
 test_that("begin/abort", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)

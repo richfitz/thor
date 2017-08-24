@@ -39,8 +39,12 @@ format_thor <- function(x) {
   method_names <- setdiff(ls(x, pattern = "^[^.]"), exclude)
   methods <- vapply(method_names, function(i) capture_args(x[[i]], i),
                     character(1), USE.NAMES = FALSE)
+
+  groups <- x$.methods %||% list(Public = method_names)
+  methods2 <- vapply(groups, function(i)
+    paste0("    ", methods[match(i, method_names)], collapse = "\n"),
+    character(1), USE.NAMES = FALSE)
   paste(c(sprintf("<%s>", class(x)[[1]]),
-          "  Public:",
-          sprintf("    %s", methods)),
+          sprintf("  %s:\n%s", names(groups), methods2)),
         collapse = "\n")
 }

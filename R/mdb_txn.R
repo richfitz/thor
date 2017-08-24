@@ -57,6 +57,14 @@ R6_mdb_txn <- R6::R6Class(
     .deps = NULL,
     .write = NULL,
     .mutations = 0L,
+    .methods = list(
+      Informational = c("id", "stat"),
+      Finish = c("commit", "abort"),
+      Cursors = "cursor",
+      Data = c("get", "put", "del", "exists", "list",
+               "mget", "mput", "mdel",
+               "replace", "pop"),
+      Compare = c("cmp", "dcmp")),
 
     initialize = function(env, db, write) {
       ## If the R6 issue is not a bug then we don't have to store

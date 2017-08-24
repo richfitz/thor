@@ -87,10 +87,14 @@ list_to_fixed_env <- function(x, env) {
   invisible(env)
 }
 
-capture_args <- function(f, name) {
+capture_args <- function(f, name, width = 60) {
   args <- utils::capture.output(args(f))
-  sub("function ", name,
-      trimws(paste(args[-length(args)], collapse = "\n")))
+  str <- sub("function ", name,
+             paste(trimws(paste(args[-length(args)])), collapse = " "))
+  if (nchar(str) > width) {
+    str <- paste0(substr(str, 1, width - 4), " ...")
+  }
+  str
 }
 
 `%||%` <- function(a, b) {
