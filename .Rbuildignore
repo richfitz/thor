@@ -11,3 +11,6 @@
 ^TODO\.md$
 ^man-roxygen$
 ^autodoc\.R$
+^update_web\.sh$
+^inst/web$
+^Rprof\.out$

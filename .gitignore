@@ -3,4 +3,5 @@
 .RData
 others
 inst/doc
+inst/web
 vignettes/*.html
