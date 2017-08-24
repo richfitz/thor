@@ -9,7 +9,7 @@ test_that("id", {
 
   db2 <- env$open_database("foo")
   expect_identical(db2$id(), 2L)
-  expect_identical(db$name(), "foo")
+  expect_identical(db2$name(), "foo")
 })
 
 test_that("flags", {

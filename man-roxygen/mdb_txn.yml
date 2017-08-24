@@ -97,15 +97,153 @@ del:
       Optionally, the value of the key - if specified, and if the
       database was opened with \code{dupsort = TRUE}, only the value
       matching \code{value} will be deleted.
+  value: A scalar logical, indicating if the value was deleted
   mdb: mdb_del
 
-# exists:
-# list:
-# replace
-# pop
-# mget
-# mput
-# mdel
-# cursor
-# cmp
-# dcmp
+exists:
+  short: Test if a key exists in the database.
+  details: >-
+    This is an extension of the raw LMDB API and works by using
+    \code{mdb_get} for each key (which for lmdb need not copy data)
+    and then testing whether the return value is \code{MDB_SUCCESS} or
+    \code{MDB_NOTFOUND}
+  params:
+    key: >-
+      The name of the key to test (string or raw vector).  Unlike
+      \code{get}, \code{put} and \code{del} (but like \code{mget},
+      \code{mput} and \code{mdel}), \code{exists} is
+      \emph{vectorised}.  So the input here can be; a character vector
+      of any length (returning the same length logical vector), a raw
+      vector (representing one key, returning a scalar logical) or a
+      \code{list} with each element being either a scalar character or
+      a raw vector, returning a logical the same length as the list.
+  value: A logical vector
+
+list:
+  short: List keys in the database
+  params:
+    starts_with: >-
+      Optionally, a prefix for all strings.  Note that is not a
+      regular expression or a filename glob.  Using \code{foo} will
+      match \code{foo}, \code{foo:bar} and \code{foobar} but not
+      \code{fo} or \code{FOO}.  Because LMDB stores keys in a sorted
+      tree, using a prefix can greatly reduce the number of keys that
+      need to be tested.
+    as_raw: >-
+      Same interpretation as \code{as_raw} in \code{$get()} but with a
+      different default.  It is expected that most of the time keys
+      will be strings, so by default we'll try and return a character
+      vector \code{as_raw = FALSE}.  Change the default if your
+      database contains raw keys.
+    size: >-
+      For use with \code{starts_with}, optionally a guess at the number
+      of keys that would be returned.  with \code{starts_with = NULL}
+      we can look the number of keys up directly so this is ignored.
+
+mget:
+  short: >-
+    Get values for multiple keys at once (like \code{$get} but
+    vectorised over \code{key})
+  params:
+    key: >-
+      The keys to get values for.  Zero, one or more keys are allowed.
+    as_proxy: >-
+      Logical, indicating if a list of \code{\link{mdb_proxy}} objects
+      shold be returned.
+    as_raw: >-
+      As for \code{$get()}, logical (or \code{NULL}) indicating if raw
+      or string output is expected or desired.
+  return: >-
+    A list, unless \code{as_proxy = FALSE, as_raw = FALSE} (in which
+    case a character vector), with the same length as the number of
+    keys.  This is so that the type is entirely determined by the
+    input arguments and not by the contents of the database.  Missing
+    values are never errors, but are \code{NULL} if returning a list
+    and \code{""} if returning  a charcater vector.
+
+mput:
+  short: >-
+    Put multiple values into the database (like \code{$put} but
+    vectorised over \code{key}/\code{value}).
+  detail: >-
+    The implementation simply calls \cde{mdb_put} repeatedly (but with
+    a single round of error checking) so duplicate \code{key} entries
+    will result in the last key winning.
+  params:
+    key: >-
+      The keys to set
+    value: >-
+      The values to set against these keys.  Must be the same length
+      as \code{key}.
+    dupdata: As for \code{$put}
+    overwrite: As for \code{$put}
+    append: As for \code{$put}
+
+mdel:
+  short: >-
+    Delete multiple values from the database (like \code{$del} but
+    vectorised over \code{key}).
+  params:
+    key: The keys to delete
+    value: >-
+      As for \code{$del}.  If used, must be the same length as
+      \code{key}.
+  value: >-
+    A logical vector, the same length as \code{key}, indicating if
+    each key was deleted.
+
+cursor:
+  short: >-
+    Create a \code{\link{mdb_cursor}} object in this transaction.
+    This can be used for more powerful database interactions.
+  value: >-
+    A \code{\link{mdb_cursor}} object.
+  mdb: mdb_cursor_open
+
+cmp:
+  short: >-
+    Compare two keys for ordering
+  params:
+    a: A key (string or raw); it need not be in the database
+    b: A key to comare with b (string or raw)
+  value: >-
+    A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a >
+    b).
+  mdb: mdb_cmp
+
+dcmp:
+  short: >-
+    Like \code{cmp}, but for comparing \emph{data items} in a database
+    with \code{dupsort = TRUE}.
+  params:
+    a: A data item (string or raw); it need not be in the database
+    b: A data item to comare with b (string or raw)
+  value: >-
+    A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a >
+    b).
+  mdb: mdb_dcmp
+
+replace:
+  short: >-
+    Use a temporary cursor to replace an item; this function will
+    replace the data held at \code{key} and return the previous value
+    (or \code{NULL} if it doesn't exist).  See
+    \code{\link{mdb_cursor}} for fuller documentation.
+  params:
+    key: The key to replace
+    value: The new value value to st \code{key} to
+    as_raw: For the returned value, how should the data be returned?
+  value: >-
+    As for \code{$get()}, a single data item as either a string or raw
+    vector.
+
+pop:
+  short: >-
+    Use a temporary cursor to "pop" an item; this function will delete
+    an item but return the value that it had as it deletes it.
+  params:
+    key: The key to pop
+    as_raw: For the returned value, how should the data be returned?
+  value: >-
+    As for \code{$get()}, a single data item as either a string or raw
+    vector.

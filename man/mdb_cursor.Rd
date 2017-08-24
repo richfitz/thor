@@ -12,3 +12,201 @@ sufficient.
 Cursors must be created from within a transaction (which in turn
 are created from an environment).
 }
+\section{Methods}{
+
+
+\describe{
+\item{\code{close}}{
+  Close the cursor
+
+  \emph{Usage:}
+  \code{close()}
+
+  \emph{Value}:
+  None, called for side effects only
+
+  \emph{Note}: In lmdb.h this is \code{mdb_cursor_close()}
+}
+\item{\code{key}}{
+  Return the current key
+
+  \emph{Usage:}
+  \code{key(as_proxy = FALSE, as_raw = NULL)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    }
+
+    \item{\code{as_raw}:   Return as raw?
+    }
+  }
+}
+\item{\code{value}}{
+  Return the current value
+
+  \emph{Usage:}
+  \code{value(as_proxy = FALSE, as_raw = NULL)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+    }
+
+    \item{\code{as_raw}:   Return as raw?
+    }
+  }
+}
+\item{\code{first}}{
+  Move the cursor to the first item in the database
+
+  \emph{Usage:}
+  \code{first()}
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{last}}{
+  Move the cursor to the last item in the database
+
+  \emph{Usage:}
+  \code{last()}
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{move_prev}}{
+  Move the cursor to the previous item in the database.  If called while at the first item in the database, this will invalidate the cursor position.
+
+  \emph{Usage:}
+  \code{move_prev()}
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{move_next}}{
+  Move the cursor to the next item in the database.  If called while at the last item in the database, this will invalidate the cursor position.
+
+  \emph{Usage:}
+  \code{move_next()}
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{move_to}}{
+  Move the cursor to the item in the database with key \code{key}. If \code{key} does not exist, this will invalidate the cursor position.
+
+  \emph{Usage:}
+  \code{move_to(key)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{key}:   Key to move to (string or raw)
+    }
+  }
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{seek}}{
+  Move the cursor to the item in the database with key equal to or greater than \code{key}.  If \code{key} does not exist and no key with a key greater than \code{key} exists, this will invalidate the cursor position.
+
+  \emph{Usage:}
+  \code{seek(key)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{key}:   Key to seek (string or raw)
+    }
+  }
+
+  \emph{Value}:
+  Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+}
+\item{\code{del}}{
+  Delete the current key
+
+  \emph{Usage:}
+  \code{del(dupdata = TRUE)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
+    }
+  }
+
+  \emph{Value}:
+  Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.
+
+  \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
+}
+\item{\code{put}}{
+  Store data using the cursor
+
+  \emph{Usage:}
+  \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{key}:   The key (string or raw)
+    }
+
+    \item{\code{value}:   The value (string or raw)
+    }
+
+    \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+
+    \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+
+    \item{\code{append}:   As for \code{\link{mdb_txn}} \code{$put}
+    }
+  }
+
+  \emph{Value}:
+  Logical scalar, indicating if data was previously stored at this key
+
+  \emph{Note}: In lmdb.h this is \code{mdb_cursor_put()}
+}
+}
+}
+
+\examples{
+# Start by creating a new environment, and within that a write
+# transaction, and from that a new cursor.  But first put a bunch
+# of data into the database
+env <- thor::mdb_env(tempfile())
+env$mput(letters, LETTERS)
+txn <- env$begin(write = TRUE)
+cur <- txn$cursor()
+
+# Move the cursor to the first position
+cur$first()
+
+# The key and value:
+cur$key()
+cur$value()
+
+# Move to a different key:
+cur$move_to("g")
+cur$value()
+
+# Delete the current item
+cur$del()
+cur$key()
+
+# We can't move to 'g' any more as it's gone:
+(cur$move_to("g"))
+cur$key() # NULL
+
+# But we can *seek* 'g', which will move to 'h'
+(cur$seek("g"))
+cur$key() # "h"
+
+# Get raw values out:
+cur$value(as_raw = TRUE)
+
+# Cleanup
+env$destroy()
+}

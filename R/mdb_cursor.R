@@ -4,10 +4,49 @@
 ##'
 ##' Cursors must be created from within a transaction (which in turn
 ##' are created from an environment).
+##'
+##' @template mdb_cursor
 ##' @title Use mdb transactions
 ##' @rdname mdb_cursor
 ##' @aliases mdb_cursor
 ##' @name mdb_cursor
+##' @examples
+##' # Start by creating a new environment, and within that a write
+##' # transaction, and from that a new cursor.  But first put a bunch
+##' # of data into the database
+##' env <- thor::mdb_env(tempfile())
+##' env$mput(letters, LETTERS)
+##' txn <- env$begin(write = TRUE)
+##' cur <- txn$cursor()
+##'
+##' # Move the cursor to the first position
+##' cur$first()
+##'
+##' # The key and value:
+##' cur$key()
+##' cur$value()
+##'
+##' # Move to a different key:
+##' cur$move_to("g")
+##' cur$value()
+##'
+##' # Delete the current item
+##' cur$del()
+##' cur$key()
+##'
+##' # We can't move to 'g' any more as it's gone:
+##' (cur$move_to("g"))
+##' cur$key() # NULL
+##'
+##' # But we can *seek* 'g', which will move to 'h'
+##' (cur$seek("g"))
+##' cur$key() # "h"
+##'
+##' # Get raw values out:
+##' cur$value(as_raw = TRUE)
+##'
+##' # Cleanup
+##' env$destroy()
 NULL
 
 R6_mdb_cursor <- R6::R6Class(

@@ -9,6 +9,59 @@
 ##   %\VignetteEncoding{UTF-8}
 ## ---
 
+## ## Introduction
+
+## `thor` provides an wrapper around LMBD; the lightning memory-mapped
+## database.  This is an embedded key-value store; there is no server
+## (like SQLite) - the database exists purely on disk and uses file
+## locking to manage concurrent access between processes.
+
+## This package does not provide a faithful 1:1 mapping of the
+## underlying LMDB C api because that requires too much care at the R
+## level not to crash R!  Instead, probably at the cost of some
+## performance, `thor` provides a set of wrappers that try to prevent
+## crashes by invalidating objects in the correct order.  The approach
+## taken in is very similar to the [python interface to lmdb;
+## `py-lmdb`](https://github.com/dw/py-lmdb).
+
+## Because the whole point of interacting with a database is side
+## effects, `thor` uses [R6](https://cran.r-project.org/package=storr)
+## for the interface.  This has the unfortunate effect of complicating
+## the documentation somewhat because R's documentation is focussed
+## heavily on _functions_ and the package provides only one function
+## (`mdb_env`) with everything else happening through *methods* of
+## this object, and the objects that it creates.
+
+## The objects that the package provides are
+
+## * `mdb_env`: the environment object, which is the interface to the
+##   database file.  Everything starts here!
+##
+## * `mdb_dbi`: a database handle.  Multiple databases may be stored
+##   within a single environment and if more than one is used then
+##   this object is passed about to control which database things
+##   affect.
+##
+## * `mdb_txn`: a transaction object.  LMDB is a *transactional*
+##   database and this object is used to carry out actions within a
+##   transaction (such as getting and putting data).
+##
+## * `mdb_cursor`: a cursor.  To go beyond basic `get`/`put`, cursors*
+##   *are required.  These can be used to iterate through the ##
+##   *database, and to find entries.
+##
+## * `mdb_proxy`: a proxy for a result.  This is used to defer copying
+##   data from the database into R for as long as possible.  It's a
+##   bit of an experiment so we'll see how useful it turns out to be.
+##
+## All of these objects have their own help pages, even though only
+## `mdb_env` has an actual function.  On those help pages every public
+## function described (this is the same set that is printed when
+## displaying the objects).  There are other functions that can be
+## reached using `$` - functions beginning with a `.` should be
+## considered **private**; using these can crash R.  Other functions
+## (such as `format`) exist because of the way thor uses R6.
+
 ## ## The environment
 
 ## The first step is to create an "environment"; this holds one or
