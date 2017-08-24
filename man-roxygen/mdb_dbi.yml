@@ -1,0 +1,21 @@
+id:
+  short: >-
+    Return the mdb internal id of the database
+  value: An integer
+
+name:
+  short: >-
+    Return the name of the database
+  value: >-
+    A string, or \code{NULL} for the default database, which has no
+    name
+
+flags:
+  short: >-
+    Return flags used by the database handle
+  value: >-
+    A named logical vector.  Names correspond to arguments to the
+    constructor (\code{reversekey} and \code{dupsort}).
+  params:
+    txn: A transaction (can be read-only) to use to read from the database.
+  mdb: mdb_dbi_flags

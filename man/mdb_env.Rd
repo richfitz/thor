@@ -170,7 +170,7 @@ the file lmdb.h in particular.
 
 \describe{
 \item{\code{path}}{
-  Print the absolute path to the LMDB store (on disk)
+  Return the absolute path to the LMDB store (on disk)
 
   \emph{Usage:}
   \code{path()}

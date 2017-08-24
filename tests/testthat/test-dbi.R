@@ -5,9 +5,11 @@ test_that("id", {
 
   db <- env$open_database()
   expect_identical(db$id(), 1L)
+  expect_null(db$name())
 
   db2 <- env$open_database("foo")
   expect_identical(db2$id(), 2L)
+  expect_identical(db$name(), "foo")
 })
 
 test_that("flags", {
