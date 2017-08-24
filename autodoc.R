@@ -19,6 +19,20 @@ add_usage <- function(dat, object) {
             immediate.=TRUE, call.=FALSE)
   }
 
+
+  groups <- object$public_fields$.methods
+  if (!is.null(groups)) {
+    m <- unlist(groups, use.names = FALSE)
+    msg <- setdiff(m, names(dat))
+    if (length(msg) > 0L) {
+      warning(sprintf("%d missing methods for %s:\n  %s",
+                      length(msg), object$classname,
+                      paste(msg, collapse = ", ")),
+              immediate. = TRUE)
+    }
+    dat <- dat[order(match(names(dat), m))]
+  }
+
   for (name in names(dat)) {
     dat[[name]]$method_name <- name
     dat[[name]]$usage <- capture_usage(name)

@@ -56,75 +56,28 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_env_get_maxreaders()}
 ##' }
-##' \item{\code{reader_list}}{
-##'   List information about database readers
+##' \item{\code{begin}}{
+##'   Begin a transaction
 ##'
 ##'   \emph{Usage:}
-##'   \code{reader_list()}
-##'
-##'   \emph{Value}:
-##'   A character matrix with columns \code{pid} (process ID), \code{thread} (a pointer address), and \code{txnid} (a small integer)
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_reader_list()}
-##' }
-##' \item{\code{reader_check}}{
-##'   Check for, and remove, stale entries in the reader lock table.
-##'
-##'   \emph{Usage:}
-##'   \code{reader_check()}
-##'
-##'   \emph{Value}:
-##'   An integer, being the number of stale readers discarded.  However, this function is primarily called for its side effect.
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_reader_check()}
-##' }
-##' \item{\code{copy}}{
-##'   Copy the entire environment state to a new path.  This can be used to make a backup of the database.
-##'
-##'   \emph{Usage:}
-##'   \code{copy(path, compact = FALSE)}
+##'   \code{begin(db = NULL, write = FALSE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{path}:   Scalar character; the new path
+##'     \item{\code{db}:   A database handle, as returned by \code{open_database}.  If \code{NULL} (the default) then the default database will be used.
 ##'     }
 ##'
-##'     \item{\code{compact}:   Scalar logical; perform compaction while copying?  This omits free pages and sequentially renumbers all pages in output.  This can take longer than the default but produce a smaller database
-##'     }
-##'   }
-##'
-##'   \emph{Value}:
-##'   Invisibly, the new path (allowing use of \code{$copy(tempfile)})
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_env_copy()} & \code{mdb_env_copy2()}
-##' }
-##' \item{\code{sync}}{
-##'   Flush the data buffers to disk.
-##'
-##'   \emph{Usage:}
-##'   \code{sync(force = FALSE)}
-##'
-##'   \emph{Arguments:}
-##'   \itemize{
-##'     \item{\code{force}:   Scalar logical; force a synchronous flush.  Otherwise if the environment was constructed with \code{sync = FALSE} the flushes will be omitted, and with \code{mapasync = TRUE} they will be asynchronous.
+##'     \item{\code{write}:   Scalar logical, indicating if this should be a write transaction.  There can be only one write transaction per database (see \code{\link{mdb_txn}} for more details) - it is an error to try to open more than one.
 ##'     }
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{rdonly = TRUE}.
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_env_sync()}
-##' }
-##' \item{\code{close}}{
-##'   Close the environment.  This closes all cursors and transactions (active write transactions are aborted).
-##'
-##'   \emph{Usage:}
-##'   \code{close()}
+##'   Transactions are the key objects for interacting with an LMDB database (aside from the convenience interface below).  They are described in more detail in \code{\link{mdb_txn}}.
 ##'
 ##'   \emph{Value}:
-##'   No return value, called for side effects only
+##'   A \code{\link{mdb_txn}} object
 ##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_env_close()}
+##'   \emph{Note}: In lmdb.h this is \code{mdb_begin()}
 ##' }
 ##' \item{\code{open_database}}{
 ##'   Open a named database, or return one if already opened.
@@ -172,28 +125,53 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_drop()}
 ##' }
-##' \item{\code{begin}}{
-##'   Begin a transaction
+##' \item{\code{sync}}{
+##'   Flush the data buffers to disk.
 ##'
 ##'   \emph{Usage:}
-##'   \code{begin(db = NULL, write = FALSE)}
+##'   \code{sync(force = FALSE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{db}:   A database handle, as returned by \code{open_database}.  If \code{NULL} (the default) then the default database will be used.
-##'     }
-##'
-##'     \item{\code{write}:   Scalar logical, indicating if this should be a write transaction.  There can be only one write transaction per database (see \code{\link{mdb_txn}} for more details) - it is an error to try to open more than one.
+##'     \item{\code{force}:   Scalar logical; force a synchronous flush.  Otherwise if the environment was constructed with \code{sync = FALSE} the flushes will be omitted, and with \code{mapasync = TRUE} they will be asynchronous.
 ##'     }
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   Transactions are the key objects for interacting with an LMDB database (aside from the convenience interface below).  They are described in more detail in \code{\link{mdb_txn}}.
+##'   Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{rdonly = TRUE}.
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_env_sync()}
+##' }
+##' \item{\code{copy}}{
+##'   Copy the entire environment state to a new path.  This can be used to make a backup of the database.
+##'
+##'   \emph{Usage:}
+##'   \code{copy(path, compact = FALSE)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{path}:   Scalar character; the new path
+##'     }
+##'
+##'     \item{\code{compact}:   Scalar logical; perform compaction while copying?  This omits free pages and sequentially renumbers all pages in output.  This can take longer than the default but produce a smaller database
+##'     }
+##'   }
 ##'
 ##'   \emph{Value}:
-##'   A \code{\link{mdb_txn}} object
+##'   Invisibly, the new path (allowing use of \code{$copy(tempfile)})
 ##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_begin()}
+##'   \emph{Note}: In lmdb.h this is \code{mdb_env_copy()} & \code{mdb_env_copy2()}
+##' }
+##' \item{\code{close}}{
+##'   Close the environment.  This closes all cursors and transactions (active write transactions are aborted).
+##'
+##'   \emph{Usage:}
+##'   \code{close()}
+##'
+##'   \emph{Value}:
+##'   No return value, called for side effects only
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_env_close()}
 ##' }
 ##' \item{\code{destroy}}{
 ##'   Totally destroy an LMDB environment.  This closes the database and removes the files.  Use with care!
@@ -203,5 +181,27 @@
 ##'
 ##'   \emph{Value}:
 ##'   No return value, called for side effects only
+##' }
+##' \item{\code{reader_list}}{
+##'   List information about database readers
+##'
+##'   \emph{Usage:}
+##'   \code{reader_list()}
+##'
+##'   \emph{Value}:
+##'   A character matrix with columns \code{pid} (process ID), \code{thread} (a pointer address), and \code{txnid} (a small integer)
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_reader_list()}
+##' }
+##' \item{\code{reader_check}}{
+##'   Check for, and remove, stale entries in the reader lock table.
+##'
+##'   \emph{Usage:}
+##'   \code{reader_check()}
+##'
+##'   \emph{Value}:
+##'   An integer, being the number of stale readers discarded.  However, this function is primarily called for its side effect.
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_reader_check()}
 ##' }
 ##' }

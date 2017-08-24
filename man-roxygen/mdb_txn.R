@@ -51,6 +51,17 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_txn_abort()}
 ##' }
+##' \item{\code{cursor}}{
+##'   Create a \code{\link{mdb_cursor}} object in this transaction. This can be used for more powerful database interactions.
+##'
+##'   \emph{Usage:}
+##'   \code{cursor()}
+##'
+##'   \emph{Value}:
+##'   A \code{\link{mdb_cursor}} object.
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_open()}
+##' }
 ##' \item{\code{get}}{
 ##'   Retrieve a value from the database
 ##'
@@ -216,16 +227,44 @@
 ##'   \emph{Value}:
 ##'   A logical vector, the same length as \code{key}, indicating if each key was deleted.
 ##' }
-##' \item{\code{cursor}}{
-##'   Create a \code{\link{mdb_cursor}} object in this transaction. This can be used for more powerful database interactions.
+##' \item{\code{replace}}{
+##'   Use a temporary cursor to replace an item; this function will replace the data held at \code{key} and return the previous value (or \code{NULL} if it doesn't exist).  See \code{\link{mdb_cursor}} for fuller documentation.
 ##'
 ##'   \emph{Usage:}
-##'   \code{cursor()}
+##'   \code{replace(key, value, as_raw = NULL)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{key}:   The key to replace
+##'     }
+##'
+##'     \item{\code{value}:   The new value value to st \code{key} to
+##'     }
+##'
+##'     \item{\code{as_raw}:   For the returned value, how should the data be returned?
+##'     }
+##'   }
 ##'
 ##'   \emph{Value}:
-##'   A \code{\link{mdb_cursor}} object.
+##'   As for \code{$get()}, a single data item as either a string or raw vector.
+##' }
+##' \item{\code{pop}}{
+##'   Use a temporary cursor to "pop" an item; this function will delete an item but return the value that it had as it deletes it.
 ##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_open()}
+##'   \emph{Usage:}
+##'   \code{pop(key, as_raw = NULL)}
+##'
+##'   \emph{Arguments:}
+##'   \itemize{
+##'     \item{\code{key}:   The key to pop
+##'     }
+##'
+##'     \item{\code{as_raw}:   For the returned value, how should the data be returned?
+##'     }
+##'   }
+##'
+##'   \emph{Value}:
+##'   As for \code{$get()}, a single data item as either a string or raw vector.
 ##' }
 ##' \item{\code{cmp}}{
 ##'   Compare two keys for ordering
@@ -266,44 +305,5 @@
 ##'   A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a > b).
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_dcmp()}
-##' }
-##' \item{\code{replace}}{
-##'   Use a temporary cursor to replace an item; this function will replace the data held at \code{key} and return the previous value (or \code{NULL} if it doesn't exist).  See \code{\link{mdb_cursor}} for fuller documentation.
-##'
-##'   \emph{Usage:}
-##'   \code{replace(key, value, as_raw = NULL)}
-##'
-##'   \emph{Arguments:}
-##'   \itemize{
-##'     \item{\code{key}:   The key to replace
-##'     }
-##'
-##'     \item{\code{value}:   The new value value to st \code{key} to
-##'     }
-##'
-##'     \item{\code{as_raw}:   For the returned value, how should the data be returned?
-##'     }
-##'   }
-##'
-##'   \emph{Value}:
-##'   As for \code{$get()}, a single data item as either a string or raw vector.
-##' }
-##' \item{\code{pop}}{
-##'   Use a temporary cursor to "pop" an item; this function will delete an item but return the value that it had as it deletes it.
-##'
-##'   \emph{Usage:}
-##'   \code{pop(key, as_raw = NULL)}
-##'
-##'   \emph{Arguments:}
-##'   \itemize{
-##'     \item{\code{key}:   The key to pop
-##'     }
-##'
-##'     \item{\code{as_raw}:   For the returned value, how should the data be returned?
-##'     }
-##'   }
-##'
-##'   \emph{Value}:
-##'   As for \code{$get()}, a single data item as either a string or raw vector.
 ##' }
 ##' }

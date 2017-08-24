@@ -12,35 +12,51 @@
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_close()}
 ##' }
-##' \item{\code{key}}{
-##'   Return the current key
+##' \item{\code{put}}{
+##'   Store data using the cursor
 ##'
 ##'   \emph{Usage:}
-##'   \code{key(as_proxy = FALSE, as_raw = NULL)}
+##'   \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+##'     \item{\code{key}:   The key (string or raw)
 ##'     }
 ##'
-##'     \item{\code{as_raw}:   Return as raw?
+##'     \item{\code{value}:   The value (string or raw)
+##'     }
+##'
+##'     \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
+##'     }
+##'
+##'     \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
+##'     }
+##'
+##'     \item{\code{append}:   As for \code{\link{mdb_txn}} \code{$put}
 ##'     }
 ##'   }
+##'
+##'   \emph{Value}:
+##'   Logical scalar, indicating if data was previously stored at this key
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_put()}
 ##' }
-##' \item{\code{value}}{
-##'   Return the current value
+##' \item{\code{del}}{
+##'   Delete the current key
 ##'
 ##'   \emph{Usage:}
-##'   \code{value(as_proxy = FALSE, as_raw = NULL)}
+##'   \code{del(dupdata = TRUE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
-##'     }
-##'
-##'     \item{\code{as_raw}:   Return as raw?
+##'     \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
 ##'     }
 ##'   }
+##'
+##'   \emph{Value}:
+##'   Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.
+##'
+##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
 ##' }
 ##' \item{\code{first}}{
 ##'   Move the cursor to the first item in the database
@@ -60,20 +76,20 @@
 ##'   \emph{Value}:
 ##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
 ##' }
-##' \item{\code{move_prev}}{
-##'   Move the cursor to the previous item in the database.  If called while at the first item in the database, this will invalidate the cursor position.
-##'
-##'   \emph{Usage:}
-##'   \code{move_prev()}
-##'
-##'   \emph{Value}:
-##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
-##' }
 ##' \item{\code{move_next}}{
 ##'   Move the cursor to the next item in the database.  If called while at the last item in the database, this will invalidate the cursor position.
 ##'
 ##'   \emph{Usage:}
 ##'   \code{move_next()}
+##'
+##'   \emph{Value}:
+##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
+##' }
+##' \item{\code{move_prev}}{
+##'   Move the cursor to the previous item in the database.  If called while at the first item in the database, this will invalidate the cursor position.
+##'
+##'   \emph{Usage:}
+##'   \code{move_prev()}
 ##'
 ##'   \emph{Value}:
 ##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
@@ -108,50 +124,34 @@
 ##'   \emph{Value}:
 ##'   Invisibly, a logical indicating if the cursor position is valid, but primarily called for side effects
 ##' }
-##' \item{\code{del}}{
-##'   Delete the current key
+##' \item{\code{key}}{
+##'   Return the current key
 ##'
 ##'   \emph{Usage:}
-##'   \code{del(dupdata = TRUE)}
+##'   \code{key(as_proxy = FALSE, as_raw = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
+##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
+##'     }
+##'
+##'     \item{\code{as_raw}:   Return as raw?
 ##'     }
 ##'   }
-##'
-##'   \emph{Value}:
-##'   Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_del()}
 ##' }
-##' \item{\code{put}}{
-##'   Store data using the cursor
+##' \item{\code{value}}{
+##'   Return the current value
 ##'
 ##'   \emph{Usage:}
-##'   \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+##'   \code{value(as_proxy = FALSE, as_raw = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{key}:   The key (string or raw)
+##'     \item{\code{as_proxy}:   Return as an \code{\link{mdb_proxy}} object?
 ##'     }
 ##'
-##'     \item{\code{value}:   The value (string or raw)
-##'     }
-##'
-##'     \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
-##'     }
-##'
-##'     \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
-##'     }
-##'
-##'     \item{\code{append}:   As for \code{\link{mdb_txn}} \code{$put}
+##'     \item{\code{as_raw}:   Return as raw?
 ##'     }
 ##'   }
-##'
-##'   \emph{Value}:
-##'   Logical scalar, indicating if data was previously stored at this key
-##'
-##'   \emph{Note}: In lmdb.h this is \code{mdb_cursor_put()}
 ##' }
 ##' }

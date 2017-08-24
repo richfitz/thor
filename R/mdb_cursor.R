@@ -61,10 +61,10 @@ R6_mdb_cursor <- R6::R6Class(
     .valid = FALSE,
     .methods = list(
       Finish = "close",
+      Actions = c("put", "del", "replace", "pop"),
       Movement = c("first", "last", "move_next", "move_prev"),
       Find = c("move_to", "seek", "get"),
       Current = c("key", "value"),
-      Actions = c("del", "put", "replace", "pop"),
       Duplicates = c("first_dup", "last_dup",
                      "move_next_dup", "move_prev_dup",
                      "move_next_nodup", "move_prev_nodup",
