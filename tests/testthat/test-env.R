@@ -115,14 +115,6 @@ test_that("some flags", {
   expect_true(env2$flags()[["sync"]])
 })
 
-test_that("set_mapsize", {
-  env <- mdb_env(tempfile())
-  ms <- env$info()[["mapsize"]]
-  size <- ms * 2L
-  env$set_mapsize(size)
-  expect_identical(env$info()[["mapsize"]], size)
-})
-
 test_that("copy", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
@@ -254,7 +246,7 @@ test_that("format", {
   str <- format(env)
   expect_false(grepl("initialze", str))
   expect_true(grepl("<mdb_env>", str, fixed = TRUE))
-  expect_true(grepl("set_mapsize", str, fixed = TRUE))
+  expect_true(grepl("drop_database", str, fixed = TRUE))
 })
 
 ## Convenience wrappers:
@@ -266,14 +258,8 @@ test_that("put, get, del (scalar)", {
   expect_equal(env$list(), "a")
   expect_true(env$exists("a"))
   expect_equal(env$get("a"), "A")
-  expect_equal(env$replace("a", "B"), "A")
   expect_true(env$del("a"))
   expect_false(env$del("a"))
-
-  env$put("c", "C")
-  expect_true(env$exists("c"))
-  expect_equal(env$pop("c"), "C")
-  expect_false(env$exists("c"))
 
   expect_error(env$del("a", "B"),
                "'value' is not allowed for databases with dupsort = FALSE",

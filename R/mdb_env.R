@@ -296,15 +296,6 @@ R6_mdb_env <- R6::R6Class(
       mdb_env_get_maxreaders(self$.ptr)
     },
 
-    set_mapsize = function(size) {
-      ## TODO: this is dangerous - requires no transactions active but
-      ## this is not enforced.  I need to check this condition before
-      ## using it
-
-      ## assert_integer_like(size)
-      mdb_env_set_mapsize(self$.ptr, as_integer(size))
-    },
-
     reader_list = function() {
       mdb_reader_list(self$.ptr)
     },
@@ -463,15 +454,5 @@ R6_mdb_env <- R6::R6Class(
         on.exit(mdb_cursor_close(cur_ptr))
         thor_list(cur_ptr, starts_with, as_raw, size)
       })
-    },
-    replace = function(key, value, as_raw = NULL, db = NULL) {
-      db <- db %||% self$.db
-      with_new_txn_object(self, db, TRUE, function(txn)
-        txn$replace(key, value, as_raw))
-    },
-    pop = function(key, as_raw = NULL, db = NULL) {
-      db <- db %||% self$.db
-      with_new_txn_object(self, db, TRUE, function(txn)
-        txn$pop(key, as_raw))
     }
   ))
