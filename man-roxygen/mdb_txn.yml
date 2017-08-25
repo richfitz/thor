@@ -166,7 +166,7 @@ mput:
     Put multiple values into the database (like \code{$put} but
     vectorised over \code{key}/\code{value}).
   details: >-
-    The implementation simply calls \cde{mdb_put} repeatedly (but with
+    The implementation simply calls \code{mdb_put} repeatedly (but with
     a single round of error checking) so duplicate \code{key} entries
     will result in the last key winning.
   params:

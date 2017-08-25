@@ -565,7 +565,7 @@ the file lmdb.h in particular.
   }
 
   \emph{Details:}
-  The implementation simply calls \cde{mdb_put} repeatedly (but with a single round of error checking) so duplicate \code{key} entries will result in the last key winning.
+  The implementation simply calls \code{mdb_put} repeatedly (but with a single round of error checking) so duplicate \code{key} entries will result in the last key winning.
 
   This is a helper method that establishes a temporary read-write transaction, calls the correspinding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
 }
