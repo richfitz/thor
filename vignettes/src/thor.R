@@ -9,6 +9,9 @@
 ##   %\VignetteEncoding{UTF-8}
 ## ---
 
+##+ echo = FALSE
+set.seed(1)
+
 ## ## Introduction
 
 ## `thor` provides an wrapper around LMBD; the lightning memory-mapped
@@ -35,8 +38,8 @@
 ## for the interface.  This has the unfortunate effect of complicating
 ## the documentation somewhat because R's documentation is focussed
 ## heavily on _functions_ and the package provides only one function
-## (`mdb_env`) with everything else happening through *methods* of
-## this object, and the objects that it creates.
+## (`thor::mdb_env`) with everything else happening through *methods*
+## of this object, and the objects that it creates.
 
 ## `thor` tries to expose the underlying LMDB interface in a nested
 ## set of objects of increasing power (and complexity).  The objects
@@ -83,6 +86,81 @@
 ## that detail and just treat the environment as a database).
 env <- thor::mdb_env(tempfile())
 
+## The first argument to `thor::mdb_env` is the filename - this
+## is a directory where the database files will be kept.  Here I am
+## using a temporary file for the database.
+
+## As an R6 object, the database environment has a number of methods
+## that can be used to perform actions on the database.  The print
+## method groups these by theme:
+env
+
+## The last group `Helpers` are wrappers that let you ignore the
+## transactional nature of LMDB if you just want to do really simple
+## things.
+
+## The database is currently empty:
+env$list()
+
+## But we can add some data to it:
+for (i in 1:10) {
+  env$put(ids::adjective_animal(),
+          ids::random_id())
+}
+
+## Now there are 10 _keys_ in the database, each holding a value:
+keys <- env$list()
+keys
+
+## LMDB stores keys in sorted order (not necessarily R's sorted order
+## - you can see how LMDB sorts things with the `cmp` method of a
+## transaction - see `?mdb_txn`), so `list` will return things in that
+## order.
+
+## Each _key_ has a _value_ (in this case just a hex string)
+env$get(keys[[1]])
+
+## Delete a key with
+env$del(keys[[1]])
+
+## and now there are only 9 keys
+length(env$list())
+
+## Test for existance of a key with `exists`
+env$exists(keys[[1]])
+env$exists(keys[[2]])
+
+## The `mget` method will get multiple keys at once, `mset` will set
+## multiple key/value pairs at once and `mdel` will delete mulitple
+## keys at once.
+
+env$mdel(keys)
+
+## For anything more complicated than this you would want to use
+## transactions (see below).
+
+## The `Informational` methods all return information about the state
+## of the LMDB environment;
+
+## The path that the data is stored in
+env$path()
+
+## which will contain two files - the actual data and a lock file (see
+## lmdb's documentation for more on these).
+dir(env$path())
+
+## Flags that the environment was opened with (this corresponds to the
+## arguments to the `thor::mdb_env` function)
+env$flags()
+
+## A couple of different forms of (somewhat cryptic) information about
+## the state of the environment
+env$info()
+env$stat()
+
+## (Note `entries` in `env$stat()` is the number of keys in the
+## database)
+
 ## ## Transactions
 
 ## LMDB is _transactional_; everything that happens to the database,
@@ -95,6 +173,10 @@ env <- thor::mdb_env(tempfile())
 ## "see" these changes.  You can only have one write transaction at
 ## once, but as many read transactions as you'd like.
 txn <- env$begin(write = TRUE)
+
+## As for `mdb_env`, the transaction object prints methods grouped by
+## theme
+txn
 
 ## ### Simple operations (put, get, del, etc)
 
@@ -113,25 +195,73 @@ txn$del("key")
 ## uses a cursor internally - see below)
 txn$exists("key")
 
-txn$put("key", "value")
-txn$put("key2", "another value")
-txn$put("foo", "bar")
-txn$exists("key")
+## The helper functions `mget`, `mput` and `mdel` functions do `get` /
+## `put` and `del` to multiple keys at once, more efficiently than
+## looping in R:
+values <- ids::sentence(length(keys), style = "sentence")
+txn$mput(keys, values)
 
-## To list all keys in the database, use the `list` method
+## To list keys, use `list`
 txn$list()
 
-## which takes an argument `starts_with`:
-txn$list("k")
-txn$list("f")
-txn$list("x")
+## And to fetch multiple values (`as_raw` is explained below)
+txn$mget(keys[1:3], as_raw = FALSE)
 
-## (the `exists` and `list` methods are extensions to the LMDB api)
+## Or delete multiple values
+txn$mdel(keys[1:3])
+
+## `exists` is itself always vectorised
+txn$exists(keys)
 
 ## Because the database is transactional, we can now either use
-## `txn$commit()` to save the changes (writing `key`, `key2` and `foo`
-## to the database) or `txn$abort()` to discard the changes.
-txn$abort()
+## `txn$commit()` to save the changes or `txn$abort()` to discard the
+## changes.
+
+## ### Multiple transactions at once
+
+## As well as being able to roll back a transaction, the other
+## function they serve is that each transaction gets a consstent view
+## of the database.  At this point we have one write transaction
+## running, but it's not commited yet.  So if we start another
+## transaction, it will not see any of the uncommitted "changes" that
+## our transaction has made:
+txn_new <- env$begin()
+txn_new$list()
+
+## (or equivalently, `env$list()`).  Because of the design of
+## LMDB, you cannot have multiple active write transactions at once
+##+ error = TRUE
+env$put("key", "value")
+
+##+ error = TRUE
+env$begin(write = TRUE)
+
+## (if a write transaction is made by another process against the same
+## LMDB database, then it will wait for our transaction to complete
+## before its write transaction will start - this will cause R to be
+## unresponsive during this time)
+
+## Let's commit the changes made:
+txn$commit()
+
+## After being committed a transaction cannot be reused:
+##+ error = TRUE
+txn$list()
+
+## New transactions can now see the changes
+env$list()
+
+## But importantly *old ones can't*
+txn_new$list()
+
+## This is because the old transaction has a consistent view of the
+## database - from the point that it starts to the point that it ends,
+## a read-only transaction will see the same data and a read-write
+## transaction will only see changes that it has made.
+
+## (cleaning things up a little)
+txn_new$abort()
+env$mdel(keys)
 
 ## ### Non-string data
 
@@ -224,37 +354,40 @@ txn$get("bytes")
 ## FALSE` will throw an error for a value that cannot be converted
 ## into a string.
 
+## For `mget`, it's a bit trickier because we need to check _every_
+## value as they come out to see if it's a string or a character.  The
+## rules here are:
+
+## | stored  | `as_raw`  | container | contents    |
+## |---------|-----------|-----------|-------------|
+## | string  | `NULL`    | list      | character   |
+## | string  | `FALSE`   | character | (character) |
+## | string  | `TRUE`    | list      | raw         |
+## | bytes   | `NULL`    | list      | raw         |
+## | bytes   | `FALSE`   | error     | (error)     |
+## | bytes   | `TRUE`    | list      | raw         |
+## | mixed   | `NULL`    | list      | mixed       |
+## | mixed   | `FALSE`   | error     | (error)     |
+## | mixed   | `NULL`    | list      | raw         |
+
+## That is, if `as_raw = FALSE` we return a character or error if this
+## is not possible, otherwise (`as_raw = TRUE`, `as_raw = NULL`) we
+## always return a list.  This should make programming with because
+## the value of `as_raw` entirely predicts the container type.  Within
+## the container, the rule for contents is the same as for `get()`.
+
+## So, the default (`as_raw = NULL`) returns a list with auto-detected
+## types for each element:
+txn$mget(c("string", "bytes"))
+
+## Or we could get both as raw
+txn$mget(c("string", "bytes"), as_raw = TRUE)
+
+## But because one of the values is binary, we can't do this:
+##+ error = TRUE
+txn$mget(c("string", "bytes"), as_raw = FALSE)
+
+## But if we only pull strings it's ok:
+txn$mget(c("string", "string"), as_raw = FALSE)
+
 txn$abort()
-
-## ### Multi-value operations
-
-## (this whole section is an extension to the LMDB api)
-
-txn <- env$begin(write = TRUE)
-
-## As an multi-value analog to `get`, `put` and `del`, thor implements
-## `mget`, `mput` and `mdel` to add, fetch and delete multiple values
-## at once.  The names are influenced by Redis.
-
-keys <- letters[1:8]
-values <- strrep(toupper(keys), 4)
-
-## To put these 8 values into the database at once:
-txn$mput(keys, values)
-
-## All 8 values are now in the db:
-txn$list()
-
-## We can fetch all values at once:
-txn$mget(keys)
-
-## `mget` here always returns a list because `as_raw` is applied to
-## each element in turn and any one could require storing as raw.  To
-## force a string, vector use `as_raw = FALSE`:
-txn$mget(keys, as_raw = FALSE)
-
-## Similarly, to force a raw vector, use `as_raw = TRUE`:
-txn$mget(keys, as_raw = TRUE)
-
-## The `exists` method is also vectorised:
-txn$exists(letters[1:10])
