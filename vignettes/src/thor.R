@@ -16,12 +16,18 @@
 ## (like SQLite) - the database exists purely on disk and uses file
 ## locking to manage concurrent access between processes.
 
+## Key-value stores are simple systems for persistently storing values
+## against keys (as the name suggests).  There's really very little
+## extra than that!  The complications come from trying to efficiently
+## query the store, or patterns like "add a new value but only if the
+## previous value was `foo`".
+
 ## This package does not provide a faithful 1:1 mapping of the
 ## underlying LMDB C api because that requires too much care at the R
 ## level not to crash R!  Instead, probably at the cost of some
 ## performance, `thor` provides a set of wrappers that try to prevent
 ## crashes by invalidating objects in the correct order.  The approach
-## taken in is very similar to the [python interface to lmdb;
+## taken in is very similar to the [python interface to LMDB;
 ## `py-lmdb`](https://github.com/dw/py-lmdb).
 
 ## Because the whole point of interacting with a database is side
@@ -32,7 +38,9 @@
 ## (`mdb_env`) with everything else happening through *methods* of
 ## this object, and the objects that it creates.
 
-## The objects that the package provides are
+## `thor` tries to expose the underlying LMDB interface in a nested
+## set of objects of increasing power (and complexity).  The objects
+## that the package provides are
 
 ## * `mdb_env`: the environment object, which is the interface to the
 ##   database file.  Everything starts here!
@@ -62,6 +70,12 @@
 ## considered **private**; using these can crash R.  Other functions
 ## (such as `format`) exist because of the way thor uses R6.
 
+## For basic operations, one can just use the `mdb_env` object and
+## ignore the rest of the package.  To do more interesting things,
+## you'll need transactions (`mdb_txn`), and then perhaps you'll need
+## cursors (`mdb_cursor`).  The proxy objects are available if you use
+## transactions.
+
 ## ## The environment
 
 ## The first step is to create an "environment"; this holds one or
@@ -71,7 +85,7 @@ env <- thor::mdb_env(tempfile())
 
 ## ## Transactions
 
-## lmdb is _transactional_; everything that happens to the database,
+## LMDB is _transactional_; everything that happens to the database,
 ## read or write, happens as a transaction.  For a write transaction
 ## either the whole transaction happens or none of it happens.  For
 ## both read and write transactions, the "view" of the database is
@@ -112,7 +126,7 @@ txn$list("k")
 txn$list("f")
 txn$list("x")
 
-## (the `exists` and `list` methods are extensions to the lmdb api)
+## (the `exists` and `list` methods are extensions to the LMDB api)
 
 ## Because the database is transactional, we can now either use
 ## `txn$commit()` to save the changes (writing `key`, `key2` and `foo`
@@ -121,7 +135,7 @@ txn$abort()
 
 ## ### Non-string data
 
-## thor (and lmdb) can handle two types of data; strings (as above)
+## thor (and LMDB) can handle two types of data; strings (as above)
 ## and raw vectors.  Raw vectors can be used to serialise R objects
 ## using `serialize`, which allows storing of arbitrary data.  This is
 ## the approach taken by
@@ -214,7 +228,7 @@ txn$abort()
 
 ## ### Multi-value operations
 
-## (this whole section is an extension to the lmdb api)
+## (this whole section is an extension to the LMDB api)
 
 txn <- env$begin(write = TRUE)
 

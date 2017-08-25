@@ -124,7 +124,9 @@ yaml_read <- function(filename) {
 }
 
 process <- function() {
-  for (file in dir("man-roxygen", full.names = TRUE, pattern = "\\.yml$")) {
+  files <- dir("man-roxygen", full.names = TRUE, pattern = "\\.yml$")
+  files <- files[!grepl("helper\\.yml$", files)]
+  for (file in files) {
     process1(file)
   }
 }
@@ -132,6 +134,25 @@ process <- function() {
 process1 <- function(filename) {
   object <- get(paste0("R6_", sub("\\.yml", "", basename(filename))))
   dat <- yaml_read(filename)
+  if (object$classname == "mdb_env") {
+    extra <- yaml_read(file.path(dirname(filename), "mdb_txn.yml"))
+    take <- list(ro = c("get", "exists", "list", "mget"),
+                 rw = c("put", "del", "mput", "mdel"))
+    info <- yaml_read(file.path(dirname(filename), "mdb_env_helper.yml"))
+    for (v in names(take)) {
+      for (i in take[[v]]) {
+        x <- extra[[i]]
+        x$params$as_proxy <- NULL
+        x$params$db <- info$db
+        if (is.null(x$details)) {
+          x$details <- info[[v]]
+        } else {
+          x$details <- paste(x$details, info[[v]], sep = "\n\n")
+        }
+        dat[[i]] <- x
+      }
+    }
+  }
   dat <- add_usage(dat, object)
   str <- format_class(dat)
   dest <- sub("\\.yml", ".R", filename)

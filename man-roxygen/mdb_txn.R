@@ -144,7 +144,7 @@
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   This is an extension of the raw LMDB API and works by using \code{mdb_get} for each key (which for lmdb need not copy data) and then testing whether the return value is \code{MDB_SUCCESS} or \code{MDB_NOTFOUND}
+##'   This is an extension of the raw LMDB API and works by using \code{mdb_get} for each key (which for lmdb need not copy data) and then testing whether the return value is \code{MDB_SUCCESS} or \code{MDB_NOTFOUND}.
 ##'
 ##'   \emph{Value}:
 ##'   A logical vector
@@ -208,6 +208,9 @@
 ##'     \item{\code{append}:   As for \code{$put}
 ##'     }
 ##'   }
+##'
+##'   \emph{Details:}
+##'   The implementation simply calls \cde{mdb_put} repeatedly (but with a single round of error checking) so duplicate \code{key} entries will result in the last key winning.
 ##' }
 ##' \item{\code{mdel}}{
 ##'   Delete multiple values from the database (like \code{$del} but vectorised over \code{key}).

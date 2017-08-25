@@ -106,7 +106,7 @@ exists:
     This is an extension of the raw LMDB API and works by using
     \code{mdb_get} for each key (which for lmdb need not copy data)
     and then testing whether the return value is \code{MDB_SUCCESS} or
-    \code{MDB_NOTFOUND}
+    \code{MDB_NOTFOUND}.
   params:
     key: >-
       The name of the key to test (string or raw vector).  Unlike
@@ -165,7 +165,7 @@ mput:
   short: >-
     Put multiple values into the database (like \code{$put} but
     vectorised over \code{key}/\code{value}).
-  detail: >-
+  details: >-
     The implementation simply calls \cde{mdb_put} repeatedly (but with
     a single round of error checking) so duplicate \code{key} entries
     will result in the last key winning.
