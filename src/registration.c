@@ -60,6 +60,8 @@ static const R_CallMethodDef call_methods[] = {
 
   // Other
   {"Cmdb_proxy_copy",              (DL_FUNC) &r_mdb_proxy_copy,            2},
+  {"Cmdb_proxy_head",              (DL_FUNC) &r_mdb_proxy_head,            3},
+  {"Cmdb_proxy_is_raw",            (DL_FUNC) &r_mdb_proxy_is_raw,          1},
 
   // Testing
   {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},

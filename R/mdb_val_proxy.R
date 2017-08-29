@@ -3,8 +3,8 @@
 ##' copying it.  So rather than immediately trying to read the whole
 ##' thing in, this class provides a "proxy" to the data.  At the
 ##' moment they're not terribly useful - all you can do is get the
-##' length!  They are used internally in the package to support
-##' cursors.
+##' length, and peek at the first bytes!  They are used internally in
+##' the package to support cursors.
 ##'
 ##' @template mdb_val_proxy
 ##' @title Proxy values
@@ -36,6 +36,39 @@
 ##' txn$put("c", "cabbage")
 ##' p$is_valid()
 ##' try(p$data())
+##'
+##' # It is possible to read the first few bytes; this might be useful
+##' # to determine if (say) a value is a serialised R object:
+##' txn$put("d", serialize(mtcars, NULL))
+##'
+##' # The first 6 bytes of a binary serialised rds object is always
+##' #
+##' #   0x58 0x0a 0x00 0x00 0x00 0x02
+##' #
+##' # for XDR serialisation, or
+##' #
+##' #   0x42 0x0a 0x02 0x00 0x00 0x00
+##' #
+##' # for native little-endian serialisation.
+##' #
+##' # So with a little helper function
+##' is_rds <- function(x) {
+##'   h_xdr <- as.raw(c(0x58, 0x0a, 0x00, 0x00, 0x00, 0x02))
+##'   h_bin <- as.raw(c(0x42, 0x0a, 0x02, 0x00, 0x00, 0x00))
+##'   x6 <- head(x, 6L)
+##'   identical(x6, h_xdr) || identical(x6, h_bin)
+##' }
+##'
+##' # We can see that the value stored at 'a' is not rds
+##' p1 <- txn$get("a", as_proxy = TRUE)
+##' is_rds(p1$head(6, as_raw = TRUE))
+##'
+##' # But the value stored at 'd' is:
+##' p2 <- txn$get("d", as_proxy = TRUE)
+##' is_rds(p2$head(6, as_raw = TRUE))
+##'
+##' # Retrieve and unserialise the value:
+##' head(unserialize(p2$data()))
 NULL
 
 mdb_val_proxy <- function(txn, ptr) {
@@ -68,7 +101,21 @@ mdb_val_proxy <- function(txn, ptr) {
       } else {
         mdb_proxy_copy(ptr, as_raw)
       }
+    },
+
+    head = function(n = 6L, as_raw = NULL) {
+      assert_valid()
+      if (is_missing) {
+        NULL
+      } else {
+        mdb_proxy_head(ptr, n, as_raw)
+      }
+    },
+
+    is_raw = function() {
+      mdb_proxy_is_raw(ptr)
     })
+
   class(ret) <- "mdb_val_proxy"
   ret
 }

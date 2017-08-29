@@ -182,6 +182,14 @@ mdb_proxy_copy <- function(x, as_raw) {
   .Call(Cmdb_proxy_copy, x, as_raw)
 }
 
+mdb_proxy_head <- function(x, n, as_raw) {
+  .Call(Cmdb_proxy_head, x, as_integer(n), as_raw)
+}
+
+mdb_proxy_is_raw <- function(x) {
+  .Call(Cmdb_proxy_is_raw, x)
+}
+
 thor_list <- function(cur, starts_with, as_raw, size) {
   .Call(Cthor_list, cur, starts_with, as_raw, if (!is.null(size)) as_integer(size))
 }

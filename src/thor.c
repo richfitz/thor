@@ -512,6 +512,14 @@ void* r_pointer_addr(SEXP r_ptr, const char * name, bool closed_error) {
   return contents;
 }
 
+thor_val_proxy* r_proxy_addr(SEXP r_ptr) {
+  void * contents = R_ExternalPtrAddr(r_ptr);
+  if (contents == NULL) {
+    Rf_error("proxy has been invalidated; can't use!");
+  }
+  return (thor_val_proxy*) contents;
+}
+
 // --- wrappers ---
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
   SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, R_NilValue));
@@ -658,25 +666,60 @@ SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
 // I've done this reasonably in 'ring' - I can probably pull the
 // relevant bits out into a shared package if need be.
 SEXP r_mdb_proxy_copy(SEXP r_proxy, SEXP r_as_raw) {
-  thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
-  if (proxy == NULL) {
-    Rf_error("proxy has been invalidated; can't use!");
+  thor_val_proxy *proxy = r_proxy_addr(r_proxy);
+  return_as as_raw =
+    mdb_proxy_check_contents(proxy, to_return_as(r_as_raw), proxy->size);
+
+  return mdb_proxy_resolve(proxy, r_proxy, as_raw);
+}
+
+SEXP r_mdb_proxy_head(SEXP r_proxy, SEXP r_n, SEXP r_as_raw) {
+  thor_val_proxy *proxy = r_proxy_addr(r_proxy);
+  size_t n = scalar_size(r_n, "n");
+  if (n > proxy->size) {
+    n = proxy->size;
   }
   return_as as_raw = to_return_as(r_as_raw);
+  as_raw = mdb_proxy_check_contents(proxy, as_raw, n);
+  if (n == proxy->size) {
+    return mdb_proxy_resolve(proxy, r_proxy, as_raw);
+  } else {
+    return raw_string_to_sexp(proxy->data, n, as_raw);
+  }
+}
 
-  // This type detection bit here is the hard bit:
+SEXP r_mdb_proxy_is_raw(SEXP r_proxy) {
+  thor_val_proxy *proxy = r_proxy_addr(r_proxy);
+  if (proxy->data_contains_nul) {
+    return ScalarLogical(true);
+  } else if (proxy->resolved[AS_STRING]) {
+    return ScalarLogical(false);
+  } else {
+    return R_NilValue;
+  }
+}
+
+return_as mdb_proxy_check_contents(thor_val_proxy* proxy, return_as as_raw,
+                                   size_t n) {
   if (as_raw == AS_ANY) {
     if (proxy->resolved[AS_STRING]) {
       as_raw = AS_STRING;
     } else if (proxy->data_contains_nul) {
-      as_raw = AS_RAW;
+      as_raw = n == proxy->size ? AS_RAW :
+        is_raw_string(proxy->data, n, AS_ANY);
     } else {
-      proxy->data_contains_nul =
-        is_raw_string(proxy->data, proxy->size, AS_ANY);
+      return_as data_contains_nul =
+        is_raw_string(proxy->data, n, AS_ANY);
+      if (data_contains_nul || n == proxy->size) {
+        proxy->data_contains_nul = data_contains_nul;
+      }
       as_raw = proxy->data_contains_nul ? AS_RAW : AS_STRING;
     }
   }
+  return as_raw;
+}
 
+SEXP mdb_proxy_resolve(thor_val_proxy *proxy, SEXP r_proxy, return_as as_raw) {
   SEXP resolved = R_ExternalPtrProtected(r_proxy);
   SEXP ret;
   if (proxy->resolved[as_raw]) {

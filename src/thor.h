@@ -85,6 +85,12 @@ void* r_pointer_addr(SEXP r_ptr, const char * name, bool closed_error);
 
 void sexp_to_mdb_val(SEXP r_x, const char *name, MDB_val *x);
 SEXP r_mdb_proxy_copy(SEXP r_ptr, SEXP r_as_raw);
+SEXP r_mdb_proxy_head(SEXP r_ptr, SEXP r_n, SEXP r_as_raw);
+SEXP r_mdb_proxy_is_raw(SEXP r_proxy);
+
+return_as mdb_proxy_check_contents(thor_val_proxy* proxy, return_as as_raw,
+                                   size_t n);
+SEXP mdb_proxy_resolve(thor_val_proxy *proxy, SEXP r_proxy, return_as as_raw);
 
 SEXP mdb_val_to_sexp(MDB_val *x, bool as_proxy, return_as as_raw);
 SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw);

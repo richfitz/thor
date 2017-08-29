@@ -9,8 +9,8 @@ design.  LMDB can pass back a read-only pointer to memory without
 copying it.  So rather than immediately trying to read the whole
 thing in, this class provides a "proxy" to the data.  At the
 moment they're not terribly useful - all you can do is get the
-length!  They are used internally in the package to support
-cursors.
+length, and peek at the first bytes!  They are used internally in
+the package to support cursors.
 }
 \section{Methods}{
 
@@ -24,12 +24,36 @@ cursors.
 
   \emph{Arguments:}
   \itemize{
-    \item{\code{as_raw}:   Return the value as a raw vector?  This has the same semantics as \code{\link{mdb_env$get}} - if \code{NULL} then the value will be returned as a string as possible, otherwise as a raw vector.  If \code{TRUE} then the value is always returned as a raw vector, and if \code{FALSE} then the value is always returned as a string (or an error is thrown if that is not possible).
+    \item{\code{as_raw}:   Return the value as a raw vector?  This has the same semantics as \code{\mdb_env$get} - if \code{NULL} then the value will be returned as a string as possible, otherwise as a raw vector.  If \code{TRUE} then the value is always returned as a raw vector, and if \code{FALSE} then the value is always returned as a string (or an error is thrown if that is not possible).
     }
   }
 
   \emph{Value}:
   A string or raw vector
+}
+\item{\code{head}}{
+  Read the first \code{n} bytes from a proxy
+
+  \emph{Usage:}
+  \code{head(n = 6L, as_raw = NULL)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{n}:   The number of bytes to read.  If \code{n} is greater than the length of the object the whole object is returned (same behaviour as \code{\link{head}}
+    }
+
+    \item{\code{as_raw}:   As for \code{$data()}
+    }
+  }
+}
+\item{\code{is_raw}}{
+  Return whether we know a value to be raw or not.  This is affected by whether we have successfully turned the value into a string (in which case we can return \code{FALSE}) or if any \code{NULL} bytes have been detected.  The latter condition may be satisfied by reading the first bit of the proxy with \code{$head()}
+
+  \emph{Usage:}
+  \code{is_raw()}
+
+  \emph{Value}:
+  A logical if we can, otherwise \code{NULL} (for symmetry with \code{as_raw})
 }
 \item{\code{is_valid}}{
   Test if a proxy object is still valid.  Once the proxy is invalid, it cannot be read from any more.  Proxies are invalidated if their parent transaction is closed, or if any write operations (e.g., `put`, `del`) have occured.
@@ -77,4 +101,37 @@ p$is_valid()
 txn$put("c", "cabbage")
 p$is_valid()
 try(p$data())
+
+# It is possible to read the first few bytes; this might be useful
+# to determine if (say) a value is a serialised R object:
+txn$put("d", serialize(mtcars, NULL))
+
+# The first 6 bytes of a binary serialised rds object is always
+#
+#   0x58 0x0a 0x00 0x00 0x00 0x02
+#
+# for XDR serialisation, or
+#
+#   0x42 0x0a 0x02 0x00 0x00 0x00
+#
+# for native little-endian serialisation.
+#
+# So with a little helper function
+is_rds <- function(x) {
+  h_xdr <- as.raw(c(0x58, 0x0a, 0x00, 0x00, 0x00, 0x02))
+  h_bin <- as.raw(c(0x42, 0x0a, 0x02, 0x00, 0x00, 0x00))
+  x6 <- head(x, 6L)
+  identical(x6, h_xdr) || identical(x6, h_bin)
+}
+
+# We can see that the value stored at 'a' is not rds
+p1 <- txn$get("a", as_proxy = TRUE)
+is_rds(p1$head(6, as_raw = TRUE))
+
+# But the value stored at 'd' is:
+p2 <- txn$get("d", as_proxy = TRUE)
+is_rds(p2$head(6, as_raw = TRUE))
+
+# Retrieve and unserialise the value:
+head(unserialize(p2$data()))
 }

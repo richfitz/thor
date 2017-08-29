@@ -4,13 +4,34 @@ data:
   params:
     as_raw: >-
       Return the value as a raw vector?  This has the same semantics
-      as \code{\link{mdb_env$get}} - if \code{NULL} then the value
+      as \code{\mdb_env$get} - if \code{NULL} then the value
       will be returned as a string as possible, otherwise as a raw
       vector.  If \code{TRUE} then the value is always returned as a
       raw vector, and if \code{FALSE} then the value is always
       returned as a string (or an error is thrown if that is not
       possible).
   value: A string or raw vector
+
+head:
+  short: >-
+    Read the first \code{n} bytes from a proxy
+  params:
+    n: >-
+      The number of bytes to read.  If \code{n} is greater than the
+      length of the object the whole object is returned (same
+      behaviour as \code{\link{head}}
+    as_raw: As for \code{$data()}
+
+is_raw:
+  short: >-
+    Return whether we know a value to be raw or not.  This is affected
+    by whether we have successfully turned the value into a string (in
+    which case we can return \code{FALSE}) or if any \code{NULL} bytes
+    have been detected.  The latter condition may be satisfied by
+    reading the first bit of the proxy with \code{$head()}
+  value: >-
+    A logical if we can, otherwise \code{NULL} (for symmetry with
+    \code{as_raw})
 
 is_valid:
   short: >-
