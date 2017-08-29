@@ -178,8 +178,8 @@
 ##' # A convenience method, 'with_transaction' exists to allow
 ##' # transactional workflows with less code repetition.
 ##'
-##' This will get the old value of a key 'a', set 'a' to a new value
-##' and return the old value:
+##' # This will get the old value of a key 'a', set 'a' to a new value
+##' # and return the old value:
 ##' env$with_transaction(function(txn) {
 ##'   val <- txn$get("a")
 ##'   txn$put("a", "new_value")
