@@ -15,15 +15,6 @@ with_new_txn <- function(env, write, f) {
   }
 }
 
-with_new_txn_object <- function(env, db, write, f) {
-  txn <- env$begin(db, write)
-  withCallingHandlers({
-    ret <- f(txn)
-    txn$commit()
-    ret
-  }, error = function(e) txn$abort())
-}
-
 invalidate_dependencies <- function(x) {
   if (!is.null(x$.deps)) {
     deps <- x$.deps$get()

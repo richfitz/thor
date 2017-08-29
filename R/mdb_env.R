@@ -174,6 +174,62 @@
 ##' # After committing, the values are visible for new transactions
 ##' txn$commit()
 ##' env$get("b", missing_is_error = FALSE)
+##'
+##' # A convenience method, 'with_transaction' exists to allow
+##' # transactional workflows with less code repetition.
+##'
+##' This will get the old value of a key 'a', set 'a' to a new value
+##' and return the old value:
+##' env$with_transaction(function(txn) {
+##'   val <- txn$get("a")
+##'   txn$put("a", "new_value")
+##'   val
+##' }, write = TRUE)
+##'
+##' # If an error occured, the transaction would be aborted.  So far,
+##' # not very interesting!
+##'
+##' # More interesting: implementing redis's RPOPLPUSH that takes the
+##' # last value off of the end of one list and pushes it into the
+##' # start of another.
+##' rpoplpush <- function(env, src, dest) {
+##'   f <- function(txn) {
+##'     # Take the value out of the source list and update
+##'     val <- unserialize(txn$get(src, as_raw = TRUE))
+##'     take <- val[[length(val)]]
+##'     txn$put(src, serialize(val[-length(val)], NULL))
+##'
+##'     # Put the value onto the destination list
+##'     val <- unserialize(txn$get(dest, as_raw = TRUE))
+##'     txn$put(dest, serialize(c(val, take), NULL))
+##'
+##'     # And we'll return the value that was modified
+##'     take
+##'   }
+##'   env$with_transaction(f, write = TRUE)
+##' }
+##'
+##' # Set things up - a source list with numbers 1:5 and an empty
+##' # destination list
+##' env$put("src", serialize(1:5, NULL))
+##' env$put("dest", serialize(integer(0), NULL))
+##'
+##' # then try it out:
+##' rpoplpush(env, "src", "dest") # 5
+##' rpoplpush(env, "src", "dest") # 4
+##' rpoplpush(env, "src", "dest") # 3
+##'
+##' # Here is the state of the two lists
+##' unserialize(env$get("src"))
+##' unserialize(env$get("dest"))
+##'
+##' # The above code will fail if one of the lists is available
+##' env$del("dest")
+##' try(rpoplpush(env, "src", "dest"))
+##'
+##' # but because it's in a transaction, this failed attempt leaves src
+##' # unchanged
+##' unserialize(env$get("src"))
 mdb_env <- function(path, mode = as.octmode("644"),
                     subdir = TRUE, rdonly = FALSE, metasync = TRUE,
                     sync = TRUE, writemap = FALSE, lock = TRUE,
@@ -206,7 +262,7 @@ R6_mdb_env <- R6::R6Class(
     .methods = list(
       Informational = c("path", "flags", "info", "stat",
                         "maxkeysize", "maxreaders"),
-      Transactions = "begin",
+      Transactions = c("begin", "with_transaction"),
       Databases = c("open_database", "drop_database"),
       Management = c("sync", "copy", "close", "destroy",
                      "reader_list", "reader_check"),
@@ -395,6 +451,16 @@ R6_mdb_env <- R6::R6Class(
 
     begin = function(db = NULL, write = FALSE) {
       R6_mdb_txn$new(self, db, write)
+    },
+
+    with_transaction = function(fun, db = NULL, write = FALSE) {
+      txn <- self$begin(db = db, write = write)
+      end <- if (write) txn$commit else txn$abort
+      withCallingHandlers({
+        ret <- fun(txn)
+        end()
+        ret
+      }, error = function(e) txn$abort())
     },
 
     destroy = function() {

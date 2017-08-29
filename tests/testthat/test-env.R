@@ -330,3 +330,24 @@ test_that("global environment lock", {
   env2$close()
   env1$destroy()
 })
+
+test_that("with_transaction", {
+  env <- mdb_env(tempfile())
+  env$put("a", "hello")
+
+  expect_equal(env$with_transaction(function(txn) {
+    val <- txn$get("a")
+    txn$put("a", "world")
+    val
+  }, write = TRUE), "hello")
+
+  expect_equal(env$get("a"), "world")
+
+  expect_error(env$with_transaction(function(txn) {
+    txn$put("a", "again")
+    stop("my error")
+    val
+  }, write = TRUE), "my error")
+
+  expect_equal(env$get("a"), "world")
+})
