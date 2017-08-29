@@ -9,7 +9,7 @@
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{as_raw}:   Return the value as a raw vector?  This has the same semantics as \code{\mdb_env$get} - if \code{NULL} then the value will be returned as a string as possible, otherwise as a raw vector.  If \code{TRUE} then the value is always returned as a raw vector, and if \code{FALSE} then the value is always returned as a string (or an error is thrown if that is not possible).
+##'     \item{\code{as_raw}:   Return the value as a raw vector?  This has the same semantics as \code{mdb_env$get} - if \code{NULL} then the value will be returned as a string as possible, otherwise as a raw vector.  If \code{TRUE} then the value is always returned as a raw vector, and if \code{FALSE} then the value is always returned as a string (or an error is thrown if that is not possible).
 ##'     }
 ##'   }
 ##'

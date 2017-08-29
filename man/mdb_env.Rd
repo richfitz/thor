@@ -258,6 +258,27 @@ the file lmdb.h in particular.
 
   \emph{Note}: In lmdb.h this is \code{mdb_begin()}
 }
+\item{\code{with_transaction}}{
+  Evaluate some code within a transaction
+
+  \emph{Usage:}
+  \code{with_transaction(fun, db = NULL, write = FALSE)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{fun}:   A function of one argument that does the work of the transaction.  \code{with_transaction} will pass the transaction to this function.  This is most eaily explained with an example, so see the bottom of the help
+    }
+
+    \item{\code{db}:   A database handle, as returned by \code{open_database}.  If \code{NULL} (the default) then the default database will be used.
+    }
+
+    \item{\code{write}:   Scalar logical, indicating if this should be a write transaction.  There can be only one write transaction per database (see \code{\link{mdb_txn}} for more details) - it is an error to try to open more than one.
+    }
+  }
+
+  \emph{Details:}
+  This exists to simplify a pattern where one wants to open a transaction, evaluate some code with that transaction and if anything goes wrong abort, but otherwise commit.  It is most useful with read-write transactions, but can be used with both (and the default is for readonoly transactions, like \code{begin()}.
+}
 \item{\code{open_database}}{
   Open a named database, or return one if already opened.
 
@@ -615,4 +636,60 @@ env$get("b", missing_is_error = FALSE)
 # After committing, the values are visible for new transactions
 txn$commit()
 env$get("b", missing_is_error = FALSE)
+
+# A convenience method, 'with_transaction' exists to allow
+# transactional workflows with less code repetition.
+
+This will get the old value of a key 'a', set 'a' to a new value
+and return the old value:
+env$with_transaction(function(txn) {
+  val <- txn$get("a")
+  txn$put("a", "new_value")
+  val
+}, write = TRUE)
+
+# If an error occured, the transaction would be aborted.  So far,
+# not very interesting!
+
+# More interesting: implementing redis's RPOPLPUSH that takes the
+# last value off of the end of one list and pushes it into the
+# start of another.
+rpoplpush <- function(env, src, dest) {
+  f <- function(txn) {
+    # Take the value out of the source list and update
+    val <- unserialize(txn$get(src, as_raw = TRUE))
+    take <- val[[length(val)]]
+    txn$put(src, serialize(val[-length(val)], NULL))
+
+    # Put the value onto the destination list
+    val <- unserialize(txn$get(dest, as_raw = TRUE))
+    txn$put(dest, serialize(c(val, take), NULL))
+
+    # And we'll return the value that was modified
+    take
+  }
+  env$with_transaction(f, write = TRUE)
+}
+
+# Set things up - a source list with numbers 1:5 and an empty
+# destination list
+env$put("src", serialize(1:5, NULL))
+env$put("dest", serialize(integer(0), NULL))
+
+# then try it out:
+rpoplpush(env, "src", "dest") # 5
+rpoplpush(env, "src", "dest") # 4
+rpoplpush(env, "src", "dest") # 3
+
+# Here is the state of the two lists
+unserialize(env$get("src"))
+unserialize(env$get("dest"))
+
+# The above code will fail if one of the lists is available
+env$del("dest")
+try(rpoplpush(env, "src", "dest"))
+
+# but because it's in a transaction, this failed attempt leaves src
+# unchanged
+unserialize(env$get("src"))
 }

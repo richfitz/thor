@@ -104,6 +104,27 @@ method to begin a transaction on a particular database.
 
   \emph{Note}: In lmdb.h this is \code{mdb_begin()}
 }
+\item{\code{with_transaction}}{
+  Evaluate some code within a transaction
+
+  \emph{Usage:}
+  \code{with_transaction(fun, db = NULL, write = FALSE)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{fun}:   A function of one argument that does the work of the transaction.  \code{with_transaction} will pass the transaction to this function.  This is most eaily explained with an example, so see the bottom of the help
+    }
+
+    \item{\code{db}:   A database handle, as returned by \code{open_database}.  If \code{NULL} (the default) then the default database will be used.
+    }
+
+    \item{\code{write}:   Scalar logical, indicating if this should be a write transaction.  There can be only one write transaction per database (see \code{\link{mdb_txn}} for more details) - it is an error to try to open more than one.
+    }
+  }
+
+  \emph{Details:}
+  This exists to simplify a pattern where one wants to open a transaction, evaluate some code with that transaction and if anything goes wrong abort, but otherwise commit.  It is most useful with read-write transactions, but can be used with both (and the default is for readonoly transactions, like \code{begin()}.
+}
 \item{\code{open_database}}{
   Open a named database, or return one if already opened.
 
