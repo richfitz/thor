@@ -3,19 +3,20 @@
 ## Dirty hack to compile docs in the absence of proper Roxygen R6 support.
 devtools::load_all(".")
 
-add_usage <- function(dat, object) {
+add_usage <- function(class, dat, object) {
+  methods <-
+    if (inherits(object, "R6ClassGenerator")) object$public_methods else object
   capture_usage <- function(name) {
-    tmp <- capture.output(args(object$public_methods[[name]]))
+    tmp <- capture.output(args(methods[[name]]))
     tmp <- strip_trailing_whitespace(paste(tmp[-length(tmp)], collapse="\n"))
     sub("^function\\s*", name, tmp)
   }
 
-  valid <- names(object$public_methods)
+  valid <- names(methods)
   extra <- setdiff(names(dat), valid)
   if (length(extra) > 0L) {
     warning(sprintf("In '%s', extra methods: %s",
-                    object$classname,
-                    paste(extra, collapse=", ")),
+                    class, paste(extra, collapse=", ")),
             immediate.=TRUE, call.=FALSE)
   }
 
@@ -26,7 +27,7 @@ add_usage <- function(dat, object) {
     msg <- setdiff(m, names(dat))
     if (length(msg) > 0L) {
       warning(sprintf("%d missing methods for %s:\n  %s",
-                      length(msg), object$classname,
+                      length(msg), class,
                       paste(msg, collapse = ", ")),
               immediate. = TRUE)
     }
@@ -36,7 +37,7 @@ add_usage <- function(dat, object) {
   for (name in names(dat)) {
     dat[[name]]$method_name <- name
     dat[[name]]$usage <- capture_usage(name)
-    dat[[name]]$order <- names(formals(object$public_methods[[name]]))
+    dat[[name]]$order <- names(formals(methods[[name]]))
   }
   dat
 }
@@ -132,9 +133,14 @@ process <- function() {
 }
 
 process1 <- function(filename) {
-  object <- get(paste0("R6_", sub("\\.yml", "", basename(filename))))
+  base <- sub("\\.yml", "", basename(filename))
+  if (base == "mdb_val_proxy") {
+    object <- mdb_val_proxy(NULL, NULL)
+  } else {
+    object <- get(paste0("R6_", base))
+  }
   dat <- yaml_read(filename)
-  if (object$classname == "mdb_env") {
+  if (base == "mdb_env") {
     extra <- yaml_read(file.path(dirname(filename), "mdb_txn.yml"))
     take <- list(ro = c("get", "exists", "list", "mget"),
                  rw = c("put", "del", "mput", "mdel"))
@@ -153,7 +159,7 @@ process1 <- function(filename) {
       }
     }
   }
-  dat <- add_usage(dat, object)
+  dat <- add_usage(base, dat, object)
   str <- format_class(dat)
   dest <- sub("\\.yml", ".R", filename)
   message("writing ", dest)

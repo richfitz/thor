@@ -4,8 +4,77 @@
 \alias{mdb_proxy}
 \title{Proxy values}
 \description{
-Proxy object
+Proxy object.  These exist to try and exploit LMDB's copy-free
+design.  LMDB can pass back a read-only pointer to memory without
+copying it.  So rather than immediately trying to read the whole
+thing in, this class provides a "proxy" to the data.  At the
+moment they're not terribly useful - all you can do is get the
+length!  They are used internally in the package to support
+cursors.
 }
-\details{
-These may change
+\section{Methods}{
+
+
+\describe{
+\item{\code{data}}{
+  Return the value from a proxy object
+
+  \emph{Usage:}
+  \code{data(as_raw = NULL)}
+
+  \emph{Arguments:}
+  \itemize{
+    \item{\code{as_raw}:   Return the value as a raw vector?  This has the same semantics as \code{\link{mdb_env$get}} - if \code{NULL} then the value will be returned as a string as possible, otherwise as a raw vector.  If \code{TRUE} then the value is always returned as a raw vector, and if \code{FALSE} then the value is always returned as a string (or an error is thrown if that is not possible).
+    }
+  }
+
+  \emph{Value}:
+  A string or raw vector
+}
+\item{\code{is_valid}}{
+  Test if a proxy object is still valid.  Once the proxy is invalid, it cannot be read from any more.  Proxies are invalidated if their parent transaction is closed, or if any write operations (e.g., `put`, `del`) have occured.
+
+  \emph{Usage:}
+  \code{is_valid()}
+
+  \emph{Value}:
+  Scalar logical
+}
+\item{\code{size}}{
+  The size of the data - the number of characters in the string, or number of bytes in the raw vector.
+
+  \emph{Usage:}
+  \code{size()}
+
+  \emph{Value}:
+  Scalar integer
+}
+}
+}
+
+\examples{
+# Start with a write transaction that has written a little data:
+env <- thor::mdb_env(tempfile())
+txn <- env$begin(write = TRUE)
+txn$put("a", "apple")
+txn$put("b", "banana")
+
+# We can get a proxy object back by passing as_proxy = TRUE
+p <- txn$get("a", as_proxy = TRUE)
+p
+
+# Without copying anything we can get the length of the data
+p$size() # == nchar("apple")
+
+# And of course we can get the data
+p$data()
+p$data(as_raw = TRUE)
+
+# Referencing an invalid proxy is an error, but you can use
+# "is_valid()" check to see if it is valid
+p$is_valid()
+
+txn$put("c", "cabbage")
+p$is_valid()
+try(p$data())
 }

@@ -1,0 +1,28 @@
+data:
+  short: >-
+    Return the value from a proxy object
+  params:
+    as_raw: >-
+      Return the value as a raw vector?  This has the same semantics
+      as \code{\link{mdb_env$get}} - if \code{NULL} then the value
+      will be returned as a string as possible, otherwise as a raw
+      vector.  If \code{TRUE} then the value is always returned as a
+      raw vector, and if \code{FALSE} then the value is always
+      returned as a string (or an error is thrown if that is not
+      possible).
+  value: A string or raw vector
+
+is_valid:
+  short: >-
+    Test if a proxy object is still valid.  Once the proxy is invalid,
+    it cannot be read from any more.  Proxies are invalidated if their
+    parent transaction is closed, or if any write operations (e.g.,
+    `put`, `del`) have occured.
+  value: >-
+    Scalar logical
+
+size:
+  short: >-
+    The size of the data - the number of characters in the string, or
+    number of bytes in the raw vector.
+  value: Scalar integer
