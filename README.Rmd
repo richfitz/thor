@@ -7,7 +7,9 @@
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/github/richfitz/thor?svg=true)](https://ci.appveyor.com/project/richfitz/thor)
 [![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://codecov.io/github/richfitz/thor?branch=master)
 
-
+```{r, echo = FALSE, results = "hide"}
+knitr::opts_chunk$set(error = FALSE)
+```
 
 An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded transactional key-value store and this package provides R mappings to it.  It wraps the entire LMDB interface.
 
@@ -19,110 +21,24 @@ The package comes with a vignette that describes the main features of the packag
 
 Everything starts by creating an environment (which lives at a point in the file system), and then using methods of the environment object to interact with the database
 
-
-```r
+```{r}
 env <- thor::mdb_env(tempfile())
 env
 ```
 
-```
-## <mdb_env>
-##   Informational:
-##     path()
-##     flags()
-##     info()
-##     stat()
-##     maxkeysize()
-##     maxreaders()
-##   Transactions:
-##     begin(db = NULL, write = FALSE)
-##   Databases:
-##     open_database(key = NULL, reversekey = FALSE, dupsort =  ...
-##     drop_database(db, delete = TRUE)
-##   Management:
-##     sync(force = FALSE)
-##     copy(path, compact = FALSE)
-##     close()
-##     destroy()
-##     reader_list()
-##     reader_check()
-##   Helpers:
-##     get(key, missing_is_error = TRUE, as_raw = NULL, db = NULL)
-##     put(key, value, dupdata = TRUE, overwrite = TRUE, append ...
-##     del(key, value = NULL, db = NULL)
-##     exists(key, db = NULL)
-##     list(starts_with = NULL, as_raw = FALSE, size = NULL, db ...
-##     mget(key, as_raw = NULL, db = NULL)
-##     mput(key, value, dupdata = TRUE, overwrite = TRUE, appen ...
-##     mdel(key, value = NULL, db = NULL)
-```
 
-
-
-```r
+```{r}
 env$put("hello", "world")
-```
-
-```
-## NULL
-```
-
-```r
 env$exists("hello")
-```
-
-```
-## [1] TRUE
-```
-
-```r
 env$get("hello") # world
-```
-
-```
-## [1] "world"
-```
-
-```r
 env$del("hello")
-```
-
-```
-## [1] TRUE
 ```
 
 LMDB is _transactional_, and `thor` exposes this like so:
 
-
-```r
+```{r}
 txn <- env$begin(write = TRUE)
 txn
-```
-
-```
-## <mdb_txn>
-##   Informational:
-##     id()
-##     stat()
-##   Finish:
-##     commit()
-##     abort(cache = TRUE)
-##   Cursors:
-##     cursor()
-##   Data:
-##     get(key, missing_is_error = TRUE, as_proxy = FALSE, as_r ...
-##     put(key, value, dupdata = TRUE, overwrite = TRUE, append ...
-##     del(key, value = NULL)
-##     exists(key)
-##     list(starts_with = NULL, as_raw = FALSE, size = NULL)
-##     mget(key, as_proxy = FALSE, as_raw = NULL)
-##     mput(key, value, dupdata = TRUE, overwrite = TRUE, appen ...
-##     mdel(key, value = NULL)
-##     replace(key, value, as_raw = NULL)
-##     pop(key, as_raw = NULL)
-##   Compare:
-##     cmp(a, b)
-##     dcmp(a, b)
 ```
 
 Only one write transaction is active at a given point in time.  There can be an unlimited number of read transactions.

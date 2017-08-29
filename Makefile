@@ -48,7 +48,7 @@ clean:
 README.md: README.Rmd
 	Rscript -e "options(warnPartialMatchArgs=FALSE); knitr::knit('$<')"
 	sed -i.bak 's/[[:space:]]*$$//' README.md
-	rm -f $@.bak myfile.json
+	rm -f $@.bak
 
 .PHONY: all test document install vignettes
 
