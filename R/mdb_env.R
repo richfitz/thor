@@ -34,9 +34,9 @@
 ##'   Passing \code{subdir = FALSE} is equivalent to lmdb's
 ##'   \code{MDB_NOSUBDIR} flag.
 ##'
-##' @param rdonly Open the environment in read-only mode.  No write
+##' @param readonly Open the environment in read-only mode.  No write
 ##'   operations are allowed.  LMDB will still modify the lock file.
-##'   Passing \code{rdonly = TRUE} is equivalent to lmdb's
+##'   Passing \code{readonly = TRUE} is equivalent to lmdb's
 ##'   \code{MDB_RDONLY} flag.
 ##'
 ##' @param metasync If \code{FALSE}, flush system buffers to disk only
@@ -66,7 +66,7 @@
 ##'   equivalent to lmdb's \code{MDB_NOSYNC} flag.
 ##'
 ##' @param writemap If \code{TRUE}, use a writeable memory map unless
-##'   \code{rdonly = TRUE} is set. This uses fewer mallocs but loses
+##'   \code{readonly = TRUE} is set. This uses fewer mallocs but loses
 ##'   protection from application bugs like wild pointer writes and
 ##'   other bad updates into the database. This may be slightly faster
 ##'   for DBs that fit entirely in RAM, but is slower for DBs larger
@@ -231,7 +231,7 @@
 ##' # unchanged
 ##' unserialize(env$get("src"))
 mdb_env <- function(path, mode = as.octmode("644"),
-                    subdir = TRUE, rdonly = FALSE, metasync = TRUE,
+                    subdir = TRUE, readonly = FALSE, metasync = TRUE,
                     sync = TRUE, writemap = FALSE, lock = TRUE,
                     mapasync = FALSE, rdahead = TRUE, meminit = TRUE,
                     ## other args
@@ -239,7 +239,7 @@ mdb_env <- function(path, mode = as.octmode("644"),
                     reversekey = FALSE, dupsort = FALSE, create = TRUE) {
   R6_mdb_env$new(path, mode,
                  ## flags:
-                 subdir = subdir, rdonly = rdonly, metasync = metasync,
+                 subdir = subdir, readonly = readonly, metasync = metasync,
                  sync = sync, writemap = writemap, lock = lock,
                  mapasync = mapasync, rdahead = rdahead,
                  meminit = meminit,
@@ -270,7 +270,7 @@ R6_mdb_env <- R6::R6Class(
                   "mget", "mput", "mdel")),
 
     initialize = function(path, mode,
-                          subdir, sync, rdonly,
+                          subdir, sync, readonly,
                           metasync, writemap, lock,
                           mapasync, rdahead, meminit,
                           maxdbs, maxreaders, mapsize,
@@ -297,7 +297,7 @@ R6_mdb_env <- R6::R6Class(
         dir.create(path, FALSE, TRUE)
       }
       mdb_env_open(self$.ptr, path, mode,
-                   subdir, sync, rdonly,
+                   subdir, sync, readonly,
                    metasync, writemap, lock,
                    mapasync, rdahead, meminit)
 
@@ -318,7 +318,7 @@ R6_mdb_env <- R6::R6Class(
     .new_txn_ptr = function(write, parent_ptr, temporary = FALSE) {
       if (write) {
         self$.check_write()
-        ptr <- mdb_txn_begin(self$.ptr, parent_ptr, rdonly = FALSE)
+        ptr <- mdb_txn_begin(self$.ptr, parent_ptr, readonly = FALSE)
         if (!temporary) {
           write_txns[[self$.path]] <- self$.ptr
           self$.write_txn <- ptr
@@ -326,7 +326,7 @@ R6_mdb_env <- R6::R6Class(
       } else {
         ptr <- self$.spare_txns$pop()
         if (is.null(ptr)) {
-          ptr <- mdb_txn_begin(self$.ptr, parent_ptr, rdonly = TRUE)
+          ptr <- mdb_txn_begin(self$.ptr, parent_ptr, readonly = TRUE)
         } else {
           mdb_txn_renew(ptr)
         }

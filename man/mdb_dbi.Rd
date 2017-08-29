@@ -184,7 +184,7 @@ method to begin a transaction on a particular database.
   }
 
   \emph{Details:}
-  Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{rdonly = TRUE}.
+  Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{readonly = TRUE}.
 
   \emph{Note}: In lmdb.h this is \code{mdb_env_sync()}
 }

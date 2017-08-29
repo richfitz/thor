@@ -83,7 +83,7 @@ sync:
     flushes the OS buffers upon commit as well, unless the environment
     was opened with \code{sync = FALSE} or in part \code{metasync =
     FALSE}.  This call is not valid if the environment was opened with
-    \code{rdonly = TRUE}.
+    \code{readonly = TRUE}.
   params:
     force: >-
       Scalar logical; force a synchronous flush.  Otherwise if the

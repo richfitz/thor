@@ -7,12 +7,12 @@ mdb_env_create <- function() {
 }
 
 mdb_env_open <- function(env, path, mode,
-                         subdir, sync, rdonly,
+                         subdir, sync, readonly,
                          metasync, writemap, lock,
                          mapasync, rdahead, meminit) {
   assert_is(mode, "octmode")
   .Call(Cmdb_env_open, env, path, mode,
-        subdir, sync, rdonly,
+        subdir, sync, readonly,
         metasync, writemap, lock,
         mapasync, rdahead, meminit)
 }
@@ -66,12 +66,12 @@ mdb_env_get_maxkeysize <- function(env) {
 }
 
 ## transactions:
-mdb_txn_begin <- function(env, parent, rdonly) {
+mdb_txn_begin <- function(env, parent, readonly) {
   ## TODO: This currently allows a couple of additional arguments
   ## (sync, metasync) but we'll NULL them out for now.  These should
   ## be settable, but I don't know that it's always a reasonable thing
   ## to do to allow them.
-  .Call(Cmdb_txn_begin, env, parent, rdonly, NULL, NULL)
+  .Call(Cmdb_txn_begin, env, parent, readonly, NULL, NULL)
 }
 
 mdb_txn_id <- function(txn) {

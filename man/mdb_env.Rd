@@ -4,7 +4,7 @@
 \alias{mdb_env}
 \title{Create an mdb_env environment}
 \usage{
-mdb_env(path, mode = as.octmode("644"), subdir = TRUE, rdonly = FALSE,
+mdb_env(path, mode = as.octmode("644"), subdir = TRUE, readonly = FALSE,
   metasync = TRUE, sync = TRUE, writemap = FALSE, lock = TRUE,
   mapasync = FALSE, rdahead = TRUE, meminit = TRUE, maxdbs = NULL,
   maxreaders = NULL, mapsize = NULL, reversekey = FALSE,
@@ -30,9 +30,9 @@ file will be created with "-lock" appended to the filename.
 Passing \code{subdir = FALSE} is equivalent to lmdb's
 \code{MDB_NOSUBDIR} flag.}
 
-\item{rdonly}{Open the environment in read-only mode.  No write
+\item{readonly}{Open the environment in read-only mode.  No write
 operations are allowed.  LMDB will still modify the lock file.
-Passing \code{rdonly = TRUE} is equivalent to lmdb's
+Passing \code{readonly = TRUE} is equivalent to lmdb's
 \code{MDB_RDONLY} flag.}
 
 \item{metasync}{If \code{FALSE}, flush system buffers to disk only
@@ -62,7 +62,7 @@ TRUE} may be preferable.  Passing \code{sync = FALSE} is
 equivalent to lmdb's \code{MDB_NOSYNC} flag.}
 
 \item{writemap}{If \code{TRUE}, use a writeable memory map unless
-\code{rdonly = TRUE} is set. This uses fewer mallocs but loses
+\code{readonly = TRUE} is set. This uses fewer mallocs but loses
 protection from application bugs like wild pointer writes and
 other bad updates into the database. This may be slightly faster
 for DBs that fit entirely in RAM, but is slower for DBs larger
@@ -338,7 +338,7 @@ the file lmdb.h in particular.
   }
 
   \emph{Details:}
-  Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{rdonly = TRUE}.
+  Data is always written to disk when a transaction is committed, but the operating system may keep it buffered.  LMDB always flushes the OS buffers upon commit as well, unless the environment was opened with \code{sync = FALSE} or in part \code{metasync = FALSE}.  This call is not valid if the environment was opened with \code{readonly = TRUE}.
 
   \emph{Note}: In lmdb.h this is \code{mdb_env_sync()}
 }

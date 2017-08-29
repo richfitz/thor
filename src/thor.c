@@ -39,7 +39,7 @@ SEXP r_mdb_env_create() {
 }
 
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
-                    SEXP r_subdir, SEXP r_sync, SEXP r_rdonly,
+                    SEXP r_subdir, SEXP r_sync, SEXP r_readonly,
                     SEXP r_metasync, SEXP r_writemap, SEXP r_lock,
                     SEXP r_mapasync, SEXP r_rdahead, SEXP r_meminit) {
   MDB_env * env = r_mdb_get_env(r_env, true);
@@ -49,7 +49,7 @@ SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
   const unsigned int flags = MDB_NOTLS |
     sexp_to_flag(r_subdir,   MDB_NOSUBDIR,   "subdir",     true)  |
     sexp_to_flag(r_sync,     MDB_NOSYNC,     "sync",       true)  |
-    sexp_to_flag(r_rdonly,   MDB_RDONLY,     "rdonly",     false) |
+    sexp_to_flag(r_readonly, MDB_RDONLY,     "readonly",   false) |
     sexp_to_flag(r_metasync, MDB_NOMETASYNC, "metasync",   true)  |
     sexp_to_flag(r_writemap, MDB_WRITEMAP,   "writemap",   false) |
     sexp_to_flag(r_lock,     MDB_NOLOCK,     "lock",       true)  |
@@ -81,7 +81,7 @@ SEXP r_mdb_env_get_flags(SEXP r_env) {
   val[i] = flag_to_bool(flags, MDB_NOSUBDIR, true);
   SET_STRING_ELT(nms, i++, mkChar("subdir"));
   val[i] = flag_to_bool(flags, MDB_RDONLY, false);
-  SET_STRING_ELT(nms, i++, mkChar("rdonly"));
+  SET_STRING_ELT(nms, i++, mkChar("readonly"));
   val[i] = flag_to_bool(flags, MDB_WRITEMAP, false);
   SET_STRING_ELT(nms, i++, mkChar("writemap"));
   val[i] = flag_to_bool(flags, MDB_NOMETASYNC, true);
@@ -201,12 +201,12 @@ SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
 
 // Transactions:
 SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
-                     SEXP r_rdonly, SEXP r_sync, SEXP r_metasync) {
+                     SEXP r_readonly, SEXP r_sync, SEXP r_metasync) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   MDB_txn * parent =
     r_parent == R_NilValue ? NULL : r_mdb_get_txn(r_parent, true);
   const unsigned int flags =
-    sexp_to_flag(r_rdonly, MDB_RDONLY, "rdonly", false) |
+    sexp_to_flag(r_readonly, MDB_RDONLY, "readonly", false) |
     sexp_to_flag(r_sync, MDB_NOSYNC, "sync", true) |
     sexp_to_flag(r_metasync, MDB_NOMETASYNC, "metasync", true);
 
