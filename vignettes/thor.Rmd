@@ -484,3 +484,24 @@ txn$mget(c("string", "string"), as_raw = FALSE)
 
 txn$abort()
 ```
+
+## Caveats
+
+LMDB will allow multiple process to access the database at the same
+time, but enforce only one write transaction.  **However** to make
+that work relies on file locking.  The LMDB documentation covers
+issues around more detail - all the issues there apply to `thor`,
+though some of them are ensured by the thor's design (and because R
+is single threaded some do not really affect us).
+
+* crashed processes may leave stale lockfiles that may need to be
+  removed by `reader_check()`
+
+* do not use LMDB database on remote systems, even between
+  processes on the same host, as file locking and memory map sync
+  may be unreliable.  This may be disappointing, but if you have
+  multiple hosts you really do need a server based solution, not a
+  file based one.
+
+* avoid long-lived transactions, as they can cause the database
+  size to grow quickly.
