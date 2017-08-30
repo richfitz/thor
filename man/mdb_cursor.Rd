@@ -196,6 +196,12 @@ are created from an environment).
   \emph{Value}:
   Depending on \code{as_raw} and if there is a value stored, \code{NULL}, a character string or a raw vector
 }
+\item{\code{is_valid}}{
+  Test if cursor is valid (i.e., that it is pointing at data that can be retrieved).  Cursors start off invalid until placed (e.g., \code{first}, \code{last}) and can be invalidated by moving off the beginning or end of the database.
+
+  \emph{Usage:}
+  \code{is_valid()}
+}
 \item{\code{key}}{
   Return the current key
 

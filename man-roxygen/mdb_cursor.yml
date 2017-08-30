@@ -1,3 +1,11 @@
+is_valid:
+  short: >-
+    Test if cursor is valid (i.e., that it is pointing at data that
+    can be retrieved).  Cursors start off invalid until placed (e.g.,
+    \code{first}, \code{last}) and can be invalidated by moving off
+    the beginning or end of the database.
+  return: Logical scalar
+
 close:
   short: >-
     Close the cursor

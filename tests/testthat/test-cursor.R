@@ -219,11 +219,11 @@ test_that("pop", {
 
   cur <- txn$cursor()
   expect_identical(cur$pop("g"), "G")
-  expect_true(cur$.valid)
+  expect_true(cur$is_valid())
   expect_identical(cur$key(), "h")
 
   expect_null(cur$pop("g"))
-  expect_false(cur$.valid)
+  expect_false(cur$is_valid())
   expect_null(cur$key())
 })
 

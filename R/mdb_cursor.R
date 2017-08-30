@@ -64,7 +64,7 @@ R6_mdb_cursor <- R6::R6Class(
       Actions = c("put", "del", "replace", "pop"),
       Movement = c("first", "last", "move_next", "move_prev"),
       Find = c("move_to", "seek", "get"),
-      Current = c("key", "value"),
+      Current = c("is_valid", "key", "value"),
       Duplicates = c("first_dup", "last_dup",
                      "move_next_dup", "move_prev_dup",
                      "move_next_nodup", "move_prev_nodup",
@@ -105,6 +105,10 @@ R6_mdb_cursor <- R6::R6Class(
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
       self$.valid <- !is.null(x[[2L]])
+    },
+
+    is_valid = function() {
+      self$.valid
     },
 
     ## TODO: pass value_if_missing through to value and make size NA for these?
