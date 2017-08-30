@@ -1,9 +1,14 @@
 Package: thor
 Title: Interface to 'LMDB'
 Version: 0.0.2
-Author: Rich FitzJohn
-Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
-Description: This is Thor, god of lightning.
+Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
+    email = "rich.fitzjohn@gmail.com"),
+    person("The OpenLDAP Foundation", role = "cph"))
+Description: Key-value store, implemented as a wrapper around 'LMDB';
+    the "lightning memory-mapped database".  'LMDB' is a transactional
+    key value store that uses a memory map for efficient access.  This
+    package wraps the entire 'LMDB' interface, providing objects for
+    transactions and cursors.
 License: MIT + file LICENSE
 LazyData: true
 URL: https://github.com/richfitz/thor
