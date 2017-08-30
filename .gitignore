@@ -5,3 +5,4 @@ others
 inst/doc
 inst/web
 vignettes/*.html
+.valgrind_ignore

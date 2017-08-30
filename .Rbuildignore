@@ -14,3 +14,4 @@
 ^update_web\.sh$
 ^inst/web$
 ^Rprof\.out$
+^\.valgrind_ignore$
