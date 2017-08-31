@@ -225,8 +225,8 @@ SEXP r_mdb_txn_id(SEXP r_txn) {
 
 SEXP r_mdb_txn_commit(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  no_error(mdb_txn_commit(txn), "mdb_txn_commit");
   R_ClearExternalPtr(r_txn);
+  no_error(mdb_txn_commit(txn), "mdb_txn_commit");
   return R_NilValue;
 }
 
