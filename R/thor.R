@@ -205,3 +205,7 @@ thor_mput <- function(txn, dbi, key, value, dupdata, overwrite, append) {
 thor_mdel <- function(txn, dbi, key, value) {
   .Call(Cthor_mdel, txn, dbi, key, value)
 }
+
+pointer_addr_str <- function(x) {
+  .Call(Cpointer_addr_str, x)
+}

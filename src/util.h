@@ -30,3 +30,5 @@ size_t sexp_get_data(SEXP data, const char **data_contents, const char* name);
 SEXP r_test_error(SEXP r_rc, SEXP r_false_flag, SEXP r_str);
 
 SEXP combine_vector(SEXP x, size_t len);
+
+SEXP r_pointer_addr_str(SEXP r_ptr);

@@ -66,6 +66,7 @@ static const R_CallMethodDef call_methods[] = {
   // Testing
   {"Cis_null_pointer",             (DL_FUNC) &r_is_null_pointer,           1},
   {"Ctest_error",                  (DL_FUNC) &r_test_error,                3},
+  {"Cpointer_addr_str",            (DL_FUNC) &r_pointer_addr_str,          1},
 
   {NULL,                           NULL,                                   0}
 };
