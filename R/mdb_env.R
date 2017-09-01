@@ -315,10 +315,11 @@ R6_mdb_env <- R6::R6Class(
       }
     },
 
-    .new_txn_ptr = function(write, parent_ptr, temporary = FALSE) {
+    .new_txn_ptr = function(write, parent_ptr, sync = NULL, metasync = NULL,
+                            temporary = FALSE) {
       if (write) {
         self$.check_write()
-        ptr <- mdb_txn_begin(self$.ptr, parent_ptr, readonly = FALSE)
+        ptr <- mdb_txn_begin(self$.ptr, parent_ptr, FALSE, sync, metasync)
         if (!temporary) {
           write_txns[[self$.path]] <- self$.ptr
           self$.write_txn <- ptr
@@ -326,7 +327,7 @@ R6_mdb_env <- R6::R6Class(
       } else {
         ptr <- self$.spare_txns$pop()
         if (is.null(ptr)) {
-          ptr <- mdb_txn_begin(self$.ptr, parent_ptr, readonly = TRUE)
+          ptr <- mdb_txn_begin(self$.ptr, parent_ptr, TRUE, sync, metasync)
         } else {
           mdb_txn_renew(ptr)
         }
@@ -449,8 +450,8 @@ R6_mdb_env <- R6::R6Class(
       with_new_txn(self, TRUE, dropdb)
     },
 
-    begin = function(db = NULL, write = FALSE) {
-      R6_mdb_txn$new(self, db, write)
+    begin = function(db = NULL, write = FALSE, sync = TRUE, metasync = TRUE) {
+      R6_mdb_txn$new(self, db, write, sync, metasync)
     },
 
     with_transaction = function(fun, db = NULL, write = FALSE) {

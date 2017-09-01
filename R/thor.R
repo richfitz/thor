@@ -66,12 +66,8 @@ mdb_env_get_maxkeysize <- function(env) {
 }
 
 ## transactions:
-mdb_txn_begin <- function(env, parent, readonly) {
-  ## TODO: This currently allows a couple of additional arguments
-  ## (sync, metasync) but we'll NULL them out for now.  These should
-  ## be settable, but I don't know that it's always a reasonable thing
-  ## to do to allow them.
-  .Call(Cmdb_txn_begin, env, parent, readonly, NULL, NULL)
+mdb_txn_begin <- function(env, parent, readonly, sync = NULL, metasync = NULL) {
+  .Call(Cmdb_txn_begin, env, parent, readonly, sync, metasync)
 }
 
 mdb_txn_id <- function(txn) {

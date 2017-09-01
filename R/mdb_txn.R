@@ -66,7 +66,7 @@ R6_mdb_txn <- R6::R6Class(
                "replace", "pop"),
       Compare = c("cmp", "dcmp")),
 
-    initialize = function(env, db, write) {
+    initialize = function(env, db, write, sync, metasync) {
       ## If the R6 issue is not a bug then we don't have to store
       ## upstream references for GC purposes - just if we need to use
       ## them!
@@ -84,7 +84,7 @@ R6_mdb_txn <- R6::R6Class(
 
       ## NOTE: Parent transactions are not supported yet
       parent <- NULL
-      self$.ptr <- env$.new_txn_ptr(write, parent)
+      self$.ptr <- env$.new_txn_ptr(write, parent, sync, metasync)
     },
 
     .cache_spare = function() {

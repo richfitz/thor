@@ -1,5 +1,7 @@
-with_new_txn <- function(env, write, f) {
-  txn_ptr <- env$.new_txn_ptr(write, NULL, TRUE)
+with_new_txn <- function(env, write, f, sync = NULL, metasync = NULL) {
+  parent <- NULL
+  txn_ptr <- env$.new_txn_ptr(write, parent, sync, metasync,
+                              temporary = TRUE)
   if (write) {
     withCallingHandlers({
       ret <- f(txn_ptr)
