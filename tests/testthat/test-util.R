@@ -126,3 +126,8 @@ test_that("error detection", {
   expect_error(no_error2(KEYEXIST, NOTFOUND, "foo"),
                "MDB_KEYEXIST: Key/data pair already exists: foo")
 })
+
+test_that("pointer_addr_str", {
+  env <- mdb_env_create()
+  pointer_addr_str(env)
+})
