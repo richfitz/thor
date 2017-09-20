@@ -100,3 +100,7 @@ capture_args <- function(f, name, width = 60) {
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }
+
+str_drop_start <- function(x, sub) {
+  substr(x, nchar(sub) + 1L, nchar(x))
+}

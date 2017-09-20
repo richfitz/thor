@@ -14,7 +14,8 @@ LazyData: true
 URL: https://github.com/richfitz/thor
 BugReports: https://github.com/richfitz/thor/issues
 Imports:
-    R6
+    R6,
+    storr
 Suggests:
     ids,
     knitr,
