@@ -450,7 +450,7 @@ R6_mdb_env <- R6::R6Class(
       with_new_txn(self, TRUE, dropdb)
     },
 
-    begin = function(db = NULL, write = FALSE, sync = TRUE, metasync = TRUE) {
+    begin = function(db = NULL, write = FALSE, sync = NULL, metasync = NULL) {
       R6_mdb_txn$new(self, db, write, sync, metasync)
     },
 

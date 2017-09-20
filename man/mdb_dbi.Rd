@@ -85,7 +85,7 @@ method to begin a transaction on a particular database.
   Begin a transaction
 
   \emph{Usage:}
-  \code{begin(db = NULL, write = FALSE)}
+  \code{begin(db = NULL, write = FALSE, sync = NULL, metasync = NULL)}
 
   \emph{Arguments:}
   \itemize{
