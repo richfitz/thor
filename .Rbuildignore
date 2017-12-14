@@ -15,3 +15,4 @@
 ^inst/web$
 ^Rprof\.out$
 ^\.valgrind_ignore$
+^docs$
