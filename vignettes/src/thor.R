@@ -34,7 +34,7 @@ set.seed(1)
 ## `py-lmdb`](https://github.com/dw/py-lmdb).
 
 ## Because the whole point of interacting with a database is side
-## effects, `thor` uses [R6](https://cran.r-project.org/package=storr)
+## effects, `thor` uses [R6](https://cran.r-project.org/package=R6)
 ## for the interface.  This has the unfortunate effect of complicating
 ## the documentation somewhat because R's documentation is focussed
 ## heavily on _functions_ and the package provides only one function
