@@ -40,7 +40,6 @@ clean:
 	rm -f src/*.o src/*.so src/*.dll
 	rm -f tests/testthat/*.o tests/testthat/*.so tests/testthat/*.dll
 	rm -f inst/examples/*.o inst/examples/*.so inst/examples/*.dll
-	rm -rf src/dde.so.dSYM
 	rm -rf tests/testthat/*.so.dSYM
 	rm -rf inst/examples/*.so.dSYM
 	make -C src/lmdb clean
