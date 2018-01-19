@@ -268,6 +268,7 @@ test_that("serialisation does not crash", {
 ## This test exists to ensure that if something happens and the R6
 ## object does not completely build the cleanup is safe
 test_that("naked cursor can be garbage collected", {
+  test_not_empty()
   env <- mdb_env(tempfile())
   txn <- env$begin()
   cur_ptr <- mdb_cursor_open(txn$.ptr, txn$.db$.ptr)

@@ -129,5 +129,5 @@ test_that("error detection", {
 
 test_that("pointer_addr_str", {
   env <- mdb_env_create()
-  pointer_addr_str(env)
+  expect_match(pointer_addr_str(env), "^0x")
 })

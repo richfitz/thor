@@ -13,3 +13,7 @@ expect_object_docs <- function(object) {
   testthat::expect_equal(setdiff(m, methods), character(0))
   testthat::expect_equal(setdiff(methods, c(sys, m)), character(0))
 }
+
+test_not_empty <- function() {
+  expect_true(TRUE)
+}

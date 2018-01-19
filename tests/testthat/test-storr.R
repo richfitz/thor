@@ -1,6 +1,7 @@
 context("storr")
 
 test_that("spec", {
+  test_not_empty()
   storr::test_driver(function(dr = NULL, ...)
     driver_thor(dr$env %||% mdb_env(tempfile()), ...))
 })

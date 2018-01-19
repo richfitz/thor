@@ -210,6 +210,7 @@ test_that("serialisation does not crash", {
 ## These tests exist to ensure that if something happens and the R6
 ## object does not completely build the cleanup is safe
 test_that("naked environment can be garbage collected", {
+  test_not_empty()
   path <- tempfile()
   dir.create(path)
   env_ptr <- mdb_env_create()
@@ -220,6 +221,7 @@ test_that("naked environment can be garbage collected", {
 })
 
 test_that("naked unintialised environment can be garbage collected", {
+  test_not_empty()
   path <- tempfile()
   dir.create(path)
   env_ptr <- mdb_env_create()
