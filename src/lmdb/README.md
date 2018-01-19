@@ -1,6 +1,6 @@
 This the library code from lmdb - see https://github.com/LMDB/lmdb
 
-Currently at [4d21543](https://github.com/LMDB/lmdb/tree/4d21543)
+Currently at [4d5e2d2](https://github.com/LMDB/lmdb/tree/4d5e2d2)
 
 From the lmdb distribution we use the files
 
