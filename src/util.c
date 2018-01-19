@@ -2,7 +2,7 @@
 
 void no_error(int rc, const char* str) {
   if (rc != MDB_SUCCESS) {
-    Rf_error("Error in mdb: %s: %s", mdb_strerror(rc), str);
+    Rf_error("Error in mdb: %s: %s (code: %d)", mdb_strerror(rc), str, rc);
   }
 }
 
@@ -11,7 +11,7 @@ bool no_error2(int rc, int false_flag, const char* str) {
   if (rc == MDB_SUCCESS) {
     found = true;
   } else if (rc != false_flag) {
-    Rf_error("Error in mdb: %s: %s", mdb_strerror(rc), str);
+    Rf_error("Error in mdb: %s: %s (code: %d)", mdb_strerror(rc), str, rc);
   }
   return found;
 }
