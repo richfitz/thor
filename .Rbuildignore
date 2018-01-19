@@ -16,3 +16,5 @@
 ^Rprof\.out$
 ^\.valgrind_ignore$
 ^docs$
+^README.html$
+^src/thor\.so\.dSYM$

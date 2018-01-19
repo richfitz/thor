@@ -7,3 +7,5 @@ inst/web
 vignettes/*.html
 .valgrind_ignore
 docs
+*.so.dSYM
+README.html
