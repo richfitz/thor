@@ -129,7 +129,8 @@ test_that("error detection", {
 
 test_that("pointer_addr_str", {
   env <- mdb_env_create()
-  expect_match(pointer_addr_str(env), "^0x")
+  ## Actual string output is platform dependent
+  expect_is(pointer_addr_str(env), "character")
 })
 
 test_that("pointer_addr_str - error", {
