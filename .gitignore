@@ -9,3 +9,6 @@ vignettes/*.html
 docs
 *.so.dSYM
 README.html
+coverage.html
+*.gcov
+lib

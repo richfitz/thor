@@ -38,11 +38,8 @@ check_all:
 
 clean:
 	rm -f src/*.o src/*.so src/*.dll
-	rm -f tests/testthat/*.o tests/testthat/*.so tests/testthat/*.dll
-	rm -f inst/examples/*.o inst/examples/*.so inst/examples/*.dll
-	rm -rf tests/testthat/*.so.dSYM
-	rm -rf inst/examples/*.so.dSYM
-	make -C src/lmdb clean
+	rm -rf src/*.so.dSYM
+	rm -rf coverage.html lib
 
 README.md: README.Rmd
 	Rscript -e "options(warnPartialMatchArgs=FALSE); knitr::knit('$<')"
