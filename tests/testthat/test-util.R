@@ -131,3 +131,8 @@ test_that("pointer_addr_str", {
   env <- mdb_env_create()
   expect_match(pointer_addr_str(env), "^0x")
 })
+
+test_that("pointer_addr_str - error", {
+  expect_error(pointer_addr_str(NULL),
+               "Expected an external pointer")
+})
