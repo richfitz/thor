@@ -275,10 +275,10 @@ R6_mdb_env <- R6::R6Class(
                           mapasync, rdahead, meminit,
                           maxdbs, maxreaders, mapsize,
                           reversekey, dupsort, create) {
-      self$.deps = stack()
+      self$.deps <- stack()
       self$.ptr <- mdb_env_create()
       self$.dbs <- new.env(parent = emptyenv())
-      self$.spare_txns = stack()
+      self$.spare_txns <- stack()
 
       if (!is.null(maxreaders)) {
         mdb_env_set_maxreaders(self$.ptr, maxreaders)

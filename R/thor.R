@@ -187,7 +187,8 @@ mdb_proxy_is_raw <- function(x) {
 }
 
 thor_list <- function(cur, starts_with, as_raw, size) {
-  .Call(Cthor_list, cur, starts_with, as_raw, if (!is.null(size)) as_integer(size))
+  .Call(Cthor_list, cur, starts_with, as_raw,
+        if (!is.null(size)) as_integer(size))
 }
 
 thor_exists <- function(txn, dbi, key) {

@@ -113,7 +113,7 @@ R6_mdb_cursor <- R6::R6Class(
 
     ## TODO: pass value_if_missing through to value and make size NA for these?
     key = function(as_proxy = FALSE, as_raw = NULL) {
-      if (is.null(self$.cur_key) ||!self$.cur_key$is_valid()) {
+      if (is.null(self$.cur_key) || !self$.cur_key$is_valid()) {
         self$.cursor_get(cursor_op$GET_CURRENT)
       }
       if (as_proxy) {
@@ -124,7 +124,7 @@ R6_mdb_cursor <- R6::R6Class(
     },
 
     value = function(as_proxy = FALSE, as_raw = NULL) {
-      if (is.null(self$.cur_value) ||!self$.cur_value$is_valid()) {
+      if (is.null(self$.cur_value) || !self$.cur_value$is_valid()) {
         self$.cursor_get(cursor_op$GET_CURRENT)
       }
       if (as_proxy) {
@@ -164,7 +164,8 @@ R6_mdb_cursor <- R6::R6Class(
         FALSE
       }
     },
-    put = function(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE) {
+    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
+                   append = FALSE) {
       res <- mdb_cursor_put(self$.ptr, key, value, dupdata, overwrite, append)
       self$.txn$.mutations <- self$.txn$.mutations + 1L
       self$.cursor_get(cursor_op$GET_CURRENT)
