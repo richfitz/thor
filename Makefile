@@ -61,6 +61,7 @@ vignettes: vignettes/thor.Rmd
 
 pkgdown:
 	${RSCRIPT} -e "library(methods); pkgdown::build_site()"
+	rm -f README.html
 
 website: pkgdown
 	./scripts/update_web.sh
