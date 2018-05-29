@@ -48,7 +48,8 @@ README.md: README.Rmd
 
 .PHONY: all test document install vignettes
 
-vignettes/%.Rmd: vignettes/src/%.R
+vignettes/%.Rmd: vignettes_src/%.R
+	mkdir -p vignettes
 	${RSCRIPT} -e 'library(sowsear); sowsear("$<", output="$@")'
 
 ## This will eventually swap out for devtools::build_vignettes(), but

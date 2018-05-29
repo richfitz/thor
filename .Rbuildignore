@@ -21,3 +21,4 @@
 ^coverage\.html$
 ^.*\.gcov$
 ^lib$
+^vignettes_src$
