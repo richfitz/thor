@@ -24,3 +24,4 @@ Suggests:
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 ByteCompile: true
+Encoding: UTF-8
