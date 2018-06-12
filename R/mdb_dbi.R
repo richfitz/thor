@@ -45,13 +45,16 @@
 ##' env$destroy()
 NULL
 
+
 R6_mdb_dbi <- R6::R6Class(
   "mdb_dbi",
   cloneable = FALSE,
+
   public = list(
     .ptr = NULL,
     .dupsort = NULL,
     .name = NULL,
+
     ## TODO: other options here include dupfixed, integerkey,
     ## integerdup, reversedup
     initialize = function(env, txn_ptr, name, reversekey, dupsort, create) {
@@ -60,6 +63,7 @@ R6_mdb_dbi <- R6::R6Class(
       self$.dupsort <- dupsort
       self$.name <- name
     },
+
     .invalidate = function() {
       ## NOTE: We don't explicitly call close here, following the
       ## docs.  I think we could consider doing better though - if we
@@ -70,16 +74,20 @@ R6_mdb_dbi <- R6::R6Class(
       ## not perfect.
       self$.ptr <- NULL
     },
+
     format = function() {
       format_thor(self)
     },
+
     id = function() {
       mdb_dbi_id(self$.ptr)
     },
+
     flags = function(txn) {
       assert_is(txn, "mdb_txn")
       mdb_dbi_flags(txn$.ptr, self$.ptr)
     },
+
     name = function() {
       self$.name
     }

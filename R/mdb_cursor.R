@@ -49,6 +49,7 @@
 ##' env$destroy()
 NULL
 
+
 R6_mdb_cursor <- R6::R6Class(
   "mdb_cursor",
   cloneable = FALSE,
@@ -137,12 +138,15 @@ R6_mdb_cursor <- R6::R6Class(
     first = function() {
       self$.cursor_get(cursor_op$FIRST)
     },
+
     last = function() {
       self$.cursor_get(cursor_op$LAST)
     },
+
     move_prev = function() {
       self$.cursor_get(cursor_op$PREV)
     },
+
     move_next = function() {
       self$.cursor_get(cursor_op$NEXT)
     },
@@ -150,6 +154,7 @@ R6_mdb_cursor <- R6::R6Class(
     move_to = function(key) {
       self$.cursor_get(cursor_op$SET_KEY, key)
     },
+
     seek = function(key) {
       self$.cursor_get(cursor_op$SET_RANGE, key)
     },
@@ -211,6 +216,7 @@ R6_mdb_cursor <- R6::R6Class(
       }
       invisible(v)
     },
+
     last_dup = function() {
       key <- self$.cur_key
       v <- self$.cursor_get(cursor_op$LAST_DUP)
@@ -219,24 +225,31 @@ R6_mdb_cursor <- R6::R6Class(
       }
       invisible(v)
     },
+
     move_prev_dup = function() {
       self$.cursor_get(cursor_op$PREV_DUP)
     },
+
     move_next_dup = function() {
       self$.cursor_get(cursor_op$NEXT_DUP)
     },
+
     move_to_dup = function(key, value) {
       self$.cursor_get(cursor_op$GET_BOTH, key, value)
     },
+
     seek_dup = function(key, value) {
       self$.cursor_get(cursor_op$GET_BOTH_RANGE, key, value)
     },
+
     move_prev_nodup = function() {
       self$.cursor_get(cursor_op$PREV_NODUP)
     },
+
     move_next_nodup = function() {
       self$.cursor_get(cursor_op$NEXT_NODUP)
     },
+
     count = function() {
       mdb_cursor_count(self$.ptr)
     }

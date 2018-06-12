@@ -248,9 +248,11 @@ mdb_env <- function(path, mode = as.octmode("644"),
                  reversekey = reversekey, dupsort = dupsort, create = create)
 }
 
+
 R6_mdb_env <- R6::R6Class(
   "mdb_env",
   cloneable = FALSE,
+
   public = list(
     .ptr = NULL,
     .db = NULL,
@@ -346,18 +348,23 @@ R6_mdb_env <- R6::R6Class(
     path = function() {
       mdb_env_get_path(self$.ptr)
     },
+
     flags = function() {
       mdb_env_get_flags(self$.ptr)
     },
+
     stat = function() {
       mdb_env_stat(self$.ptr)
     },
+
     info = function() {
       mdb_env_info(self$.ptr)
     },
+
     maxkeysize = function() {
       mdb_env_get_maxkeysize(self$.ptr)
     },
+
     maxreaders = function() {
       mdb_env_get_maxreaders(self$.ptr)
     },
@@ -365,6 +372,7 @@ R6_mdb_env <- R6::R6Class(
     reader_list = function() {
       mdb_reader_list(self$.ptr)
     },
+
     reader_check = function() {
       mdb_reader_check(self$.ptr)
     },
@@ -482,23 +490,27 @@ R6_mdb_env <- R6::R6Class(
       with_new_txn(self, FALSE, function(txn_ptr)
         mdb_get(txn_ptr, db$.ptr, key, missing_is_error, FALSE, as_raw))
     },
+
     mget = function(key, as_raw = NULL, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, FALSE, function(txn_ptr)
         thor_mget(txn_ptr, db$.ptr, key, FALSE, as_raw))
     },
+
     put = function(key, value, dupdata = TRUE, overwrite = TRUE,
                    append = FALSE, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, TRUE, function(txn_ptr)
         mdb_put(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
     },
+
     mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
                     append = FALSE, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, TRUE, function(txn_ptr)
         thor_mput(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
     },
+
     del = function(key, value = NULL, db = NULL) {
       db <- db %||% self$.db
       if (!is.null(value) && !db$.dupsort) {
@@ -506,8 +518,8 @@ R6_mdb_env <- R6::R6Class(
       }
       with_new_txn(self, TRUE, function(txn_ptr)
         mdb_del(txn_ptr, db$.ptr, key, value))
-
     },
+
     mdel = function(key, value = NULL, db = NULL) {
       db <- db %||% self$.db
       if (!is.null(value) && !db$.dupsort) {
@@ -517,11 +529,13 @@ R6_mdb_env <- R6::R6Class(
         thor_mdel(txn_ptr, db$.ptr, key, value))
 
     },
+
     exists = function(key, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, FALSE, function(txn_ptr)
         thor_exists(txn_ptr, db$.ptr, key))
     },
+
     list = function(starts_with = NULL, as_raw = FALSE, size = NULL,
                     db = NULL) {
       db <- db %||% self$.db

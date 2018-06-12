@@ -20,10 +20,11 @@ set.seed(1)
 ## locking to manage concurrent access between processes.
 
 ## Key-value stores are simple systems for persistently storing values
-## against keys (as the name suggests).  There's really very little
-## extra than that!  The complications come from trying to efficiently
-## query the store, or patterns like "add a new value but only if the
-## previous value was `foo`".
+## against keys.  In the case of `thor`, both the keys and the data
+## can be strings or (raw) data.  This provides a low-level building
+## block on which other applications can be built.  The complications
+## come from trying to efficiently query the store, or patterns like
+## "add a new value but only if the previous value was `foo`".
 
 ## This package does not provide a faithful 1:1 mapping of the
 ## underlying LMDB C api because that requires too much care at the R

@@ -21,6 +21,7 @@ storr_thor <- function(env, prefix = "", hash_algorithm = NULL,
                default_namespace)
 }
 
+
 ##' @export
 ##' @rdname storr_thor
 ##' @importFrom storr join_key_namespace
@@ -28,9 +29,12 @@ driver_thor <- function(env, prefix = "", hash_algorithm = NULL) {
   R6_driver_thor$new(env, prefix, hash_algorithm)
 }
 
+
 R6_driver_thor <- R6::R6Class(
   "driver_thor",
+
   cloneable = FALSE,
+
   public = list(
     env = NULL,
     prefix = NULL,
@@ -65,6 +69,7 @@ R6_driver_thor <- R6::R6Class(
       self$env$get(self$name_key(key, namespace),
                    as_raw = FALSE, missing_is_error = TRUE)
     },
+
     mget_hash = function(key, namespace) {
       kn <- join_key_namespace(key, namespace)
       if (kn$n == 0L) {
@@ -75,9 +80,11 @@ R6_driver_thor <- R6::R6Class(
       res[!nzchar(res)] <- NA_character_
       res
     },
+
     set_hash = function(key, namespace, hash) {
       self$env$put(self$name_key(key, namespace), hash)
     },
+
     mset_hash = function(key, namespace, hash) {
       if (length(hash) == 0L) {
         return()
@@ -90,6 +97,7 @@ R6_driver_thor <- R6::R6Class(
                           as_raw = TRUE, missing_is_error = TRUE)
       unserialize(res)
     },
+
     mget_object = function(hash) {
       if (length(hash) == 0) {
         return(list())
@@ -116,6 +124,7 @@ R6_driver_thor <- R6::R6Class(
     exists_hash = function(key, namespace) {
       self$env$exists(self$name_key(key, namespace))
     },
+
     exists_object = function(hash) {
       self$env$exists(self$name_hash(hash))
     },
@@ -126,6 +135,7 @@ R6_driver_thor <- R6::R6Class(
       kn <- join_key_namespace(key, namespace)
       self$env$mdel(self$name_key(kn$key, kn$namespace))
     },
+
     del_object = function(hash) {
       self$env$mdel(self$name_hash(hash))
     },
@@ -134,10 +144,12 @@ R6_driver_thor <- R6::R6Class(
       start <- sprintf("%sdata:%s", self$prefix, "")
       str_drop_start(self$env$list(start), start)
     },
+
     list_keys = function(namespace) {
       start <- self$name_key("", namespace)
       str_drop_start(self$env$list(start), start)
     },
+
     list_namespaces = function() {
       ## For this to work, consider disallowing ":" in namespace
       ## names, or sanitising them on the way in?
@@ -149,10 +161,12 @@ R6_driver_thor <- R6::R6Class(
     name_key = function(key, namespace) {
       sprintf("%skeys:%s:%s", self$prefix, namespace, key)
     },
+
     name_hash = function(hash) {
       sprintf("%sdata:%s", self$prefix, hash)
     }
   ))
+
 
 driver_thor_config <- function(env, prefix, name, value, default,
                                must_agree) {

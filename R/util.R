@@ -2,6 +2,7 @@ is_null_pointer <- function(x) {
   .Call(Cis_null_pointer, x)
 }
 
+
 ## A really simple little stack thing.  This is going to hold
 ## references that can be compared with `identical`; because we pass
 ## everything by reference this should all work reasonably well.  We
@@ -22,6 +23,7 @@ stack <- function() {
     clear = function() {
       data <<- list()
     },
+
     ## This adds to the set only if its a new thing.
     add = function(x) {
       for (i in seq_along(data)) {
@@ -31,9 +33,11 @@ stack <- function() {
       }
       data[[length(data) + 1L]] <<- x
     },
+
     push = function(x) {
       data[[length(data) + 1L]] <<- x
     },
+
     pop = function(empty = NULL) {
       n <- length(data)
       if (n == 0L) {
@@ -43,12 +47,15 @@ stack <- function() {
       data[[n]] <<- NULL
       ret
     },
+
     get = function(x) {
       data
     },
+
     length = function() {
       length(data)
     },
+
     discard = function(x) {
       for (i in seq_along(data)) {
         if (identical(data[[i]], x)) {
@@ -58,6 +65,7 @@ stack <- function() {
       }
     })
 }
+
 
 as_integer <- function(x, name = deparse(substitute(x))) {
   if (is.integer(x)) {
@@ -78,6 +86,7 @@ as_integer <- function(x, name = deparse(substitute(x))) {
   }
 }
 
+
 list_to_fixed_env <- function(x, env) {
   for (i in names(x)) {
     env[[i]] <- x[[i]]
@@ -86,6 +95,7 @@ list_to_fixed_env <- function(x, env) {
   lockEnvironment(env)
   invisible(env)
 }
+
 
 capture_args <- function(f, name, width = 60) {
   args <- utils::capture.output(args(f))
@@ -97,9 +107,11 @@ capture_args <- function(f, name, width = 60) {
   str
 }
 
+
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }
+
 
 str_drop_start <- function(x, sub) {
   substr(x, nchar(sub) + 1L, nchar(x))

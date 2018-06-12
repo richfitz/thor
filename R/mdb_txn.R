@@ -47,6 +47,7 @@
 ##' env$destroy()
 NULL
 
+
 R6_mdb_txn <- R6::R6Class(
   "mdb_txn",
   cloneable = FALSE,
@@ -124,9 +125,11 @@ R6_mdb_txn <- R6::R6Class(
     id = function() {
       mdb_txn_id(self$.ptr)
     },
+
     stat = function() {
       mdb_stat(self$.ptr, self$.db$.ptr)
     },
+
     commit = function() {
       invalidate_dependencies(self)
       if (!self$.cache_spare()) {
@@ -134,6 +137,7 @@ R6_mdb_txn <- R6::R6Class(
         self$.cleanup()
       }
     },
+
     abort = function(cache = TRUE) {
       if (!is.null(self$.ptr)) {
         invalidate_dependencies(self)
@@ -143,6 +147,7 @@ R6_mdb_txn <- R6::R6Class(
         }
       }
     },
+
     .cleanup = function() {
       self$.env$.deps$discard(self)
       if (self$.write) {
@@ -165,11 +170,13 @@ R6_mdb_txn <- R6::R6Class(
         res
       }
     },
+
     put = function(key, value, dupdata = TRUE, overwrite = TRUE,
                    append = FALSE) {
       self$.mutations <- self$.mutations + 1L
       mdb_put(self$.ptr, self$.db$.ptr, key, value, dupdata, overwrite, append)
     },
+
     del = function(key, value = NULL) {
       if (!is.null(value) && !self$.db$.dupsort) {
         stop("'value' is not allowed for databases with dupsort = FALSE")
@@ -181,6 +188,7 @@ R6_mdb_txn <- R6::R6Class(
     exists = function(key) {
       thor_exists(self$.ptr, self$.db$.ptr, key)
     },
+
     list = function(starts_with = NULL, as_raw = FALSE, size = NULL) {
       cur_ptr <- mdb_cursor_open(self$.ptr, self$.db$.ptr)
       on.exit(mdb_cursor_close(cur_ptr))
@@ -192,6 +200,7 @@ R6_mdb_txn <- R6::R6Class(
       on.exit(cur$close())
       cur$replace(key, value, as_raw)
     },
+
     pop = function(key, as_raw = NULL) {
       cur <- self$cursor()
       on.exit(cur$close())
@@ -206,12 +215,14 @@ R6_mdb_txn <- R6::R6Class(
         res
       }
     },
+
     mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
                     append = FALSE) {
       self$.mutations <- self$.mutations + 1L
       thor_mput(self$.ptr, self$.db$.ptr, key, value,
                 dupdata, overwrite, append)
     },
+
     mdel = function(key, value = NULL) {
       if (!is.null(value) && !self$.db$.dupsort) {
         stop("'value' is not allowed for databases with dupsort = FALSE")
@@ -227,6 +238,7 @@ R6_mdb_txn <- R6::R6Class(
     cmp = function(a, b) {
       mdb_cmp(self$.ptr, self$.db$.ptr, a, b)
     },
+
     dcmp = function(a, b) {
       if (self$.db$.dupsort) {
         mdb_dcmp(self$.ptr, self$.db$.ptr, a, b)
