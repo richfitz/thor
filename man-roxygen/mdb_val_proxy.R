@@ -41,7 +41,7 @@
 ##'   A logical if we can, otherwise \code{NULL} (for symmetry with \code{as_raw})
 ##' }
 ##' \item{\code{is_valid}}{
-##'   Test if a proxy object is still valid.  Once the proxy is invalid, it cannot be read from any more.  Proxies are invalidated if their parent transaction is closed, or if any write operations (e.g., `put`, `del`) have occurred.
+##'   Test if a proxy object is still valid.  Once the proxy is invalid, it cannot be read from any more.  Proxies are invalidated if their parent transaction is closed, or if any write operations (e.g., \code{put}, \code{del}) have occurred.
 ##'
 ##'   \emph{Usage:}
 ##'   \code{is_valid()}

@@ -149,6 +149,14 @@ begin:
       transaction.  There can be only one write transaction per
       database (see \code{\link{mdb_txn}} for more details) - it is an
       error to try to open more than one.
+    sync: >-
+      Scalar logical, indicating if the data should be syncronised
+      synchronised (flushed to disk) after writes; see main parameter
+      list.
+    metasync: >-
+      Scalar logical, indicating if the metadata should be
+      synchronised (flushed to disk) after writes; see main parameter
+      list.
   value: A \code{\link{mdb_txn}} object
   mdb: mdb_begin
 
