@@ -1,6 +1,6 @@
 Package: thor
 Title: Interface to 'LMDB'
-Version: 0.0.2
+Version: 1.0.0
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
     person("The OpenLDAP Foundation", role = "cph"))
