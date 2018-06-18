@@ -159,13 +159,13 @@ with_transaction:
     transaction, evaluate some code with that transaction and if
     anything goes wrong abort, but otherwise commit.  It is most
     useful with read-write transactions, but can be used with both
-    (and the default is for readonoly transactions, like
+    (and the default is for readonly transactions, like
     \code{begin()}.
   params:
     fun: >-
       A function of one argument that does the work of the
       transaction.  \code{with_transaction} will pass the transaction
-      to this function.  This is most eaily explained with an example,
+      to this function.  This is most easily explained with an example,
       so see the bottom of the help
     db: *txn_db
     write: *txn_write

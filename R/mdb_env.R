@@ -24,10 +24,10 @@
 ##'
 ##' @param mode The file mode (UNIX file permissions) to set on
 ##'   created files.  this must be an \code{octmode} object, with the
-##'   default (\code{as.octmode("644"}) being user-writable and
+##'   default (\code{as.octmode("644"}) being user-writeable and
 ##'   world-readable.
 ##'
-##' @param subdir By default, lmdb creates its files wthin a directory
+##' @param subdir By default, lmdb creates its files within a directory
 ##'   (at \code{path}).  If \code{subdir = FALSE} then the \code{path}
 ##'   is interpreted as the path to the main database file and a lock
 ##'   file will be created with "-lock" appended to the filename.
@@ -44,8 +44,8 @@
 ##'   the system flushes files to disk, or next commit or the next
 ##'   call to the \code{$sync()} method.  This optimization maintains
 ##'   database integrity, but a system crash may undo the last
-##'   committed transaction. I.e. it preserves the ACI (atomicity,
-##'   consistency, isolation) but not D (durability) database
+##'   committed transaction. I.e. it preserves the A, C and I (atomicity,
+##'   consistency, isolation) properties but not D (durability) database
 ##'   property.  Passing \code{metasync = FALSE} is equivalent to
 ##'   lmdb's \code{MDB_NOMETASYNC} flag.
 ##'
@@ -69,12 +69,12 @@
 ##'   \code{readonly = TRUE} is set. This uses fewer mallocs but loses
 ##'   protection from application bugs like wild pointer writes and
 ##'   other bad updates into the database. This may be slightly faster
-##'   for DBs that fit entirely in RAM, but is slower for DBs larger
-##'   than RAM. Incompatible with nested transactions. Do not mix
-##'   processes with \code{writemap = TRUE} and \code{writemap =
-##'   FALSE} on the same environment.  This can defeat durability
-##'   (\code{$sync()} etc).  Passing \code{writemap = TRUE} is
-##'   equivalent to lmdb's \code{MDB_WRITEMAP} flag.
+##'   for databases that fit entirely in RAM, but is slower for
+##'   databases larger than RAM. Incompatible with nested
+##'   transactions. Do not mix processes with \code{writemap = TRUE}
+##'   and \code{writemap = FALSE} on the same environment.  This can
+##'   defeat durability (\code{$sync()} etc).  Passing \code{writemap
+##'   = TRUE} is equivalent to lmdb's \code{MDB_WRITEMAP} flag.
 ##'
 ##' @param lock If \code{FALSE}, don't do any locking. If concurrent
 ##'   access is anticipated, the caller must manage all concurrency
@@ -121,7 +121,7 @@
 ##'
 ##' @param maxdbs The number of databases available within the
 ##'   environment.  If 0 (the default), then the environment holds
-##'   just one database (the main dbb).  To use named databases this
+##'   just one database (the main db).  To use named databases this
 ##'   must be set greater than one.
 ##'
 ##' @param maxreaders Maximum number of simultaneous read
@@ -186,7 +186,7 @@
 ##'   val
 ##' }, write = TRUE)
 ##'
-##' # If an error occured, the transaction would be aborted.  So far,
+##' # If an error occurred, the transaction would be aborted.  So far,
 ##' # not very interesting!
 ##'
 ##' # More interesting: implementing redis's RPOPLPUSH that takes the
@@ -410,7 +410,7 @@ R6_mdb_env <- R6::R6Class(
     ## solution would be to add the db to the transaction's
     ## dependencies in this case but that's not quite right either
     ## because then commit would invalidate the db.  So the simplest
-    ## case is to require that the db is created and commited before
+    ## case is to require that the db is created and committed before
     ## anyone uses it.
     open_database = function(key = NULL, reversekey = FALSE, dupsort = FALSE,
                              create = TRUE) {

@@ -4,7 +4,7 @@ ro: >-
   and then aborts the transaction.
 rw: >-
   This is a helper method that establishes a temporary read-write
-  transaction, calls the correspinding method in \code{\link{mdb_txn}}
+  transaction, calls the corresponding method in \code{\link{mdb_txn}}
   and then commits the transaction.  This will only be possible to use
   if there is not an existing write transaction in effect for this
   environment.

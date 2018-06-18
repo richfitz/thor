@@ -98,7 +98,7 @@
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
-##'     \item{\code{fun}:   A function of one argument that does the work of the transaction.  \code{with_transaction} will pass the transaction to this function.  This is most eaily explained with an example, so see the bottom of the help
+##'     \item{\code{fun}:   A function of one argument that does the work of the transaction.  \code{with_transaction} will pass the transaction to this function.  This is most easily explained with an example, so see the bottom of the help
 ##'     }
 ##'
 ##'     \item{\code{db}:   A database handle, as returned by \code{open_database}.  If \code{NULL} (the default) then the default database will be used.
@@ -109,7 +109,7 @@
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   This exists to simplify a pattern where one wants to open a transaction, evaluate some code with that transaction and if anything goes wrong abort, but otherwise commit.  It is most useful with read-write transactions, but can be used with both (and the default is for readonoly transactions, like \code{begin()}.
+##'   This exists to simplify a pattern where one wants to open a transaction, evaluate some code with that transaction and if anything goes wrong abort, but otherwise commit.  It is most useful with read-write transactions, but can be used with both (and the default is for readonly transactions, like \code{begin()}.
 ##' }
 ##' \item{\code{open_database}}{
 ##'   Open a named database, or return one if already opened.
@@ -291,7 +291,7 @@
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   This is a helper method that establishes a temporary read-write transaction, calls the correspinding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
+##'   This is a helper method that establishes a temporary read-write transaction, calls the corresponding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_put()}
 ##' }
@@ -314,7 +314,7 @@
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   This is a helper method that establishes a temporary read-write transaction, calls the correspinding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
+##'   This is a helper method that establishes a temporary read-write transaction, calls the corresponding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
 ##'
 ##'   \emph{Value}:
 ##'   A scalar logical, indicating if the value was deleted
@@ -420,7 +420,7 @@
 ##'   \emph{Details:}
 ##'   The implementation simply calls \code{mdb_put} repeatedly (but with a single round of error checking) so duplicate \code{key} entries will result in the last key winning.
 ##'
-##'   This is a helper method that establishes a temporary read-write transaction, calls the correspinding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
+##'   This is a helper method that establishes a temporary read-write transaction, calls the corresponding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
 ##' }
 ##' \item{\code{mdel}}{
 ##'   Delete multiple values from the database (like \code{$del} but vectorised over \code{key}).
@@ -441,7 +441,7 @@
 ##'   }
 ##'
 ##'   \emph{Details:}
-##'   This is a helper method that establishes a temporary read-write transaction, calls the correspinding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
+##'   This is a helper method that establishes a temporary read-write transaction, calls the corresponding method in \code{\link{mdb_txn}} and then commits the transaction.  This will only be possible to use if there is not an existing write transaction in effect for this environment.
 ##'
 ##'   \emph{Value}:
 ##'   A logical vector, the same length as \code{key}, indicating if each key was deleted.

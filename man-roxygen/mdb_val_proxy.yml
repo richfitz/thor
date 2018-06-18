@@ -38,7 +38,7 @@ is_valid:
     Test if a proxy object is still valid.  Once the proxy is invalid,
     it cannot be read from any more.  Proxies are invalidated if their
     parent transaction is closed, or if any write operations (e.g.,
-    `put`, `del`) have occured.
+    \code{put}, \code{del}) have occurred.
   value: >-
     Scalar logical
 

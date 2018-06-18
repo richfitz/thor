@@ -57,7 +57,7 @@ released because there is only one thread!
   \emph{Note}: In lmdb.h this is \code{mdb_txn_commit()}
 }
 \item{\code{abort}}{
-  Abandon all changes made in this transaction to the database, and invalidate the transaction, and any cursors belonging to it (i.e., once aborted the transaction cannot be used again).  For read-only transactions there is no practial difference between abort and commit, except that using \code{abort} allows the transaction to be recycled more efficiently.
+  Abandon all changes made in this transaction to the database, and invalidate the transaction, and any cursors belonging to it (i.e., once aborted the transaction cannot be used again).  For read-only transactions there is no practical difference between abort and commit, except that using \code{abort} allows the transaction to be recycled more efficiently.
 
   \emph{Usage:}
   \code{abort(cache = TRUE)}
@@ -200,7 +200,7 @@ released because there is only one thread!
     \item{\code{key}:   The keys to get values for.  Zero, one or more keys are allowed.
     }
 
-    \item{\code{as_proxy}:   Logical, indicating if a list of \code{\link{mdb_proxy}} objects shold be returned.
+    \item{\code{as_proxy}:   Logical, indicating if a list of \code{\link{mdb_proxy}} objects should be returned.
     }
 
     \item{\code{as_raw}:   As for \code{$get()}, logical (or \code{NULL}) indicating if raw or string output is expected or desired.
@@ -302,7 +302,7 @@ released because there is only one thread!
     \item{\code{a}:   A key (string or raw); it need not be in the database
     }
 
-    \item{\code{b}:   A key to comare with b (string or raw)
+    \item{\code{b}:   A key to compare with b (string or raw)
     }
   }
 
@@ -322,7 +322,7 @@ released because there is only one thread!
     \item{\code{a}:   A data item (string or raw); it need not be in the database
     }
 
-    \item{\code{b}:   A data item to comare with b (string or raw)
+    \item{\code{b}:   A data item to compare with b (string or raw)
     }
   }
 

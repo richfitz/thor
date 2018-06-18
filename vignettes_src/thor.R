@@ -27,7 +27,7 @@ set.seed(1)
 ## "add a new value but only if the previous value was `foo`".
 
 ## This package does not provide a faithful 1:1 mapping of the
-## underlying LMDB C api because that requires too much care at the R
+## underlying LMDB C API because that requires too much care at the R
 ## level not to crash R!  Instead, probably at the cost of some
 ## performance, `thor` provides a set of wrappers that try to prevent
 ## crashes by invalidating objects in the correct order.  The approach
@@ -127,12 +127,12 @@ env$del(keys[[1]])
 ## and now there are only 9 keys
 length(env$list())
 
-## Test for existance of a key with `exists`
+## Test for existence of a key with `exists`
 env$exists(keys[[1]])
 env$exists(keys[[2]])
 
 ## The `mget` method will get multiple keys at once, `mset` will set
-## multiple key/value pairs at once and `mdel` will delete mulitple
+## multiple key/value pairs at once and `mdel` will delete multiple
 ## keys at once.
 
 env$mdel(keys)
@@ -221,9 +221,9 @@ txn$exists(keys)
 ## ### Multiple transactions at once
 
 ## As well as being able to roll back a transaction, the other
-## function they serve is that each transaction gets a consstent view
+## function they serve is that each transaction gets a consistent view
 ## of the database.  At this point we have one write transaction
-## running, but it's not commited yet.  So if we start another
+## running, but it's not committed yet.  So if we start another
 ## transaction, it will not see any of the uncommitted "changes" that
 ## our transaction has made:
 txn_new <- env$begin()
@@ -270,7 +270,7 @@ env$mdel(keys)
 ## and raw vectors.  Raw vectors can be used to serialise R objects
 ## using `serialize`, which allows storing of arbitrary data.  This is
 ## the approach taken by
-## [`redux`](https://cran.r-project.org/package=redux) amongst other
+## [`redux`](https://cran.r-project.org/package=redux) among other
 ## packages.
 
 ## All strings can be represented in raw vectors but the reverse is
