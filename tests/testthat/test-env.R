@@ -353,3 +353,23 @@ test_that("with_transaction", {
 
   expect_equal(env$get("a"), "world")
 })
+
+
+test_that("readonly", {
+  skip_on_os("windows")
+  path <- tempfile()
+  env <- mdb_env(path)
+  env$put("a", "hello")
+  env$close()
+
+  files <- dir(path, full.names = TRUE)
+  Sys.chmod(files, "400")
+  env <- mdb_env(path, readonly = TRUE, lock = FALSE)
+  expect_equal(env$list(), "a")
+  expect_equal(env$get("a"), "hello")
+  expect_error(env$put("a", "goodbye"))
+  env$close()
+
+  Sys.chmod(files, "664")
+  unlink(path, recursive = TRUE)
+})

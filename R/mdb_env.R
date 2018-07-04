@@ -422,7 +422,8 @@ R6_mdb_env <- R6::R6Class(
       newdb <- function(txn_ptr) {
         R6_mdb_dbi$new(self, txn_ptr, key, reversekey, dupsort, create)
       }
-      db <- with_new_txn(self, TRUE, newdb)
+      flags <- self$flags()
+      db <- with_new_txn(self, flags[["lock"]] || !flags[["readonly"]], newdb)
 
       if (is.null(key)) {
         self$.db <- db
