@@ -33,7 +33,9 @@ Passing \code{subdir = FALSE} is equivalent to lmdb's
 \item{readonly}{Open the environment in read-only mode.  No write
 operations are allowed.  LMDB will still modify the lock file.
 Passing \code{readonly = TRUE} is equivalent to lmdb's
-\code{MDB_RDONLY} flag.}
+\code{MDB_RDONLY} flag.  If you want a to modify nothing no
+disk, pass \code{lock = FALSE} also (but beware that concurrent
+access may not go to plan).}
 
 \item{metasync}{If \code{FALSE}, flush system buffers to disk only
 once per transaction, omit the metadata flush. Defer that until
