@@ -11,7 +11,7 @@ An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded tra
 
 ## Documentation
 
-The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/vignettes/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://symas.com/mdb/doc/) along side the reference documentation for some details (but hopefully not too much).
+The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/articles/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://symas.com/mdb/doc/) along side the reference documentation for some details (but hopefully not too much).
 
 ## Usage
 
