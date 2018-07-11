@@ -1,14 +1,17 @@
 Package: thor
 Title: Interface to 'LMDB'
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
+    person("Howard", "Chu", role = "cph"),
+    person("Symas Corp", role = "cph"),
+    person("Martin", "Hedenfalk", role = "cph"),
     person("The OpenLDAP Foundation", role = "cph"))
 Description: Key-value store, implemented as a wrapper around 'LMDB';
-    the "lightning memory-mapped database".  'LMDB' is a transactional
-    key value store that uses a memory map for efficient access.  This
-    package wraps the entire 'LMDB' interface, providing objects for
-    transactions and cursors.
+    the "lightning memory-mapped database" <https://symas.com/lmdb/>.
+    'LMDB' is a transactional key value store that uses a memory map
+    for efficient access.  This package wraps the entire 'LMDB'
+    interface, providing objects for transactions and cursors.
 License: MIT + file LICENSE
 LazyData: true
 URL: https://github.com/richfitz/thor
