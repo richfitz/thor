@@ -4,7 +4,7 @@ Version: 1.0.1
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
     person("Howard", "Chu", role = "cph"),
-    person("Symas Corp", role = "cph"),
+    person("Symas Corporation", role = "cph"),
     person("Martin", "Hedenfalk", role = "cph"),
     person("The OpenLDAP Foundation", role = "cph"))
 Description: Key-value store, implemented as a wrapper around 'LMDB';
