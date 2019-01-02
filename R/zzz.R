@@ -1,4 +1,5 @@
 ##' @useDynLib thor, .registration = TRUE
+##' @importFrom R6 R6Class
 NULL
 
 
