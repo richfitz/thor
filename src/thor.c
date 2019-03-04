@@ -456,22 +456,22 @@ struct reader_data {
 
 int mdb_reader_list_callback(const char *msg, void *ctx) {
   struct reader_data * data = (struct reader_data*) ctx;
+  SET_STRING_ELT(data->data, data->n, mkChar(msg));
   data->n++;
-  data->data = PROTECT(CONS(mkChar(msg), data->data));
   return 0;
 }
 
 SEXP r_mdb_reader_list(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  struct reader_data data = {0, R_NilValue};
+  MDB_envinfo info;
+  no_error(mdb_env_info(env, &info), "mdb_env_info");
+  int n = info.me_numreaders;
+
+  SEXP ret = PROTECT(allocVector(STRSXP, n + 1));
+  struct reader_data data = {0, ret};
   mdb_reader_list(env, &mdb_reader_list_callback, &data);
-  SEXP str = data.data;
-  SEXP ret = PROTECT(allocVector(STRSXP, data.n));
-  for (size_t i = data.n; i > 0; --i) {
-    SET_STRING_ELT(ret, i - 1, CAR(str));
-    str = CDR(str);
-  }
-  UNPROTECT(data.n + 1);
+
+  UNPROTECT(1);
   return ret;
 }
 
