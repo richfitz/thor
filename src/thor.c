@@ -125,9 +125,9 @@ SEXP r_mdb_env_info(SEXP r_env) {
   MDB_envinfo info;
   no_error(mdb_env_info(env, &info), "mdb_env_info");
 
-  SEXP ret = PROTECT(allocVector(INTSXP, 5));
+  SEXP ret = PROTECT(allocVector(REALSXP, 5));
   SEXP nms = PROTECT(allocVector(STRSXP, 5));
-  int *c_ret = INTEGER(ret);
+  double *c_ret = REAL(ret);
 
   c_ret[0] = info.me_mapsize;
   SET_STRING_ELT(nms, 0, mkChar("mapsize"));
@@ -168,7 +168,7 @@ SEXP r_mdb_env_get_path(SEXP r_env) {
 
 SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  size_t size = scalar_size(r_size, "size");
+  mdb_size_t size = scalar_mdb_size(r_size, "size");
   no_error(mdb_env_set_mapsize(env, size), "mdb_env_set_mapsize");
   return R_NilValue;
 }

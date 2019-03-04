@@ -50,6 +50,11 @@ test_that("as_integer", {
   expect_identical(as_integer(1.0), 1L)
   expect_error(as_integer(pi), "'pi' must be an integer", fixed = TRUE)
   expect_error(as_integer(c(.1, .2)), "must be a scalar", fixed = TRUE)
+
+  expect_error(as_integer(.Machine$integer.max + 1),
+               "is too large (integer overflow)", fixed = TRUE)
+  expect_is(as_integer(.Machine$integer.max + 1, TRUE), "numeric")
+  expect_is(as_integer(.Machine$integer.max - 1, TRUE), "integer")
 })
 
 test_that("scalar_character (C)", {

@@ -30,6 +30,29 @@ int scalar_int(SEXP x, const char * name) {
   return INTEGER(x)[0];
 }
 
+
+mdb_size_t scalar_mdb_size(SEXP x, const char * name) {
+  mdb_size_t ret = 0;
+  if (TYPEOF(x) == INTSXP && length(x) == 1) {
+    int value = INTEGER(x)[0];
+    if (value < 0) {
+      Rf_error("Expected a positive size for '%s'", name);
+    }
+    ret = value;
+  } else if (TYPEOF(x) == REALSXP && length(x) == 1) {
+    double value = REAL(x)[0];
+    if (value < 0) {
+      Rf_error("Expected a positive size for '%s'", name);
+    }
+    ret = value;
+  } else {
+    // NOTE: not typically reachable from R code (see test-env.R)
+    Rf_error("Expected a scalar integer for '%s'", name);
+  }
+  return ret;
+}
+
+
 size_t scalar_size(SEXP x, const char * name) {
   int ret = scalar_int(x, name);
   if (ret < 0) {

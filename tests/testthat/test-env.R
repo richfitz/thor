@@ -373,3 +373,24 @@ test_that("readonly", {
   Sys.chmod(files, "664")
   unlink(path, recursive = TRUE)
 })
+
+
+test_that("mdb_env with non-integer hash size", {
+  large <- .Machine$integer.max + 1
+  env <- mdb_env(tempfile(), mapsize = large)
+  expect_equal(storage.mode(env$info()), "double")
+})
+
+
+test_that("corner cases for hash size", {
+  large <- .Machine$integer.max * 2
+  small <- 100
+  expect_error(mdb_env(tempfile(), mapsize = -large),
+               "Expected a positive size for 'size'")
+  expect_error(mdb_env(tempfile(), mapsize = -small),
+               "Expected a positive size for 'size'")
+
+  env <- mdb_env(tempfile())
+  expect_error(.Call(Cmdb_env_set_mapsize, env$.ptr, rep(large, 2)),
+               "Expected a scalar integer for 'size'")
+})

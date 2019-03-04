@@ -66,8 +66,7 @@ stack <- function() {
     })
 }
 
-
-as_integer <- function(x, name = deparse(substitute(x))) {
+as_integer <- function(x, allow_long = FALSE, name = deparse(substitute(x))) {
   if (is.integer(x)) {
     x
   } else {
@@ -77,10 +76,20 @@ as_integer <- function(x, name = deparse(substitute(x))) {
       ## handling code.
       stop(sprintf("'%s' must be a scalar", name))
     }
-    ret <- as.integer(x)
-    if (ret != x) {
+    eps <- sqrt(.Machine$double.eps)
+    if (!is.numeric(x) || abs(x - round(x)) > eps) {
       stop(sprintf("'%s' must be an integer, or integer-like", name),
            call. = FALSE)
+    }
+    if (abs(x) > .Machine$integer.max) {
+      if (allow_long) {
+        ret <- x
+      } else {
+        stop(sprintf("'%s' is too large (integer overflow)", name),
+             call. = FALSE)
+      }
+    } else {
+      ret <- as.integer(x)
     }
     ret
   }

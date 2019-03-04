@@ -31,7 +31,11 @@ mdb_env_stat <- function(env) {
 
 
 mdb_env_info <- function(env) {
-  .Call(Cmdb_env_info, env)
+  ret <- .Call(Cmdb_env_info, env)
+  if (ret[["mapsize"]] <= .Machine$integer.max) {
+    storage.mode(ret) <- "integer"
+  }
+  ret
 }
 
 
@@ -56,7 +60,7 @@ mdb_env_get_path <- function(env) {
 
 
 mdb_env_set_mapsize <- function(env, mapsize) {
-  .Call(Cmdb_env_set_mapsize, env, as_integer(mapsize))
+  .Call(Cmdb_env_set_mapsize, env, as_integer(mapsize, TRUE))
 }
 
 
