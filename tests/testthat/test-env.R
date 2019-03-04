@@ -376,6 +376,9 @@ test_that("readonly", {
 
 
 test_that("mdb_env with non-integer hash size", {
+  ## Needs to be run on 64 bit systems
+  skip_on_cran()
+  skip_on_os("windows")
   large <- .Machine$integer.max + 1
   env <- mdb_env(tempfile(), mapsize = large)
   expect_equal(storage.mode(env$info()), "double")
