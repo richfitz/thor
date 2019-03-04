@@ -385,7 +385,7 @@ test_that("mdb_env with non-integer hash size", {
 test_that("corner cases for hash size", {
   ## Needs to be run on 64 bit systems
   skip_on_cran()
-  skip_on_windows()
+  skip_on_os("windows")
   large <- .Machine$integer.max * 2
   small <- 100
   expect_error(mdb_env(tempfile(), mapsize = -large),
