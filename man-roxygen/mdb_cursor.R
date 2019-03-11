@@ -16,7 +16,7 @@
 ##'   Store data using the cursor
 ##'
 ##'   \emph{Usage:}
-##'   \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+##'   \code{put(key, value, overwrite = TRUE, append = FALSE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
@@ -24,9 +24,6 @@
 ##'     }
 ##'
 ##'     \item{\code{value}:   The value (string or raw)
-##'     }
-##'
-##'     \item{\code{dupdata}:   As for \code{\link{mdb_txn}} \code{$put}
 ##'     }
 ##'
 ##'     \item{\code{overwrite}:   As for \code{\link{mdb_txn}} \code{$put}
@@ -45,13 +42,7 @@
 ##'   Delete the current key
 ##'
 ##'   \emph{Usage:}
-##'   \code{del(dupdata = TRUE)}
-##'
-##'   \emph{Arguments:}
-##'   \itemize{
-##'     \item{\code{dupdata}:   Delete all data items for this key in a database with \code{dupdata = TRUE}
-##'     }
-##'   }
+##'   \code{del()}
 ##'
 ##'   \emph{Value}:
 ##'   Logical, indicating if a value was deleted (which will be \code{TRUE} if the cursor was valid before this operation). Primarily called for its side effect of deleting the data.  After deletion, we call \code{mdb_cursor_get} with \code{MDB_GET_CURRENT} which will re-validate the cursor.

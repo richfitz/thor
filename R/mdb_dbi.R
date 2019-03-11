@@ -52,15 +52,13 @@ R6_mdb_dbi <- R6::R6Class(
 
   public = list(
     .ptr = NULL,
-    .dupsort = NULL,
     .name = NULL,
 
     ## TODO: other options here include dupfixed, integerkey,
     ## integerdup, reversedup
-    initialize = function(env, txn_ptr, name, reversekey, dupsort, create) {
-      self$.ptr <- mdb_dbi_open(txn_ptr, name, reversekey, dupsort, create)
+    initialize = function(env, txn_ptr, name, reversekey, create) {
+      self$.ptr <- mdb_dbi_open(txn_ptr, name, reversekey, create)
       env$.deps$add(self)
-      self$.dupsort <- dupsort
       self$.name <- name
     },
 

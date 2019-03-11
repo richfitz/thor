@@ -143,14 +143,6 @@
 ##'   compared from beginning to end.  Passing \code{reversekey = TRUE}
 ##'   is equivalent to lmdb's \code{MDB_REVERSEKEY}.
 ##'
-##' @param dupsort Passed through to \code{open_database} for the main
-##'   database.  If \code{TRUE}, duplicate keys may be used in the
-##'   database. (Or, from another perspective, keys may have multiple
-##'   data items, stored in sorted order.) By default keys must be
-##'   unique and may have only a single data item.  Passing
-##'   \code{dupsort = TRUE} is equivalent to lmdb's
-##'   \code{MDB_DUPSORT}.
-##'
 ##' @param create If \code{FALSE}, do not create the directory
 ##'   \code{path} if it is missing.
 ##'
@@ -238,7 +230,7 @@ mdb_env <- function(path, mode = as.octmode("644"),
                     mapasync = FALSE, rdahead = TRUE, meminit = TRUE,
                     ## other args
                     maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
-                    reversekey = FALSE, dupsort = FALSE, create = TRUE) {
+                    reversekey = FALSE, create = TRUE) {
   R6_mdb_env$new(path, mode,
                  ## flags:
                  subdir = subdir, readonly = readonly, metasync = metasync,
@@ -247,7 +239,7 @@ mdb_env <- function(path, mode = as.octmode("644"),
                  meminit = meminit,
                  ## other:
                  maxdbs = maxdbs, maxreaders = maxreaders, mapsize = mapsize,
-                 reversekey = reversekey, dupsort = dupsort, create = create)
+                 reversekey = reversekey, create = create)
 }
 
 
@@ -278,7 +270,7 @@ R6_mdb_env <- R6::R6Class(
                           metasync, writemap, lock,
                           mapasync, rdahead, meminit,
                           maxdbs, maxreaders, mapsize,
-                          reversekey, dupsort, create) {
+                          reversekey, create) {
       self$.deps <- stack()
       self$.ptr <- mdb_env_create()
       self$.dbs <- new.env(parent = emptyenv())
@@ -306,7 +298,7 @@ R6_mdb_env <- R6::R6Class(
                    mapasync, rdahead, meminit)
 
       self$.path <- normalizePath(self$path(), mustWork = TRUE)
-      self$open_database(NULL, reversekey, dupsort, create)
+      self$open_database(NULL, reversekey, create)
     },
 
     .check_write = function() {
@@ -414,15 +406,14 @@ R6_mdb_env <- R6::R6Class(
     ## because then commit would invalidate the db.  So the simplest
     ## case is to require that the db is created and committed before
     ## anyone uses it.
-    open_database = function(key = NULL, reversekey = FALSE, dupsort = FALSE,
-                             create = TRUE) {
+    open_database = function(key = NULL, reversekey = FALSE, create = TRUE) {
       db <- if (is.null(key)) self$.db else self$.dbs[[key]]
       if (!is.null(db)) {
         return(db)
       }
 
       newdb <- function(txn_ptr) {
-        R6_mdb_dbi$new(self, txn_ptr, key, reversekey, dupsort, create)
+        R6_mdb_dbi$new(self, txn_ptr, key, reversekey, create)
       }
       flags <- self$flags()
       db <- with_new_txn(self, flags[["lock"]] || !flags[["readonly"]], newdb)
@@ -500,36 +491,28 @@ R6_mdb_env <- R6::R6Class(
         thor_mget(txn_ptr, db$.ptr, key, FALSE, as_raw))
     },
 
-    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
-                   append = FALSE, db = NULL) {
+    put = function(key, value, overwrite = TRUE, append = FALSE, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, TRUE, function(txn_ptr)
-        mdb_put(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
+        mdb_put(txn_ptr, db$.ptr, key, value, overwrite, append))
     },
 
-    mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
-                    append = FALSE, db = NULL) {
+    mput = function(key, value, overwrite = TRUE, append = FALSE, db = NULL) {
       db <- db %||% self$.db
       with_new_txn(self, TRUE, function(txn_ptr)
-        thor_mput(txn_ptr, db$.ptr, key, value, dupdata, overwrite, append))
+        thor_mput(txn_ptr, db$.ptr, key, value, overwrite, append))
     },
 
-    del = function(key, value = NULL, db = NULL) {
+    del = function(key, db = NULL) {
       db <- db %||% self$.db
-      if (!is.null(value) && !db$.dupsort) {
-        stop("'value' is not allowed for databases with dupsort = FALSE")
-      }
       with_new_txn(self, TRUE, function(txn_ptr)
-        mdb_del(txn_ptr, db$.ptr, key, value))
+        mdb_del(txn_ptr, db$.ptr, key))
     },
 
-    mdel = function(key, value = NULL, db = NULL) {
+    mdel = function(key, db = NULL) {
       db <- db %||% self$.db
-      if (!is.null(value) && !db$.dupsort) {
-        stop("'value' is not allowed for databases with dupsort = FALSE")
-      }
       with_new_txn(self, TRUE, function(txn_ptr)
-        thor_mdel(txn_ptr, db$.ptr, key, value))
+        thor_mdel(txn_ptr, db$.ptr, key))
 
     },
 

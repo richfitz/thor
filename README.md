@@ -8,7 +8,7 @@
 
 
 
-An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded transactional key-value store and this package provides R mappings to it.  It wraps the entire LMDB interface.
+An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded transactional key-value store and this package provides R mappings to it.  It wraps the entire LMDB interface, except for support for duplicated keys.
 
 ## Documentation
 
@@ -37,7 +37,7 @@ env
 ##     begin(db = NULL, write = FALSE, sync = NULL, metasync =  ...
 ##     with_transaction(fun, db = NULL, write = FALSE)
 ##   Databases:
-##     open_database(key = NULL, reversekey = FALSE, dupsort =  ...
+##     open_database(key = NULL, reversekey = FALSE, create = TRUE)
 ##     drop_database(db, delete = TRUE)
 ##   Management:
 ##     sync(force = FALSE)
@@ -48,13 +48,13 @@ env
 ##     reader_check()
 ##   Helpers:
 ##     get(key, missing_is_error = TRUE, as_raw = NULL, db = NULL)
-##     put(key, value, dupdata = TRUE, overwrite = TRUE, append ...
-##     del(key, value = NULL, db = NULL)
+##     put(key, value, overwrite = TRUE, append = FALSE, db = NULL)
+##     del(key, db = NULL)
 ##     exists(key, db = NULL)
 ##     list(starts_with = NULL, as_raw = FALSE, size = NULL, db ...
 ##     mget(key, as_raw = NULL, db = NULL)
-##     mput(key, value, dupdata = TRUE, overwrite = TRUE, appen ...
-##     mdel(key, value = NULL, db = NULL)
+##     mput(key, value, overwrite = TRUE, append = FALSE, db =  ...
+##     mdel(key, db = NULL)
 ```
 
 
@@ -111,18 +111,17 @@ txn
 ##     cursor()
 ##   Data:
 ##     get(key, missing_is_error = TRUE, as_proxy = FALSE, as_r ...
-##     put(key, value, dupdata = TRUE, overwrite = TRUE, append ...
-##     del(key, value = NULL)
+##     put(key, value, overwrite = TRUE, append = FALSE)
+##     del(key)
 ##     exists(key)
 ##     list(starts_with = NULL, as_raw = FALSE, size = NULL)
 ##     mget(key, as_proxy = FALSE, as_raw = NULL)
-##     mput(key, value, dupdata = TRUE, overwrite = TRUE, appen ...
-##     mdel(key, value = NULL)
+##     mput(key, value, overwrite = TRUE, append = FALSE)
+##     mdel(key)
 ##     replace(key, value, as_raw = NULL)
 ##     pop(key, as_raw = NULL)
 ##   Compare:
 ##     cmp(a, b)
-##     dcmp(a, b)
 ```
 
 Only one write transaction is active at a given point in time.  There can be an unlimited number of read transactions.

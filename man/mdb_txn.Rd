@@ -111,7 +111,7 @@ released because there is only one thread!
   Put values into the database.  In other systems, this might be called "\code{set}".
 
   \emph{Usage:}
-  \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+  \code{put(key, value, overwrite = TRUE, append = FALSE)}
 
   \emph{Arguments:}
   \itemize{
@@ -119,9 +119,6 @@ released because there is only one thread!
     }
 
     \item{\code{value}:   The value to save (string or raw vector)
-    }
-
-    \item{\code{dupdata}:   if \code{FALSE}, add data only where the key already exists in the database.  This is valid only when the database was opened with \code{dupdata = TRUE}.
     }
 
     \item{\code{overwrite}:   Logical - when \code{TRUE} it will overwrite existing data; when \code{FALSE} throw an error
@@ -137,14 +134,11 @@ released because there is only one thread!
   Remove a key/value pair from the database
 
   \emph{Usage:}
-  \code{del(key, value = NULL)}
+  \code{del(key)}
 
   \emph{Arguments:}
   \itemize{
     \item{\code{key}:   The name of the key (string or raw vector)
-    }
-
-    \item{\code{value}:   Optionally, the value of the key - if specified, and if the database was opened with \code{dupsort = TRUE}, only the value matching \code{value} will be deleted.
     }
   }
 
@@ -211,7 +205,7 @@ released because there is only one thread!
   Put multiple values into the database (like \code{$put} but vectorised over \code{key}/\code{value}).
 
   \emph{Usage:}
-  \code{mput(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE)}
+  \code{mput(key, value, overwrite = TRUE, append = FALSE)}
 
   \emph{Arguments:}
   \itemize{
@@ -219,9 +213,6 @@ released because there is only one thread!
     }
 
     \item{\code{value}:   The values to set against these keys.  Must be the same length as \code{key}.
-    }
-
-    \item{\code{dupdata}:   As for \code{$put}
     }
 
     \item{\code{overwrite}:   As for \code{$put}
@@ -238,14 +229,11 @@ released because there is only one thread!
   Delete multiple values from the database (like \code{$del} but vectorised over \code{key}).
 
   \emph{Usage:}
-  \code{mdel(key, value = NULL)}
+  \code{mdel(key)}
 
   \emph{Arguments:}
   \itemize{
     \item{\code{key}:   The keys to delete
-    }
-
-    \item{\code{value}:   As for \code{$del}.  If used, must be the same length as \code{key}.
     }
   }
 
@@ -310,26 +298,6 @@ released because there is only one thread!
   A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a > b).
 
   \emph{Note}: In lmdb.h this is \code{mdb_cmp()}
-}
-\item{\code{dcmp}}{
-  Like \code{cmp}, but for comparing \emph{data items} in a database with \code{dupsort = TRUE}.
-
-  \emph{Usage:}
-  \code{dcmp(a, b)}
-
-  \emph{Arguments:}
-  \itemize{
-    \item{\code{a}:   A data item (string or raw); it need not be in the database
-    }
-
-    \item{\code{b}:   A data item to compare with b (string or raw)
-    }
-  }
-
-  \emph{Value}:
-  A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a > b).
-
-  \emph{Note}: In lmdb.h this is \code{mdb_dcmp()}
 }
 }
 }

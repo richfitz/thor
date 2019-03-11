@@ -32,7 +32,7 @@
 ##'   }
 ##'
 ##'   \emph{Value}:
-##'   A named logical vector.  Names correspond to arguments to the constructor (\code{reversekey} and \code{dupsort}).
+##'   A named logical vector.  Names correspond to arguments to the constructor (\code{reversekey}).
 ##'
 ##'   \emph{Note}: In lmdb.h this is \code{mdb_dbi_flags()}
 ##' }

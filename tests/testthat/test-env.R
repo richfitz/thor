@@ -266,10 +266,6 @@ test_that("put, get, del (scalar)", {
   expect_equal(env$get("a"), "A")
   expect_true(env$del("a"))
   expect_false(env$del("a"))
-
-  expect_error(env$del("a", "B"),
-               "'value' is not allowed for databases with dupsort = FALSE",
-               fixed = TRUE)
 })
 
 test_that("mput, mget, mdel (vector)", {
@@ -283,10 +279,6 @@ test_that("mput, mget, mdel (vector)", {
   expect_equal(env$mget(letters, as_raw = NULL), as.list(LETTERS))
   expect_equal(env$mdel(letters), rep(TRUE, 26))
   expect_equal(env$mdel(letters), rep(FALSE, 26))
-
-  expect_error(env$mdel("a", "B"),
-               "'value' is not allowed for databases with dupsort = FALSE",
-               fixed = TRUE)
 })
 
 test_that("convenience functions use pool", {

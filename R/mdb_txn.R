@@ -65,7 +65,7 @@ R6_mdb_txn <- R6::R6Class(
       Data = c("get", "put", "del", "exists", "list",
                "mget", "mput", "mdel",
                "replace", "pop"),
-      Compare = c("cmp", "dcmp")),
+      Compare = "cmp"),
 
     initialize = function(env, db, write, sync, metasync) {
       ## If the R6 issue is not a bug then we don't have to store
@@ -171,18 +171,14 @@ R6_mdb_txn <- R6::R6Class(
       }
     },
 
-    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
-                   append = FALSE) {
+    put = function(key, value, overwrite = TRUE, append = FALSE) {
       self$.mutations <- self$.mutations + 1L
-      mdb_put(self$.ptr, self$.db$.ptr, key, value, dupdata, overwrite, append)
+      mdb_put(self$.ptr, self$.db$.ptr, key, value, overwrite, append)
     },
 
-    del = function(key, value = NULL) {
-      if (!is.null(value) && !self$.db$.dupsort) {
-        stop("'value' is not allowed for databases with dupsort = FALSE")
-      }
+    del = function(key) {
       self$.mutations <- self$.mutations + 1L
-      mdb_del(self$.ptr, self$.db$.ptr, key, value)
+      mdb_del(self$.ptr, self$.db$.ptr, key)
     },
 
     exists = function(key) {
@@ -216,19 +212,14 @@ R6_mdb_txn <- R6::R6Class(
       }
     },
 
-    mput = function(key, value, dupdata = TRUE, overwrite = TRUE,
-                    append = FALSE) {
+    mput = function(key, value, overwrite = TRUE, append = FALSE) {
       self$.mutations <- self$.mutations + 1L
-      thor_mput(self$.ptr, self$.db$.ptr, key, value,
-                dupdata, overwrite, append)
+      thor_mput(self$.ptr, self$.db$.ptr, key, value, overwrite, append)
     },
 
-    mdel = function(key, value = NULL) {
-      if (!is.null(value) && !self$.db$.dupsort) {
-        stop("'value' is not allowed for databases with dupsort = FALSE")
-      }
+    mdel = function(key) {
       self$.mutations <- self$.mutations + 1L
-      thor_mdel(self$.ptr, self$.db$.ptr, key, value)
+      thor_mdel(self$.ptr, self$.db$.ptr, key)
     },
 
     cursor = function() {
@@ -237,13 +228,5 @@ R6_mdb_txn <- R6::R6Class(
 
     cmp = function(a, b) {
       mdb_cmp(self$.ptr, self$.db$.ptr, a, b)
-    },
-
-    dcmp = function(a, b) {
-      if (self$.db$.dupsort) {
-        mdb_dcmp(self$.ptr, self$.db$.ptr, a, b)
-      } else {
-        stop("dcmp() is not meaningful on database with dupsort = FALSE")
-      }
     }
   ))

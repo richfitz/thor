@@ -4,11 +4,11 @@
 \alias{mdb_env}
 \title{Create an mdb_env environment}
 \usage{
-mdb_env(path, mode = as.octmode("644"), subdir = TRUE, readonly = FALSE,
-  metasync = TRUE, sync = TRUE, writemap = FALSE, lock = TRUE,
-  mapasync = FALSE, rdahead = TRUE, meminit = TRUE, maxdbs = NULL,
-  maxreaders = NULL, mapsize = NULL, reversekey = FALSE,
-  dupsort = FALSE, create = TRUE)
+mdb_env(path, mode = as.octmode("644"), subdir = TRUE,
+  readonly = FALSE, metasync = TRUE, sync = TRUE, writemap = FALSE,
+  lock = TRUE, mapasync = FALSE, rdahead = TRUE, meminit = TRUE,
+  maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
+  reversekey = FALSE, create = TRUE)
 }
 \arguments{
 \item{path}{The directory in which the database files will reside.
@@ -138,14 +138,6 @@ in reverse order, from the end of the strings to the beginning
 (e.g., DNS names). By default, keys are treated as strings and
 compared from beginning to end.  Passing \code{reversekey = TRUE}
 is equivalent to lmdb's \code{MDB_REVERSEKEY}.}
-
-\item{dupsort}{Passed through to \code{open_database} for the main
-database.  If \code{TRUE}, duplicate keys may be used in the
-database. (Or, from another perspective, keys may have multiple
-data items, stored in sorted order.) By default keys must be
-unique and may have only a single data item.  Passing
-\code{dupsort = TRUE} is equivalent to lmdb's
-\code{MDB_DUPSORT}.}
 
 \item{create}{If \code{FALSE}, do not create the directory
 \code{path} if it is missing.}
@@ -291,7 +283,7 @@ the file lmdb.h in particular.
   Open a named database, or return one if already opened.
 
   \emph{Usage:}
-  \code{open_database(key = NULL, reversekey = FALSE, dupsort = FALSE, create = TRUE)}
+  \code{open_database(key = NULL, reversekey = FALSE, create = TRUE)}
 
   \emph{Arguments:}
   \itemize{
@@ -299,9 +291,6 @@ the file lmdb.h in particular.
     }
 
     \item{\code{reversekey}:   Compare strings in reverse order? See \code{reversekey} documentation above
-    }
-
-    \item{\code{dupsort}:   Allow use of duplicate keys in the database?  See \code{dupsort} above.
     }
 
     \item{\code{create}:   Create database if it does not exist already?
@@ -442,8 +431,7 @@ the file lmdb.h in particular.
   Put values into the database.  In other systems, this might be called "\code{set}".
 
   \emph{Usage:}
-  \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE,
-      db = NULL)}
+  \code{put(key, value, overwrite = TRUE, append = FALSE, db = NULL)}
 
   \emph{Arguments:}
   \itemize{
@@ -451,9 +439,6 @@ the file lmdb.h in particular.
     }
 
     \item{\code{value}:   The value to save (string or raw vector)
-    }
-
-    \item{\code{dupdata}:   if \code{FALSE}, add data only where the key already exists in the database.  This is valid only when the database was opened with \code{dupdata = TRUE}.
     }
 
     \item{\code{overwrite}:   Logical - when \code{TRUE} it will overwrite existing data; when \code{FALSE} throw an error
@@ -475,14 +460,11 @@ the file lmdb.h in particular.
   Remove a key/value pair from the database
 
   \emph{Usage:}
-  \code{del(key, value = NULL, db = NULL)}
+  \code{del(key, db = NULL)}
 
   \emph{Arguments:}
   \itemize{
     \item{\code{key}:   The name of the key (string or raw vector)
-    }
-
-    \item{\code{value}:   Optionally, the value of the key - if specified, and if the database was opened with \code{dupsort = TRUE}, only the value matching \code{value} will be deleted.
     }
 
     \item{\code{db}:   A database handle that would be passed through to create the transaction (see the \code{$begin} method).
@@ -569,8 +551,7 @@ the file lmdb.h in particular.
   Put multiple values into the database (like \code{$put} but vectorised over \code{key}/\code{value}).
 
   \emph{Usage:}
-  \code{mput(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE,
-      db = NULL)}
+  \code{mput(key, value, overwrite = TRUE, append = FALSE, db = NULL)}
 
   \emph{Arguments:}
   \itemize{
@@ -578,9 +559,6 @@ the file lmdb.h in particular.
     }
 
     \item{\code{value}:   The values to set against these keys.  Must be the same length as \code{key}.
-    }
-
-    \item{\code{dupdata}:   As for \code{$put}
     }
 
     \item{\code{overwrite}:   As for \code{$put}
@@ -602,14 +580,11 @@ the file lmdb.h in particular.
   Delete multiple values from the database (like \code{$del} but vectorised over \code{key}).
 
   \emph{Usage:}
-  \code{mdel(key, value = NULL, db = NULL)}
+  \code{mdel(key, db = NULL)}
 
   \emph{Arguments:}
   \itemize{
     \item{\code{key}:   The keys to delete
-    }
-
-    \item{\code{value}:   As for \code{$del}.  If used, must be the same length as \code{key}.
     }
 
     \item{\code{db}:   A database handle that would be passed through to create the transaction (see the \code{$begin} method).

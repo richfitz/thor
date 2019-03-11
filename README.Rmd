@@ -10,7 +10,7 @@
 knitr::opts_chunk$set(error = FALSE)
 ```
 
-An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded transactional key-value store and this package provides R mappings to it.  It wraps the entire LMDB interface.
+An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded transactional key-value store and this package provides R mappings to it.  It wraps the entire LMDB interface, except for support for duplicated keys.
 
 ## Documentation
 

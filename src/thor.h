@@ -47,17 +47,16 @@ SEXP r_mdb_txn_reset(SEXP r_txn);
 SEXP r_mdb_txn_renew(SEXP r_txn);
 
 // TODO: support integerkey, dupfixed, integerdup, reversedup
-SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
-                    SEXP r_reversekey, SEXP r_dupsort, SEXP r_create);
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_reversekey, SEXP r_create);
 SEXP r_mdb_stat(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_drop(SEXP r_txn, SEXP r_dbi, SEXP r_del);
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
-               SEXP r_dupdata, SEXP r_overwrite, SEXP r_append);
+               SEXP r_overwrite, SEXP r_append);
 SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                SEXP r_missing_is_error, SEXP r_as_proxy, SEXP r_as_raw);
-SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value);
+SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key);
 
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_cursor_close(SEXP r_cursor);
@@ -66,8 +65,8 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
                       SEXP r_value);
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_value,
-                      SEXP r_dupdata, SEXP r_overwrite, SEXP r_append);
-SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_dupdata);
+                      SEXP r_overwrite, SEXP r_append);
+SEXP r_mdb_cursor_del(SEXP r_cursor);
 SEXP r_mdb_cursor_count(SEXP r_cursor);
 
 SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
@@ -123,8 +122,8 @@ SEXP r_thor_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key);
 SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
                  SEXP r_as_proxy, SEXP r_as_raw);
 SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
-                 SEXP r_dupdata, SEXP r_overwrite, SEXP r_append);
-SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value);
+                 SEXP r_overwrite, SEXP r_append);
+SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key);
 
 // Utility
 bool mdb_val_starts_with(MDB_val *x, MDB_val *prefix);

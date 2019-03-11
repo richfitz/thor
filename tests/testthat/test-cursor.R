@@ -283,5 +283,5 @@ test_that("format", {
   str <- format(cur)
   expect_false(grepl("initialze", str))
   expect_true(grepl("<mdb_cursor>", str, fixed = TRUE))
-  expect_true(grepl("first_dup", str, fixed = TRUE))
+  expect_true(grepl("move_to", str, fixed = TRUE))
 })

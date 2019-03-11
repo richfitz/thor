@@ -11,7 +11,8 @@ Description: Key-value store, implemented as a wrapper around 'LMDB';
     the "lightning memory-mapped database" <https://symas.com/lmdb/>.
     'LMDB' is a transactional key value store that uses a memory map
     for efficient access.  This package wraps the entire 'LMDB'
-    interface, providing objects for transactions and cursors.
+    interface (except duplicated keys), and provides objects for
+    transactions and cursors.
 License: MIT + file LICENSE
 LazyData: true
 URL: https://github.com/richfitz/thor
@@ -24,7 +25,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 ByteCompile: true
 Encoding: UTF-8

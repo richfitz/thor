@@ -121,7 +121,7 @@
 ##'   Open a named database, or return one if already opened.
 ##'
 ##'   \emph{Usage:}
-##'   \code{open_database(key = NULL, reversekey = FALSE, dupsort = FALSE, create = TRUE)}
+##'   \code{open_database(key = NULL, reversekey = FALSE, create = TRUE)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
@@ -129,9 +129,6 @@
 ##'     }
 ##'
 ##'     \item{\code{reversekey}:   Compare strings in reverse order? See \code{reversekey} documentation above
-##'     }
-##'
-##'     \item{\code{dupsort}:   Allow use of duplicate keys in the database?  See \code{dupsort} above.
 ##'     }
 ##'
 ##'     \item{\code{create}:   Create database if it does not exist already?
@@ -272,8 +269,7 @@
 ##'   Put values into the database.  In other systems, this might be called "\code{set}".
 ##'
 ##'   \emph{Usage:}
-##'   \code{put(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE,
-##'       db = NULL)}
+##'   \code{put(key, value, overwrite = TRUE, append = FALSE, db = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
@@ -281,9 +277,6 @@
 ##'     }
 ##'
 ##'     \item{\code{value}:   The value to save (string or raw vector)
-##'     }
-##'
-##'     \item{\code{dupdata}:   if \code{FALSE}, add data only where the key already exists in the database.  This is valid only when the database was opened with \code{dupdata = TRUE}.
 ##'     }
 ##'
 ##'     \item{\code{overwrite}:   Logical - when \code{TRUE} it will overwrite existing data; when \code{FALSE} throw an error
@@ -305,14 +298,11 @@
 ##'   Remove a key/value pair from the database
 ##'
 ##'   \emph{Usage:}
-##'   \code{del(key, value = NULL, db = NULL)}
+##'   \code{del(key, db = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
 ##'     \item{\code{key}:   The name of the key (string or raw vector)
-##'     }
-##'
-##'     \item{\code{value}:   Optionally, the value of the key - if specified, and if the database was opened with \code{dupsort = TRUE}, only the value matching \code{value} will be deleted.
 ##'     }
 ##'
 ##'     \item{\code{db}:   A database handle that would be passed through to create the transaction (see the \code{$begin} method).
@@ -399,8 +389,7 @@
 ##'   Put multiple values into the database (like \code{$put} but vectorised over \code{key}/\code{value}).
 ##'
 ##'   \emph{Usage:}
-##'   \code{mput(key, value, dupdata = TRUE, overwrite = TRUE, append = FALSE,
-##'       db = NULL)}
+##'   \code{mput(key, value, overwrite = TRUE, append = FALSE, db = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
@@ -408,9 +397,6 @@
 ##'     }
 ##'
 ##'     \item{\code{value}:   The values to set against these keys.  Must be the same length as \code{key}.
-##'     }
-##'
-##'     \item{\code{dupdata}:   As for \code{$put}
 ##'     }
 ##'
 ##'     \item{\code{overwrite}:   As for \code{$put}
@@ -432,14 +418,11 @@
 ##'   Delete multiple values from the database (like \code{$del} but vectorised over \code{key}).
 ##'
 ##'   \emph{Usage:}
-##'   \code{mdel(key, value = NULL, db = NULL)}
+##'   \code{mdel(key, db = NULL)}
 ##'
 ##'   \emph{Arguments:}
 ##'   \itemize{
 ##'     \item{\code{key}:   The keys to delete
-##'     }
-##'
-##'     \item{\code{value}:   As for \code{$del}.  If used, must be the same length as \code{key}.
 ##'     }
 ##'
 ##'     \item{\code{db}:   A database handle that would be passed through to create the transaction (see the \code{$begin} method).

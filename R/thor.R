@@ -115,8 +115,8 @@ mdb_txn_renew <- function(txn) {
 }
 
 
-mdb_dbi_open <- function(txn, name, reverse_key, dupsort, create) {
-  .Call(Cmdb_dbi_open, txn, name, reverse_key, dupsort, create)
+mdb_dbi_open <- function(txn, name, reverse_key, create) {
+  .Call(Cmdb_dbi_open, txn, name, reverse_key, create)
 }
 
 
@@ -140,13 +140,13 @@ mdb_get <- function(txn, dbi, key, missing_is_error, as_proxy, as_raw) {
 }
 
 
-mdb_put <- function(txn, dbi, key, value, dupdata, overwrite, append) {
-  invisible(.Call(Cmdb_put, txn, dbi, key, value, dupdata, overwrite, append))
+mdb_put <- function(txn, dbi, key, value, overwrite, append) {
+  invisible(.Call(Cmdb_put, txn, dbi, key, value, overwrite, append))
 }
 
 
-mdb_del <- function(txn, dbi, key, value) {
-  .Call(Cmdb_del, txn, dbi, key, value)
+mdb_del <- function(txn, dbi, key) {
+  .Call(Cmdb_del, txn, dbi, key)
 }
 
 
@@ -165,14 +165,13 @@ mdb_cursor_get <- function(cursor, op, key, value) {
 }
 
 
-mdb_cursor_put <- function(cursor, key, value, dupdata, overwrite, append) {
-  .Call(Cmdb_cursor_put, cursor, key, value,
-        dupdata, overwrite, append)
+mdb_cursor_put <- function(cursor, key, value, overwrite, append) {
+  .Call(Cmdb_cursor_put, cursor, key, value, overwrite, append)
 }
 
 
-mdb_cursor_del <- function(cursor, dupdata) {
-  .Call(Cmdb_cursor_del, cursor, dupdata)
+mdb_cursor_del <- function(cursor) {
+  .Call(Cmdb_cursor_del, cursor)
 }
 
 
@@ -248,13 +247,13 @@ thor_mget <- function(txn, dbi, key, as_proxy, as_raw) {
 }
 
 
-thor_mput <- function(txn, dbi, key, value, dupdata, overwrite, append) {
-  invisible(.Call(Cthor_mput, txn, dbi, key, value, dupdata, overwrite, append))
+thor_mput <- function(txn, dbi, key, value, overwrite, append) {
+  invisible(.Call(Cthor_mput, txn, dbi, key, value, overwrite, append))
 }
 
 
-thor_mdel <- function(txn, dbi, key, value) {
-  .Call(Cthor_mdel, txn, dbi, key, value)
+thor_mdel <- function(txn, dbi, key) {
+  .Call(Cthor_mdel, txn, dbi, key)
 }
 
 

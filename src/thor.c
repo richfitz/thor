@@ -250,15 +250,14 @@ SEXP r_mdb_txn_renew(SEXP r_txn) {
   return R_NilValue;
 }
 
-SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name,
-                    SEXP r_reversekey, SEXP r_dupsort, SEXP r_create) {
+SEXP r_mdb_dbi_open(SEXP r_txn, SEXP r_name, SEXP r_reversekey,
+		    SEXP r_create) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   const char * name =
     r_name == R_NilValue ? NULL : scalar_character(r_name, "name");
 
   const unsigned int flags =
     sexp_to_flag(r_reversekey, MDB_REVERSEKEY, "reversekey", false) |
-    sexp_to_flag(r_dupsort, MDB_DUPSORT, "dupsort", false) |
     sexp_to_flag(r_create, MDB_CREATE, "create", false);
 
   MDB_dbi dbi;
@@ -281,15 +280,13 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
   unsigned int flags = 0;
   no_error(mdb_dbi_flags(txn, dbi, &flags), "mdb_dbi_flags");
 
-  SEXP ret = PROTECT(allocVector(LGLSXP, 2));
-  SEXP nms = PROTECT(allocVector(STRSXP, 2));
+  SEXP ret = PROTECT(allocVector(LGLSXP, 1));
+  SEXP nms = PROTECT(allocVector(STRSXP, 1));
   int* val = INTEGER(ret);
   size_t i = 0;
 
   val[i] = flag_to_bool(flags, MDB_REVERSEKEY, false);
   SET_STRING_ELT(nms, i++, mkChar("reversekey"));
-  val[i] = flag_to_bool(flags, MDB_DUPSORT, false);
-  SET_STRING_ELT(nms, i++, mkChar("dupsort"));
 
   setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
@@ -326,12 +323,11 @@ SEXP r_mdb_get(SEXP r_txn, SEXP r_dbi, SEXP r_key,
 }
 
 SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
-               SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
+               SEXP r_overwrite, SEXP r_append) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, value;
   const unsigned int flags =
-    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   sexp_to_mdb_val(r_key, "key", &key);
@@ -340,17 +336,13 @@ SEXP r_mdb_put(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
   return R_NilValue;
 }
 
-SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
+SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val key, value;
   sexp_to_mdb_val(r_key, "key", &key);
-  if (r_value == R_NilValue) {
-    value.mv_size = 0;
-    value.mv_data = "";
-  } else {
-    sexp_to_mdb_val(r_value, "value", &value);
-  }
+  value.mv_size = 0;
+  value.mv_data = "";
   int rc = mdb_del(txn, dbi, &key, &value);
   return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
 }
@@ -403,23 +395,21 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
 }
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_value,
-                      SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
+                      SEXP r_overwrite, SEXP r_append) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, value;
   sexp_to_mdb_val(r_key, "key", &key);
   sexp_to_mdb_val(r_value, "value", &value);
   const unsigned int flags =
-    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   int rc = mdb_cursor_put(cursor, &key, &value, flags);
   return ScalarLogical(no_error2(rc, MDB_KEYEXIST, "mdb_cursor_put"));
 }
 
-SEXP r_mdb_cursor_del(SEXP r_cursor, SEXP r_dupdata) {
+SEXP r_mdb_cursor_del(SEXP r_cursor) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  const bool dupdata = scalar_logical(r_dupdata, "dupdata");
-  const unsigned int flags = dupdata ? 0 : MDB_NODUPDATA;
+  const unsigned int flags = 0;
   no_error(mdb_cursor_del(cursor, flags), "mdb_cursor_del");
   return R_NilValue;
 }
@@ -781,45 +771,46 @@ SEXP r_mdb_cursor_op() {
   SEXP ret = PROTECT(allocVector(INTSXP, n));
   SEXP nms = PROTECT(allocVector(STRSXP, n));
   setAttrib(ret, R_NamesSymbol, nms);
+  int i = 0;
 
-  INTEGER(ret)[0] = MDB_FIRST;
-  SET_STRING_ELT(nms, 0, mkChar("FIRST"));
-  INTEGER(ret)[1] = MDB_FIRST_DUP;
-  SET_STRING_ELT(nms, 1, mkChar("FIRST_DUP"));
-  INTEGER(ret)[2] = MDB_GET_BOTH;
-  SET_STRING_ELT(nms, 2, mkChar("GET_BOTH"));
-  INTEGER(ret)[3] = MDB_GET_BOTH_RANGE;
-  SET_STRING_ELT(nms, 3, mkChar("GET_BOTH_RANGE"));
-  INTEGER(ret)[4] = MDB_GET_CURRENT;
-  SET_STRING_ELT(nms, 4, mkChar("GET_CURRENT"));
-  INTEGER(ret)[5] = MDB_GET_MULTIPLE;
-  SET_STRING_ELT(nms, 5, mkChar("GET_MULTIPLE"));
-  INTEGER(ret)[6] = MDB_LAST;
-  SET_STRING_ELT(nms, 6, mkChar("LAST"));
-  INTEGER(ret)[7] = MDB_LAST_DUP;
-  SET_STRING_ELT(nms, 7, mkChar("LAST_DUP"));
-  INTEGER(ret)[8] = MDB_NEXT;
-  SET_STRING_ELT(nms, 8, mkChar("NEXT"));
-  INTEGER(ret)[9] = MDB_NEXT_DUP;
-  SET_STRING_ELT(nms, 9, mkChar("NEXT_DUP"));
-  INTEGER(ret)[10] = MDB_NEXT_MULTIPLE;
-  SET_STRING_ELT(nms, 10, mkChar("NEXT_MULTIPLE"));
-  INTEGER(ret)[11] = MDB_NEXT_NODUP;
-  SET_STRING_ELT(nms, 11, mkChar("NEXT_NODUP"));
-  INTEGER(ret)[12] = MDB_PREV;
-  SET_STRING_ELT(nms, 12, mkChar("PREV"));
-  INTEGER(ret)[13] = MDB_PREV_DUP;
-  SET_STRING_ELT(nms, 13, mkChar("PREV_DUP"));
-  INTEGER(ret)[14] = MDB_PREV_NODUP;
-  SET_STRING_ELT(nms, 14, mkChar("PREV_NODUP"));
-  INTEGER(ret)[15] = MDB_SET;
-  SET_STRING_ELT(nms, 15, mkChar("SET"));
-  INTEGER(ret)[16] = MDB_SET_KEY;
-  SET_STRING_ELT(nms, 16, mkChar("SET_KEY"));
-  INTEGER(ret)[17] = MDB_SET_RANGE;
-  SET_STRING_ELT(nms, 17, mkChar("SET_RANGE"));
-  INTEGER(ret)[18] = MDB_PREV_MULTIPLE;
-  SET_STRING_ELT(nms, 18, mkChar("PREV_MULTIPLE"));
+  INTEGER(ret)[i] = MDB_FIRST;
+  SET_STRING_ELT(nms, i++, mkChar("FIRST"));
+  INTEGER(ret)[i] = MDB_FIRST_DUP;
+  SET_STRING_ELT(nms, i++, mkChar("FIRST_DUP"));
+  INTEGER(ret)[i] = MDB_GET_BOTH;
+  SET_STRING_ELT(nms, i++, mkChar("GET_BOTH"));
+  INTEGER(ret)[i] = MDB_GET_BOTH_RANGE;
+  SET_STRING_ELT(nms, i++, mkChar("GET_BOTH_RANGE"));
+  INTEGER(ret)[i] = MDB_GET_CURRENT;
+  SET_STRING_ELT(nms, i++, mkChar("GET_CURRENT"));
+  INTEGER(ret)[i] = MDB_GET_MULTIPLE;
+  SET_STRING_ELT(nms, i++, mkChar("GET_MULTIPLE"));
+  INTEGER(ret)[i] = MDB_LAST;
+  SET_STRING_ELT(nms, i++, mkChar("LAST"));
+  INTEGER(ret)[i] = MDB_LAST_DUP;
+  SET_STRING_ELT(nms, i++, mkChar("LAST_DUP"));
+  INTEGER(ret)[i] = MDB_NEXT;
+  SET_STRING_ELT(nms, i++, mkChar("NEXT"));
+  INTEGER(ret)[i] = MDB_NEXT_DUP;
+  SET_STRING_ELT(nms, i++, mkChar("NEXT_DUP"));
+  INTEGER(ret)[i] = MDB_NEXT_MULTIPLE;
+  SET_STRING_ELT(nms, i++, mkChar("NEXT_MULTIPLE"));
+  INTEGER(ret)[i] = MDB_NEXT_NODUP;
+  SET_STRING_ELT(nms, i++, mkChar("NEXT_NODUP"));
+  INTEGER(ret)[i] = MDB_PREV;
+  SET_STRING_ELT(nms, i++, mkChar("PREV"));
+  INTEGER(ret)[i] = MDB_PREV_DUP;
+  SET_STRING_ELT(nms, i++, mkChar("PREV_DUP"));
+  INTEGER(ret)[i] = MDB_PREV_NODUP;
+  SET_STRING_ELT(nms, i++, mkChar("PREV_NODUP"));
+  INTEGER(ret)[i] = MDB_SET;
+  SET_STRING_ELT(nms, i++, mkChar("SET"));
+  INTEGER(ret)[i] = MDB_SET_KEY;
+  SET_STRING_ELT(nms, i++, mkChar("SET_KEY"));
+  INTEGER(ret)[i] = MDB_SET_RANGE;
+  SET_STRING_ELT(nms, i++, mkChar("SET_RANGE"));
+  INTEGER(ret)[i] = MDB_PREV_MULTIPLE;
+  SET_STRING_ELT(nms, i++, mkChar("PREV_MULTIPLE"));
 
   UNPROTECT(2);
   return ret;
@@ -962,12 +953,11 @@ SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
 }
 
 SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
-                 SEXP r_dupdata, SEXP r_overwrite, SEXP r_append) {
+                 SEXP r_overwrite, SEXP r_append) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val *key, *value;
   const unsigned int flags =
-    sexp_to_flag(r_dupdata, MDB_NODUPDATA, "dupdata", true) |
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
 
@@ -996,23 +986,14 @@ SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
   return R_NilValue;
 }
 
-SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
+SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val *key, *value;
+  MDB_val *key;
   size_t len_key = sexp_to_mdb_vals(r_key, "key", &key);
-  if (r_value == R_NilValue) {
-    value = (MDB_val*)R_alloc(len_key, sizeof(MDB_val));
-    for (size_t i = 0; i < len_key; ++i) {
-      value[i].mv_data = "";
-      value[i].mv_size = 0;
-    }
-  } else {
-    size_t len_value = sexp_to_mdb_vals(r_value, "value", &value);
-    if (len_key != len_value) {
-      Rf_error("Expected %d values but recieved %d", len_key, len_value);
-    }
-  }
+  MDB_val value;
+  value.mv_size = 0;
+  value.mv_data = "";
 
   MDB_env *env = mdb_txn_env(txn);
   MDB_txn *txn_sub;
@@ -1023,7 +1004,7 @@ SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value) {
   // No R api calls here; this must not throw:
   no_error(mdb_txn_begin(env, txn, 0, &txn_sub), "thor_mdel -> txn_begin");
   for (size_t i = 0; i < len_key; ++i) {
-    int rc = mdb_del(txn_sub, dbi, key + i, value + i);
+    int rc = mdb_del(txn_sub, dbi, key + i, &value);
     if (rc == MDB_SUCCESS) {
       ret_data[i] = 1;
     } else if (rc == MDB_NOTFOUND) {

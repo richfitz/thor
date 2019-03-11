@@ -115,9 +115,6 @@ open_database:
     reversekey: >-
       Compare strings in reverse order? See \code{reversekey}
       documentation above
-    dupsort: >-
-      Allow use of duplicate keys in the database?  See \code{dupsort}
-      above.
     create: Create database if it does not exist already?
   mdb: mdb_open
 

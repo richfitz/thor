@@ -73,10 +73,6 @@ put:
   params:
     key: The name of the key (string or raw vector)
     value: The value to save (string or raw vector)
-    dupdata: >-
-      if \code{FALSE}, add data only where the key already exists in
-      the database.  This is valid only when the database was opened
-      with \code{dupdata = TRUE}.
     overwrite: >-
       Logical - when \code{TRUE} it will overwrite existing data; when
       \code{FALSE} throw an error
@@ -93,10 +89,6 @@ del:
     Remove a key/value pair from the database
   params:
     key: The name of the key (string or raw vector)
-    value: >-
-      Optionally, the value of the key - if specified, and if the
-      database was opened with \code{dupsort = TRUE}, only the value
-      matching \code{value} will be deleted.
   value: A scalar logical, indicating if the value was deleted
   mdb: mdb_del
 
@@ -175,7 +167,6 @@ mput:
     value: >-
       The values to set against these keys.  Must be the same length
       as \code{key}.
-    dupdata: As for \code{$put}
     overwrite: As for \code{$put}
     append: As for \code{$put}
 
@@ -185,9 +176,6 @@ mdel:
     vectorised over \code{key}).
   params:
     key: The keys to delete
-    value: >-
-      As for \code{$del}.  If used, must be the same length as
-      \code{key}.
   value: >-
     A logical vector, the same length as \code{key}, indicating if
     each key was deleted.
@@ -210,18 +198,6 @@ cmp:
     A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a >
     b).
   mdb: mdb_cmp
-
-dcmp:
-  short: >-
-    Like \code{cmp}, but for comparing \emph{data items} in a database
-    with \code{dupsort = TRUE}.
-  params:
-    a: A data item (string or raw); it need not be in the database
-    b: A data item to compare with b (string or raw)
-  value: >-
-    A scalar integer, being -1 (if a < b), 0 (if a == b) or 1 (if a >
-    b).
-  mdb: mdb_dcmp
 
 replace:
   short: >-

@@ -27,20 +27,20 @@ static const R_CallMethodDef call_methods[] = {
   {"Cmdb_txn_reset",               (DL_FUNC) &r_mdb_txn_reset,             1},
   {"Cmdb_txn_renew",               (DL_FUNC) &r_mdb_txn_renew,             1},
 
-  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              5},
+  {"Cmdb_dbi_open",                (DL_FUNC) &r_mdb_dbi_open,              4},
   {"Cmdb_stat",                    (DL_FUNC) &r_mdb_stat,                  2},
   {"Cmdb_dbi_flags",               (DL_FUNC) &r_mdb_dbi_flags,             2},
   {"Cmdb_drop",                    (DL_FUNC) &r_mdb_drop,                  3},
 
-  {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   7},
+  {"Cmdb_put",                     (DL_FUNC) &r_mdb_put,                   6},
   {"Cmdb_get",                     (DL_FUNC) &r_mdb_get,                   6},
-  {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   4},
+  {"Cmdb_del",                     (DL_FUNC) &r_mdb_del,                   3},
 
   {"Cmdb_cursor_open",             (DL_FUNC) &r_mdb_cursor_open,           2},
   {"Cmdb_cursor_close",            (DL_FUNC) &r_mdb_cursor_close,          1},
   {"Cmdb_cursor_get",              (DL_FUNC) &r_mdb_cursor_get,            4},
-  {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            6},
-  {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            2},
+  {"Cmdb_cursor_put",              (DL_FUNC) &r_mdb_cursor_put,            5},
+  {"Cmdb_cursor_del",              (DL_FUNC) &r_mdb_cursor_del,            1},
   {"Cmdb_cursor_count",            (DL_FUNC) &r_mdb_cursor_count,          1},
 
   {"Cmdb_cmp",                     (DL_FUNC) &r_mdb_cmp,                   4},
@@ -55,8 +55,8 @@ static const R_CallMethodDef call_methods[] = {
   {"Cthor_list",                   (DL_FUNC) &r_thor_list,                 4},
   {"Cthor_exists",                 (DL_FUNC) &r_thor_exists,               3},
   {"Cthor_mget",                   (DL_FUNC) &r_thor_mget,                 5},
-  {"Cthor_mput",                   (DL_FUNC) &r_thor_mput,                 7},
-  {"Cthor_mdel",                   (DL_FUNC) &r_thor_mdel,                 4},
+  {"Cthor_mput",                   (DL_FUNC) &r_thor_mput,                 6},
+  {"Cthor_mdel",                   (DL_FUNC) &r_thor_mdel,                 3},
 
   // Other
   {"Cmdb_proxy_copy",              (DL_FUNC) &r_mdb_proxy_copy,            2},

@@ -15,7 +15,7 @@ flags:
     Return flags used by the database handle
   value: >-
     A named logical vector.  Names correspond to arguments to the
-    constructor (\code{reversekey} and \code{dupsort}).
+    constructor (\code{reversekey}).
   params:
     txn: A transaction (can be read-only) to use to read from the database.
   mdb: mdb_dbi_flags

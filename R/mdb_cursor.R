@@ -65,11 +65,7 @@ R6_mdb_cursor <- R6::R6Class(
       Actions = c("put", "del", "replace", "pop"),
       Movement = c("first", "last", "move_next", "move_prev"),
       Find = c("move_to", "seek", "get"),
-      Current = c("is_valid", "key", "value"),
-      Duplicates = c("first_dup", "last_dup",
-                     "move_next_dup", "move_prev_dup",
-                     "move_next_nodup", "move_prev_nodup",
-                     "move_to_dup", "seek_dup", "count")),
+      Current = c("is_valid", "key", "value")),
 
     initialize = function(txn) {
       self$.txn <- txn
@@ -159,9 +155,9 @@ R6_mdb_cursor <- R6::R6Class(
       self$.cursor_get(cursor_op$SET_RANGE, key)
     },
 
-    del = function(dupdata = TRUE) {
+    del = function() {
       if (self$.valid) {
-        res <- mdb_cursor_del(self$.ptr, dupdata)
+        res <- mdb_cursor_del(self$.ptr)
         self$.txn$.mutations <- self$.txn$.mutations + 1L
         self$.cursor_get(cursor_op$GET_CURRENT)
         TRUE
@@ -169,23 +165,22 @@ R6_mdb_cursor <- R6::R6Class(
         FALSE
       }
     },
-    put = function(key, value, dupdata = TRUE, overwrite = TRUE,
-                   append = FALSE) {
-      res <- mdb_cursor_put(self$.ptr, key, value, dupdata, overwrite, append)
+    put = function(key, value, overwrite = TRUE, append = FALSE) {
+      res <- mdb_cursor_put(self$.ptr, key, value, overwrite, append)
       self$.txn$.mutations <- self$.txn$.mutations + 1L
       self$.cursor_get(cursor_op$GET_CURRENT)
       res
     },
 
     replace = function(key, value, as_raw = NULL) {
-      res <- mdb_cursor_put(self$.ptr, key, value, TRUE, FALSE, FALSE)
+      res <- mdb_cursor_put(self$.ptr, key, value, FALSE, FALSE)
       if (res) {
         ## No value existed previously
         return(NULL)
       }
       old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL, NULL)
       old <- mdb_proxy_copy(old_ptr[[2L]], as_raw)
-      self$put(key, value, TRUE, TRUE, FALSE)
+      self$put(key, value, TRUE, FALSE)
       old
     },
 
@@ -202,55 +197,5 @@ R6_mdb_cursor <- R6::R6Class(
     get = function(key, as_proxy = FALSE, as_raw = NULL) {
       self$move_to(key)
       self$value(as_proxy, as_raw)
-    },
-
-    ## These ones are only valid for databases with duplicates.  I
-    ## think that I should be careful how I expose this.  One option
-    ## is to use inheritance; a bit crap but might at least keep the
-    ## interface fairly simple.
-    first_dup = function() {
-      key <- self$.cur_key
-      v <- self$.cursor_get(cursor_op$FIRST_DUP)
-      if (v) {
-        self$.cur_key <- key
-      }
-      invisible(v)
-    },
-
-    last_dup = function() {
-      key <- self$.cur_key
-      v <- self$.cursor_get(cursor_op$LAST_DUP)
-      if (v) {
-        self$.cur_key <- key
-      }
-      invisible(v)
-    },
-
-    move_prev_dup = function() {
-      self$.cursor_get(cursor_op$PREV_DUP)
-    },
-
-    move_next_dup = function() {
-      self$.cursor_get(cursor_op$NEXT_DUP)
-    },
-
-    move_to_dup = function(key, value) {
-      self$.cursor_get(cursor_op$GET_BOTH, key, value)
-    },
-
-    seek_dup = function(key, value) {
-      self$.cursor_get(cursor_op$GET_BOTH_RANGE, key, value)
-    },
-
-    move_prev_nodup = function() {
-      self$.cursor_get(cursor_op$PREV_NODUP)
-    },
-
-    move_next_nodup = function() {
-      self$.cursor_get(cursor_op$NEXT_NODUP)
-    },
-
-    count = function() {
-      mdb_cursor_count(self$.ptr)
     }
   ))

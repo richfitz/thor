@@ -254,17 +254,6 @@ test_that("del", {
   env$close()
 })
 
-test_that("del: with value", {
-  env <- mdb_env(tempfile())
-  txn <- env$begin(write = TRUE)
-  for (i in letters) {
-    txn$put(i, toupper(i))
-  }
-  expect_error(txn$del("a", "A"),
-               "'value' is not allowed for databases with dupsort = FALSE",
-               fixed = TRUE)
-})
-
 test_that("exists", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
@@ -306,10 +295,6 @@ test_that("cmp", {
   expect_identical(txn$cmp("a", "b"), -1L)
   expect_identical(txn$cmp("b", "a"),  1L)
   expect_identical(txn$cmp("a", "a"),  0L)
-
-  expect_error(txn$dcmp("a", "b"),
-               "dcmp() is not meaningful on database with dupsort = FALSE",
-               fixed = TRUE)
 })
 
 test_that("drop; invalidate as we go", {
@@ -594,9 +579,6 @@ test_that("mdel", {
   v <- sample(letters, 12)
   txn$mput(v, toupper(v))
   expect_identical(txn$mdel(letters), letters %in% v)
-
-  expect_error(txn$mdel(letters, "a"),
-               "'value' is not allowed for databases with dupsort = FALSE")
 })
 
 test_that("mdel: atomic", {
