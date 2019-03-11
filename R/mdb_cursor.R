@@ -97,8 +97,8 @@ R6_mdb_cursor <- R6::R6Class(
       self$.ptr <- NULL
     },
 
-    .cursor_get = function(cursor_op, key = NULL, value = NULL) {
-      x <- mdb_cursor_get(self$.ptr, cursor_op, key, value)
+    .cursor_get = function(cursor_op, key = NULL) {
+      x <- mdb_cursor_get(self$.ptr, cursor_op, key)
       self$.cur_key <- mdb_val_proxy(self$.txn, x[[1L]])
       self$.cur_value <- mdb_val_proxy(self$.txn, x[[2L]])
       self$.valid <- !is.null(x[[2L]])
@@ -178,7 +178,7 @@ R6_mdb_cursor <- R6::R6Class(
         ## No value existed previously
         return(NULL)
       }
-      old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL, NULL)
+      old_ptr <- mdb_cursor_get(self$.ptr, cursor_op$GET_CURRENT, NULL)
       old <- mdb_proxy_copy(old_ptr[[2L]], as_raw)
       self$put(key, value, TRUE, FALSE)
       old

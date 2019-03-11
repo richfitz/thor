@@ -61,16 +61,13 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key);
 SEXP r_mdb_cursor_open(SEXP r_txn, SEXP r_dbi);
 SEXP r_mdb_cursor_close(SEXP r_cursor);
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
-                      SEXP r_value);
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key);
 
 SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_value,
                       SEXP r_overwrite, SEXP r_append);
 SEXP r_mdb_cursor_del(SEXP r_cursor);
-SEXP r_mdb_cursor_count(SEXP r_cursor);
 
 SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
-SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b);
 SEXP r_mdb_reader_list(SEXP r_env);
 SEXP r_mdb_reader_check(SEXP r_env);
 

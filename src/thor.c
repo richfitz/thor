@@ -363,8 +363,7 @@ SEXP r_mdb_cursor_close(SEXP r_cursor) {
   return R_NilValue;
 }
 
-SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
-                      SEXP r_value) {
+SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
   MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
   MDB_val key, value;
   MDB_cursor_op cursor_op = sexp_to_cursor_op(r_cursor_op);
@@ -372,10 +371,6 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key,
   if (r_key != R_NilValue) {
     // for: SET_KEY, SET_RANGE, GET_BOTH, GET_BOTH_RANGE
     sexp_to_mdb_val(r_key, "key", &key);
-  }
-  if (r_value != R_NilValue) {
-    // for: GET_BOTH, GET_BOTH_RANGE
-    sexp_to_mdb_val(r_value, "value", &value);
   }
 
   int rc = mdb_cursor_get(cursor, &key, &value, cursor_op);
@@ -414,13 +409,6 @@ SEXP r_mdb_cursor_del(SEXP r_cursor) {
   return R_NilValue;
 }
 
-SEXP r_mdb_cursor_count(SEXP r_cursor) {
-  MDB_cursor * cursor = r_mdb_get_cursor(r_cursor, true);
-  mdb_size_t count;
-  no_error(mdb_cursor_count(cursor, &count), "mdb_cursor_count");
-  return ScalarInteger(count);
-}
-
 SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
@@ -428,15 +416,6 @@ SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   sexp_to_mdb_val(r_a, "a", &a);
   sexp_to_mdb_val(r_b, "b", &b);
   return ScalarInteger(mdb_cmp(txn, dbi, &a, &b));
-}
-
-SEXP r_mdb_dcmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
-  MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  MDB_val a, b;
-  sexp_to_mdb_val(r_a, "a", &a);
-  sexp_to_mdb_val(r_b, "b", &b);
-  return ScalarInteger(mdb_dcmp(txn, dbi, &a, &b));
 }
 
 struct reader_data {

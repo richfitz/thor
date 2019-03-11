@@ -160,8 +160,8 @@ mdb_cursor_close <- function(cursor) {
 }
 
 
-mdb_cursor_get <- function(cursor, op, key, value) {
-  .Call(Cmdb_cursor_get, cursor, op, key, value)
+mdb_cursor_get <- function(cursor, op, key) {
+  .Call(Cmdb_cursor_get, cursor, op, key)
 }
 
 
@@ -175,18 +175,8 @@ mdb_cursor_del <- function(cursor) {
 }
 
 
-mdb_cursor_count <- function(cursor) {
-  .Call(Cmdb_cursor_count, cursor)
-}
-
-
 mdb_cmp <- function(txn, dbi, a, b) {
   .Call(Cmdb_cmp, txn, dbi, a, b)
-}
-
-
-mdb_dcmp <- function(txn, dbi, a, b) {
-  .Call(Cmdb_dcmp, txn, dbi, a, b)
 }
 
 
