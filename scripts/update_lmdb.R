@@ -46,4 +46,10 @@ stopifnot(file.copy(file.path(path, lic), "inst/LICENSE.lmdb",
                     overwrite = TRUE))
 writeLines(gsub("VERSION", version, template), file.path("src/lmdb/README.md"))
 
+message("Applying patch")
+code <- system2(c("git", "apply", "src/lmdb/mdb.patch"))
+if (code != 0L) {
+  stop("Error applying patch")
+}
+
 message("Updated lmdb to ", version)
