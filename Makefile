@@ -4,7 +4,7 @@ RSCRIPT = Rscript --no-init-file
 all: compile
 
 compile:
-	${RSCRIPT} -e 'library(methods); devtools::compile_dll()'
+	${RSCRIPT} -e 'library(methods); pkgbuild::compile_dll()'
 
 test:
 	${RSCRIPT} -e 'library(methods); devtools::test()'
