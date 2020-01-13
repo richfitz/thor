@@ -210,6 +210,15 @@ test_that("replace", {
   expect_equal(cur$replace("a", "apple"), bytes)
 })
 
+## This is needed, at least sometimes, or we fail to start another
+## transaction on OSX.  It's just a gc issue but not wonderful.  I've
+## chased this down a bit within lmdb and am pretty sure it's just
+## that a more informative error is not being propagated.  Running to
+## the point of failure, gc'ing (which clears up heaps of lmdb
+## objects) causes the .Call() function to work just fine.  valgrind
+## does not suggest anything untoward either.
+gc()
+
 test_that("pop", {
   env <- mdb_env(tempfile())
   txn <- env$begin(write = TRUE)
@@ -246,13 +255,6 @@ test_that("get", {
   expect_identical(p$data(), "H")
 })
 
-## This is needed, at least sometimes, or we fail to start another
-## transaction on OSX.  It's just a gc issue but not wonderful.  I've
-## chased this down a bit within lmdb and am pretty sure it's just
-## that a more informative error is not being propagated.  Running to
-## the point of failure, gc'ing (which clears up heaps of lmdb
-## objects) causes the .Call() function to work just fine.  valgrind
-## does not suggest anything untoward either.
 gc()
 
 test_that("serialisation does not crash", {
