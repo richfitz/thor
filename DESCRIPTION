@@ -3,9 +3,9 @@ Title: Interface to 'LMDB'
 Version: 1.1.1
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
-    person("Howard", "Chu", role = "cph"),
+    person("Howard", "Chu", role = c("aut", "cph")),
     person("Symas Corporation", role = "cph"),
-    person("Martin", "Hedenfalk", role = "cph"),
+    person("Martin", "Hedenfalk", role = c("aut", "cph")),
     person("The OpenLDAP Foundation", role = "cph"))
 Description: Key-value store, implemented as a wrapper around 'LMDB';
     the "lightning memory-mapped database" <https://symas.com/lmdb/>.
