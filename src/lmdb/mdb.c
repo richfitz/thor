@@ -9980,14 +9980,14 @@ mdb_env_cthr_toggle(mdb_copy *my, int adjust)
 static int ESECT
 mdb_env_cwalk(mdb_copy *my, pgno_t *pg, int flags)
 {
-  // RGF: this function is not used in the thor implementation of lmdb
-  // and gives errors under gcc10 which I can't replicate because it
-  // is not available on any major distro, nor any docker container
-  // that we can use for debugging.  So until debugging this is
-  // possible anywhere but Prof. Ripley's computer I will disable it,
-  // and shold we ever wrap the functionlity which uses this
-  // (mdb_env_copyfd) I'll add it back.
-  return MDB_PROBLEM;
+	// RGF: this function is not used in the thor implementation of lmdb
+	// and gives errors under gcc10 which I can't replicate because it
+	// is not available on any major distro, nor any docker container
+	// that we can use for debugging.  So until debugging this is
+	// possible anywhere but Prof. Ripley's computer I will disable it,
+	// and shold we ever wrap the functionlity which uses this
+	// (mdb_env_copyfd) I'll add it back.
+	return MDB_PROBLEM;
 }
 
 	/** Copy environment with compaction. */
