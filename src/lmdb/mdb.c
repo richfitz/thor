@@ -1733,7 +1733,7 @@ mdb_strerror(int err)
 	buf[0] = 0;
 	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, err, 0, ptr, MSGSIZE, (va_list *)buf+MSGSIZE);
+		NULL, err, 0, ptr, MSGSIZE, (va_list *)(buf+MSGSIZE));
 	return ptr;
 #else
 	return strerror(err);
@@ -9980,157 +9980,14 @@ mdb_env_cthr_toggle(mdb_copy *my, int adjust)
 static int ESECT
 mdb_env_cwalk(mdb_copy *my, pgno_t *pg, int flags)
 {
-	MDB_cursor mc = {0};
-	MDB_node *ni;
-	MDB_page *mo, *mp, *leaf;
-	char *buf, *ptr;
-	int rc, toggle;
-	unsigned int i;
-
-	/* Empty DB, nothing to do */
-	if (*pg == P_INVALID)
-		return MDB_SUCCESS;
-
-	mc.mc_snum = 1;
-	mc.mc_txn = my->mc_txn;
-	mc.mc_flags = my->mc_txn->mt_flags & (C_ORIG_RDONLY|C_WRITEMAP);
-
-	rc = mdb_page_get(&mc, *pg, &mc.mc_pg[0], NULL);
-	if (rc)
-		return rc;
-	rc = mdb_page_search_root(&mc, NULL, MDB_PS_FIRST);
-	if (rc)
-		return rc;
-
-	/* Make cursor pages writable */
-	buf = ptr = malloc(my->mc_env->me_psize * mc.mc_snum);
-	if (buf == NULL)
-		return ENOMEM;
-
-	for (i=0; i<mc.mc_top; i++) {
-		mdb_page_copy((MDB_page *)ptr, mc.mc_pg[i], my->mc_env->me_psize);
-		mc.mc_pg[i] = (MDB_page *)ptr;
-		ptr += my->mc_env->me_psize;
-	}
-
-	/* This is writable space for a leaf page. Usually not needed. */
-	leaf = (MDB_page *)ptr;
-
-	toggle = my->mc_toggle;
-	while (mc.mc_snum > 0) {
-		unsigned n;
-		mp = mc.mc_pg[mc.mc_top];
-		n = NUMKEYS(mp);
-
-		if (IS_LEAF(mp)) {
-			if (!IS_LEAF2(mp) && !(flags & F_DUPDATA)) {
-				for (i=0; i<n; i++) {
-					ni = NODEPTR(mp, i);
-					if (ni->mn_flags & F_BIGDATA) {
-						MDB_page *omp;
-						pgno_t pg;
-
-						/* Need writable leaf */
-						if (mp != leaf) {
-							mc.mc_pg[mc.mc_top] = leaf;
-							mdb_page_copy(leaf, mp, my->mc_env->me_psize);
-							mp = leaf;
-							ni = NODEPTR(mp, i);
-						}
-
-						memcpy(&pg, NODEDATA(ni), sizeof(pg));
-						memcpy(NODEDATA(ni), &my->mc_next_pgno, sizeof(pgno_t));
-						rc = mdb_page_get(&mc, pg, &omp, NULL);
-						if (rc)
-							goto done;
-						if (my->mc_wlen[toggle] >= MDB_WBUF) {
-							rc = mdb_env_cthr_toggle(my, 1);
-							if (rc)
-								goto done;
-							toggle = my->mc_toggle;
-						}
-						mo = (MDB_page *)(my->mc_wbuf[toggle] + my->mc_wlen[toggle]);
-						memcpy(mo, omp, my->mc_env->me_psize);
-						mo->mp_pgno = my->mc_next_pgno;
-						my->mc_next_pgno += omp->mp_pages;
-						my->mc_wlen[toggle] += my->mc_env->me_psize;
-						if (omp->mp_pages > 1) {
-							my->mc_olen[toggle] = my->mc_env->me_psize * (omp->mp_pages - 1);
-							my->mc_over[toggle] = (char *)omp + my->mc_env->me_psize;
-							rc = mdb_env_cthr_toggle(my, 1);
-							if (rc)
-								goto done;
-							toggle = my->mc_toggle;
-						}
-					} else if (ni->mn_flags & F_SUBDATA) {
-						MDB_db db;
-
-						/* Need writable leaf */
-						if (mp != leaf) {
-							mc.mc_pg[mc.mc_top] = leaf;
-							mdb_page_copy(leaf, mp, my->mc_env->me_psize);
-							mp = leaf;
-							ni = NODEPTR(mp, i);
-						}
-
-						memcpy(&db, NODEDATA(ni), sizeof(db));
-						my->mc_toggle = toggle;
-						rc = mdb_env_cwalk(my, &db.md_root, ni->mn_flags & F_DUPDATA);
-						if (rc)
-							goto done;
-						toggle = my->mc_toggle;
-						memcpy(NODEDATA(ni), &db, sizeof(db));
-					}
-				}
-			}
-		} else {
-			mc.mc_ki[mc.mc_top]++;
-			if (mc.mc_ki[mc.mc_top] < n) {
-				pgno_t pg;
-again:
-				ni = NODEPTR(mp, mc.mc_ki[mc.mc_top]);
-				pg = NODEPGNO(ni);
-				rc = mdb_page_get(&mc, pg, &mp, NULL);
-				if (rc)
-					goto done;
-				mc.mc_top++;
-				mc.mc_snum++;
-				mc.mc_ki[mc.mc_top] = 0;
-				if (IS_BRANCH(mp)) {
-					/* Whenever we advance to a sibling branch page,
-					 * we must proceed all the way down to its first leaf.
-					 */
-					mdb_page_copy(mc.mc_pg[mc.mc_top], mp, my->mc_env->me_psize);
-					goto again;
-				} else
-					mc.mc_pg[mc.mc_top] = mp;
-				continue;
-			}
-		}
-		if (my->mc_wlen[toggle] >= MDB_WBUF) {
-			rc = mdb_env_cthr_toggle(my, 1);
-			if (rc)
-				goto done;
-			toggle = my->mc_toggle;
-		}
-		mo = (MDB_page *)(my->mc_wbuf[toggle] + my->mc_wlen[toggle]);
-		mdb_page_copy(mo, mp, my->mc_env->me_psize);
-		mo->mp_pgno = my->mc_next_pgno++;
-		my->mc_wlen[toggle] += my->mc_env->me_psize;
-		if (mc.mc_top) {
-			/* Update parent if there is one */
-			ni = NODEPTR(mc.mc_pg[mc.mc_top-1], mc.mc_ki[mc.mc_top-1]);
-			SETPGNO(ni, mo->mp_pgno);
-			mdb_cursor_pop(&mc);
-		} else {
-			/* Otherwise we're done */
-			*pg = mo->mp_pgno;
-			break;
-		}
-	}
-done:
-	free(buf);
-	return rc;
+	// RGF: this function is not used in the thor implementation of lmdb
+	// and gives errors under gcc10 which I can't replicate because it
+	// is not available on any major distro, nor any docker container
+	// that we can use for debugging.  So until debugging this is
+	// possible anywhere but Prof. Ripley's computer I will disable it,
+	// and shold we ever wrap the functionlity which uses this
+	// (mdb_env_copyfd) I'll add it back.
+	return MDB_PROBLEM;
 }
 
 	/** Copy environment with compaction. */
