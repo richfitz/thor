@@ -1,5 +1,16 @@
 diff --git a/src/lmdb/mdb.c b/src/lmdb/mdb.c
-index f5f99a5..309c0b5 100644
+index f7592bc..3554f1f 100644
+--- a/src/lmdb/mdb.c
++++ b/src/lmdb/mdb.c
+@@ -1075,7 +1075,7 @@ typedef struct MDB_node {
+ /** @} */
+ 	unsigned short	mn_flags;		/**< @ref mdb_node */
+ 	unsigned short	mn_ksize;		/**< key size */
+-	char		mn_data[1];			/**< key and data are appended here */
++	char		mn_data[sizeof(pgno_t)];			/**< key and data are appended here */
+ } MDB_node;
+ 
+ 	/** Size of the node header, excluding dynamic data at the end */
 --- a/src/lmdb/mdb.c
 +++ b/src/lmdb/mdb.c
 @@ -1733,7 +1733,7 @@ mdb_strerror(int err)
