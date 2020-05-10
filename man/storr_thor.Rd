@@ -5,8 +5,12 @@
 \alias{driver_thor}
 \title{Thor driver for storr}
 \usage{
-storr_thor(env, prefix = "", hash_algorithm = NULL,
-  default_namespace = "objects")
+storr_thor(
+  env,
+  prefix = "",
+  hash_algorithm = NULL,
+  default_namespace = "objects"
+)
 
 driver_thor(env, prefix = "", hash_algorithm = NULL)
 }
