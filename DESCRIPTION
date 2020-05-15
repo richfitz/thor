@@ -1,6 +1,6 @@
 Package: thor
 Title: Interface to 'LMDB'
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
     person("Howard", "Chu", role = c("aut", "cph")),
@@ -25,7 +25,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 VignetteBuilder: knitr
 ByteCompile: true
 Encoding: UTF-8

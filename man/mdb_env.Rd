@@ -4,11 +4,24 @@
 \alias{mdb_env}
 \title{Create an mdb_env environment}
 \usage{
-mdb_env(path, mode = as.octmode("644"), subdir = TRUE,
-  readonly = FALSE, metasync = TRUE, sync = TRUE, writemap = FALSE,
-  lock = TRUE, mapasync = FALSE, rdahead = TRUE, meminit = TRUE,
-  maxdbs = NULL, maxreaders = NULL, mapsize = NULL,
-  reversekey = FALSE, create = TRUE)
+mdb_env(
+  path,
+  mode = as.octmode("644"),
+  subdir = TRUE,
+  readonly = FALSE,
+  metasync = TRUE,
+  sync = TRUE,
+  writemap = FALSE,
+  lock = TRUE,
+  mapasync = FALSE,
+  rdahead = TRUE,
+  meminit = TRUE,
+  maxdbs = NULL,
+  maxreaders = NULL,
+  mapsize = NULL,
+  reversekey = FALSE,
+  create = TRUE
+)
 }
 \arguments{
 \item{path}{The directory in which the database files will reside.
@@ -127,10 +140,14 @@ transactions.  Can only be set in the first process to open an
 environment.}
 
 \item{mapsize}{Maximum size database may grow to; used to size the
-memory mapping.  If database grows larger than ``map_size``, an
-error will be thrown and the user must close and reopen the
-\code{mdb_env}.  On 64-bit there is no penalty for making this
-huge (say 1TB). Must be <2GB on 32-bit.}
+memory mapping. This is measured in bytes, and the default (as
+set in lmdb) is only 1MB (2^20 bytes). If database grows larger
+than \code{map_size}, an error will be thrown and the user must
+close and reopen the \code{mdb_env}.  On 64-bit there is no
+penalty for making this huge (say 1TB). Must be <2GB on 32-bit.
+Increasing this may cause your operating system to report the
+disk as being used while your database is open, though this is
+just the amount reserved.}
 
 \item{reversekey}{Passed through to \code{open_database} for the
 main database.  If \code{TRUE}, keys are strings to be compared

@@ -131,10 +131,14 @@
 ##'   environment.
 ##'
 ##' @param mapsize Maximum size database may grow to; used to size the
-##'   memory mapping.  If database grows larger than ``map_size``, an
-##'   error will be thrown and the user must close and reopen the
-##'   \code{mdb_env}.  On 64-bit there is no penalty for making this
-##'   huge (say 1TB). Must be <2GB on 32-bit.
+##'   memory mapping. This is measured in bytes, and the default (as
+##'   set in lmdb) is only 1MB (2^20 bytes). If database grows larger
+##'   than \code{map_size}, an error will be thrown and the user must
+##'   close and reopen the \code{mdb_env}.  On 64-bit there is no
+##'   penalty for making this huge (say 1TB). Must be <2GB on 32-bit.
+##'   Increasing this may cause your operating system to report the
+##'   disk as being used while your database is open, though this is
+##'   just the amount reserved.
 ##'
 ##' @param reversekey Passed through to \code{open_database} for the
 ##'   main database.  If \code{TRUE}, keys are strings to be compared
