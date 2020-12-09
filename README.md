@@ -1,10 +1,11 @@
 # thor
 
+<!-- badges: start -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Linux Build Status](https://travis-ci.org/richfitz/thor.svg?branch=master)](https://travis-ci.org/richfitz/thor)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/github/richfitz/thor?svg=true)](https://ci.appveyor.com/project/richfitz/thor)
+[![R build status](https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg)](https://github.com/richfitz/thor/actions)
 [![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://codecov.io/github/richfitz/thor?branch=master)
 [![](http://www.r-pkg.org/badges/version/thor)](https://cran.r-project.org/package=thor)
+<!-- badges: end -->
 
 
 
