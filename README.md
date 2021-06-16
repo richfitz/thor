@@ -1,6 +1,6 @@
 # thor
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/)
 [![Linux Build Status](https://travis-ci.org/richfitz/thor.svg?branch=master)](https://travis-ci.org/richfitz/thor)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/github/richfitz/thor?svg=true)](https://ci.appveyor.com/project/richfitz/thor)
 [![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://codecov.io/github/richfitz/thor?branch=master)
@@ -12,7 +12,7 @@ An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded tra
 
 ## Documentation
 
-The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/articles/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://symas.com/mdb/doc/) along side the reference documentation for some details (but hopefully not too much).
+The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/articles/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://lmdb.tech/doc) along side the reference documentation for some details (but hopefully not too much).
 
 ## Usage
 

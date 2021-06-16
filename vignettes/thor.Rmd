@@ -33,7 +33,7 @@ level not to crash R!  Instead, probably at the cost of some
 performance, `thor` provides a set of wrappers that try to prevent
 crashes by invalidating objects in the correct order.  The approach
 taken in is very similar to the [python interface to LMDB;
-`py-lmdb`](https://github.com/dw/py-lmdb).
+`py-lmdb`](https://github.com/jnwatson/py-lmdb).
 
 Because the whole point of interacting with a database is side
 effects, `thor` uses [R6](https://cran.r-project.org/package=R6)
