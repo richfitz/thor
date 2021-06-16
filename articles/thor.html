@@ -167,7 +167,7 @@
 <p>Each <em>key</em> has a <em>value</em> (in this case just a hex string)</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">keys</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] "0b5962357676bdb55deeef881bb387ae"</code></pre>
+<pre><code>## [1] "86c69cfbc502091234a3aff57b7ff73a"</code></pre>
 <p>Delete a key with</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">del</span><span class="op">(</span><span class="va">keys</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
@@ -192,7 +192,7 @@
 <p>The path that the data is stored in</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">path</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] "/var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpMb02vD/file9344bfc11e7"</code></pre>
+<pre><code>## [1] "/var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//Rtmp7hkOcd/file84d6595427c"</code></pre>
 <p>which will contain two files - the actual data and a lock file (see lmdb’s documentation for more on these).</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/list.files.html">dir</a></span><span class="op">(</span><span class="va">env</span><span class="op">$</span><span class="fu">path</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
