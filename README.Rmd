@@ -53,7 +53,7 @@ There is a cursor interface for advanced features (see the vignette).  Both keys
 
 ## Performance
 
-lldb is an extremely fast database, but this package may be much less fast than the underlying library.  In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lldb database (this is not R6's fault and primarily caused by the cost of S3 method lookup for `$` on an object with a class attribute).  The vectorised functions will help here (e.g., `mget`, `mput`), so prefer these where practical if speed is a concern.
+lmdb is an extremely fast database, but this package may be much less fast than the underlying library.  In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lmdb database (this is not R6's fault and primarily caused by the cost of S3 method lookup for `$` on an object with a class attribute).  The vectorised functions will help here (e.g., `mget`, `mput`), so prefer these where practical if speed is a concern.
 
 ## Installation
 

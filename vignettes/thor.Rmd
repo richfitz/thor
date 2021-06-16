@@ -15,7 +15,7 @@ set.seed(1)
 
 ## Introduction
 
-`thor` provides an wrapper around LMBD; the lightning memory-mapped
+`thor` provides an wrapper around LMDB; the lightning memory-mapped
 database.  This is an embedded key-value store; there is no server
 (like SQLite) - the database exists purely on disk and uses file
 locking to manage concurrent access between processes.
