@@ -22,3 +22,5 @@
 ^.*\.gcov$
 ^lib$
 ^vignettes_src$
+^\.github$
+^\.covrignore$

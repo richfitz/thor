@@ -1,10 +1,11 @@
 # thor
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Linux Build Status](https://travis-ci.org/richfitz/thor.svg?branch=master)](https://travis-ci.org/richfitz/thor)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/github/richfitz/thor?svg=true)](https://ci.appveyor.com/project/richfitz/thor)
+<!-- badges: start -->
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/)
+[![R-CMD-check](https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg)](https://github.com/richfitz/thor/actions)
 [![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://codecov.io/github/richfitz/thor?branch=master)
 [![](http://www.r-pkg.org/badges/version/thor)](https://cran.r-project.org/package=thor)
+<!-- badges: end -->
 
 ```{r, echo = FALSE, results = "hide"}
 knitr::opts_chunk$set(error = FALSE)
@@ -14,7 +15,7 @@ An R interface to [LMDB](https://github.com/LMDB/lmdb).  LMDB is an embedded tra
 
 ## Documentation
 
-The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/articles/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://symas.com/mdb/doc/) along side the reference documentation for some details (but hopefully not too much).
+The package comes with a vignette that describes the main features of the package and of LMDB - see [here](https://richfitz.github.io/thor/articles/thor.html) for a version online.  The package also has reference documentation for all methods.  It may be useful to refer to the [LMDB documentation](http://lmdb.tech/doc) along side the reference documentation for some details (but hopefully not too much).
 
 ## Usage
 
@@ -53,7 +54,7 @@ There is a cursor interface for advanced features (see the vignette).  Both keys
 
 ## Performance
 
-lldb is an extremely fast database, but this package may be much less fast than the underlying library.  In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lldb database (this is not R6's fault and primarily caused by the cost of S3 method lookup for `$` on an object with a class attribute).  The vectorised functions will help here (e.g., `mget`, `mput`), so prefer these where practical if speed is a concern.
+lmdb is an extremely fast database, but this package may be much less fast than the underlying library.  In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lmdb database (this is not R6's fault and primarily caused by the cost of S3 method lookup for `$` on an object with a class attribute).  The vectorised functions will help here (e.g., `mget`, `mput`), so prefer these where practical if speed is a concern.
 
 ## Installation
 

@@ -147,7 +147,7 @@ begin:
       database (see \code{\link{mdb_txn}} for more details) - it is an
       error to try to open more than one.
     sync: >-
-      Scalar logical, indicating if the data should be syncronised
+      Scalar logical, indicating if the data should be synchronised
       synchronised (flushed to disk) after writes; see main parameter
       list.
     metasync: >-

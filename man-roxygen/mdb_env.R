@@ -81,7 +81,7 @@
 ##'     \item{\code{write}:   Scalar logical, indicating if this should be a write transaction.  There can be only one write transaction per database (see \code{\link{mdb_txn}} for more details) - it is an error to try to open more than one.
 ##'     }
 ##'
-##'     \item{\code{sync}:   Scalar logical, indicating if the data should be syncronised synchronised (flushed to disk) after writes; see main parameter list.
+##'     \item{\code{sync}:   Scalar logical, indicating if the data should be synchronised synchronised (flushed to disk) after writes; see main parameter list.
 ##'     }
 ##'
 ##'     \item{\code{metasync}:   Scalar logical, indicating if the metadata should be synchronised (flushed to disk) after writes; see main parameter list.
