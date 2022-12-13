@@ -16,3 +16,9 @@ To update the version, edit the [`version`](version) file in this directory, and
 ```
 ./scripts/update_lmdb.R
 ```
+
+To regenerate the patch, edit `src/lmdb/mdb.c` to your heart's content, then run
+
+```
+git diff --no-index src/lmdb/mdb.c.orig src/lmdb/mdb.c > src/lmdb/mdb.patch
+```
