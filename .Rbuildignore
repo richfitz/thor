@@ -24,4 +24,4 @@
 ^vignettes_src$
 ^\.github$
 ^\.covrignore$
-^src/lmdb/mdb.c.orig$
+^src/lmdb/mdb\.c\.orig$
