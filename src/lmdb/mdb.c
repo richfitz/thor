@@ -465,6 +465,8 @@ typedef pthread_mutex_t *mdb_mutexref_t;
 #define	GET_PAGESIZE(x)	((x) = sysconf(_SC_PAGE_SIZE))
 #endif
 
+#undef MDB_FMT_Z
+#define MDB_FMT_Z "z"
 #define	Z	MDB_FMT_Z	/**< printf/scanf format modifier for size_t */
 #define	Yu	MDB_PRIy(u)	/**< printf format for #mdb_size_t */
 #define	Yd	MDB_PRIy(d)	/**< printf format for 'signed #mdb_size_t' */
