@@ -20,5 +20,5 @@ To update the version, edit the [`version`](version) file in this directory, and
 To regenerate the patch, edit `src/lmdb/mdb.c` to your heart's content, then run
 
 ```
-git diff --no-index src/lmdb/mdb.c.orig src/lmdb/mdb.c > src/lmdb/mdb.patch
+git diff --no-index -- src/lmdb/mdb.c.orig src/lmdb/mdb.c > src/lmdb/mdb.patch
 ```

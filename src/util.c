@@ -187,6 +187,6 @@ SEXP r_pointer_addr_str(SEXP r_ptr) {
   }
   void * ptr = R_ExternalPtrAddr(r_ptr);
   char buf[128];
-  sprintf(buf, "%p", ptr);
+  snprintf(buf, 128, "%p", ptr);
   return mkString(buf);
 }

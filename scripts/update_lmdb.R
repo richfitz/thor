@@ -44,7 +44,7 @@ To update the version, edit the [`version`](version) file in this directory, and
 To regenerate the patch, edit `src/lmdb/mdb.c` to your heart\'s content, then run
 
 ```
-git diff --no-index src/lmdb/mdb.c.orig src/lmdb/mdb.c > src/lmdb/mdb.patch
+git diff --no-index -- src/lmdb/mdb.c.orig src/lmdb/mdb.c > src/lmdb/mdb.patch
 ```' -> template
 
 stopifnot(file.copy(file.path(path, src), "src/lmdb", overwrite = TRUE))
@@ -52,12 +52,12 @@ stopifnot(file.copy(file.path(path, lic), "inst/LICENSE.lmdb",
                     overwrite = TRUE))
 writeLines(gsub("VERSION", version, template), file.path("src/lmdb/README.md"))
 
-stopifnot(file.copy("src/lmdb/mdb.c", "src/lmdb/mdb.c.orig", overwrite = TRUE))
-
 message("Applying patch")
 code <- system2(c("git", "apply", "src/lmdb/mdb.patch"))
 if (code != 0L) {
   stop("Error applying patch")
 }
+
+stopifnot(file.copy(file.path(path, "mdb.c"), "src/lmdb/mdb.c.orig", overwrite = TRUE))
 
 message("Updated lmdb to ", version)

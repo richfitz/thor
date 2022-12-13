@@ -1756,8 +1756,8 @@ mdb_assert_fail(MDB_env *env, const char *expr_txt,
 	const char *func, const char *file, int line)
 {
 	char buf[400];
-	sprintf(buf, "%.100s:%d: Assertion '%.200s' failed in %.40s()",
-		file, line, expr_txt, func);
+	snprintf(buf, 400, "%.100s:%d: Assertion '%.200s' failed in %.40s()",
+                 file, line, expr_txt, func);
 	if (env->me_assert_func)
 		env->me_assert_func(env, buf);
 	fprintf(stderr, "%s\n", buf);
@@ -1800,9 +1800,9 @@ mdb_dkey(MDB_val *key, char *buf)
 #if 1
 	buf[0] = '\0';
 	for (i=0; i<key->mv_size; i++)
-		ptr += sprintf(ptr, "%02x", *c++);
+		ptr += snprintf(ptr, DKBUF_MAXKEYSIZE, "%02x", *c++);
 #else
-	sprintf(buf, "%.*s", key->mv_size, key->mv_data);
+	snprintf(buf, DKBUF_MAXKEYSIZE, "%.*s", key->mv_size, key->mv_data);
 #endif
 	return buf;
 }
@@ -7598,7 +7598,7 @@ more:
 						offset *= 4; /* space for 4 more */
 						break;
 					}
-					/* FALLTHRU: Big enough MDB_DUPFIXED sub-page */
+					/* FALLTHRU */
 				case MDB_CURRENT:
 					fp->mp_flags |= P_DIRTY;
 					COPY_PGNO(fp->mp_pgno, mp->mp_pgno);
@@ -9981,12 +9981,7 @@ static int ESECT
 mdb_env_cwalk(mdb_copy *my, pgno_t *pg, int flags)
 {
 	// RGF: this function is not used in the thor implementation of lmdb
-	// and gives errors under gcc10 which I can't replicate because it
-	// is not available on any major distro, nor any docker container
-	// that we can use for debugging.  So until debugging this is
-	// possible anywhere but Prof. Ripley's computer I will disable it,
-	// and shold we ever wrap the functionlity which uses this
-	// (mdb_env_copyfd) I'll add it back.
+	// and gives errors under gcc10, so implementation patched out.
 	return MDB_PROBLEM;
 }
 
@@ -10783,7 +10778,7 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
 	for (i=0; i<rdrs; i++) {
 		if (mr[i].mr_pid) {
 			txnid_t	txnid = mr[i].mr_txnid;
-			sprintf(buf, txnid == (txnid_t)-1 ?
+			snprintf(buf, 64, txnid == (txnid_t)-1 ?
 				"%10d %"Z"x -\n" : "%10d %"Z"x %"Yu"\n",
 				(int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
 			if (first) {
