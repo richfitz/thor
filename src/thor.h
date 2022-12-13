@@ -15,12 +15,12 @@ typedef struct thor_val_proxy {
   bool resolved[AS_ANY];
 } thor_val_proxy;
 
-void thor_init();
+void thor_init(void);
 
 // LMDB API:
-SEXP r_mdb_version();
+SEXP r_mdb_version(void);
 
-SEXP r_mdb_env_create();
+SEXP r_mdb_env_create(void);
 SEXP r_mdb_env_open(SEXP r_env, SEXP r_path, SEXP r_mode,
                     SEXP r_subdir, SEXP r_sync, SEXP r_readonly,
                     SEXP r_metasync, SEXP r_writemap, SEXP r_lock,
@@ -103,7 +103,7 @@ MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op);
 bool flag_to_bool(unsigned int flags, unsigned int x, bool invert);
 
 // cursor_op
-SEXP r_mdb_cursor_op();
+SEXP r_mdb_cursor_op(void);
 
 // Some serious tidying up required through here
 void cleanup_txn_cursors(SEXP r_txn);
