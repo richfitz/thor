@@ -13,7 +13,7 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Interface to LMDB">
 <meta property="og:description" content='Key-value store, implemented as a wrapper around LMDB;
-    the "lightning memory-mapped database" &lt;https://symas.com/lmdb/&gt;.
+    the "lightning memory-mapped database" &lt;https://www.symas.com/lmdb&gt;.
     LMDB is a transactional key value store that uses a memory map
     for efficient access.  This package wraps the entire LMDB
     interface (except duplicated keys), and provides objects for
@@ -24,6 +24,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -36,18 +38,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">thor</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.4</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="articles/thor.html">Get started</a>
 </li>
@@ -60,7 +56,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/richfitz/thor/">
+  <a href="https://github.com/richfitz/thor/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -77,171 +73,181 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="thor" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#thor" class="anchor"></a>thor</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="thor">thor<a class="anchor" aria-label="anchor" href="#thor"></a>
+</h1></div>
 <!-- badges: start -->
 
-<p>An R interface to <a href="https://github.com/LMDB/lmdb">LMDB</a>. LMDB is an embedded transactional key-value store and this package provides R mappings to it. It wraps the entire LMDB interface, except for support for duplicated keys.</p>
-<div id="documentation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#documentation" class="anchor"></a>Documentation</h2>
-<p>The package comes with a vignette that describes the main features of the package and of LMDB - see <a href="https://richfitz.github.io/thor/articles/thor.html">here</a> for a version online. The package also has reference documentation for all methods. It may be useful to refer to the <a href="http://lmdb.tech/doc">LMDB documentation</a> along side the reference documentation for some details (but hopefully not too much).</p>
+<p>An R interface to <a href="https://github.com/LMDB/lmdb" class="external-link">LMDB</a>. LMDB is an embedded transactional key-value store and this package provides R mappings to it. It wraps the entire LMDB interface, except for support for duplicated keys.</p>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<p>The package comes with a vignette that describes the main features of the package and of LMDB - see <a href="https://richfitz.github.io/thor/articles/thor.html" class="external-link">here</a> for a version online. The package also has reference documentation for all methods. It may be useful to refer to the <a href="http://lmdb.tech/doc" class="external-link">LMDB documentation</a> along side the reference documentation for some details (but hopefully not too much).</p>
 </div>
-<div id="usage" class="section level2">
-<h2 class="hasAnchor">
-<a href="#usage" class="anchor"></a>Usage</h2>
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
 <p>Everything starts by creating an environment (which lives at a point in the file system), and then using methods of the environment object to interact with the database</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">env</span> <span class="op">&lt;-</span> <span class="fu">thor</span><span class="fu">::</span><span class="fu"><a href="reference/mdb_env.html">mdb_env</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-<span class="va">env</span></code></pre></div>
-<pre><code>## &lt;mdb_env&gt;
-##   Informational:
-##     path()
-##     flags()
-##     info()
-##     stat()
-##     maxkeysize()
-##     maxreaders()
-##   Transactions:
-##     begin(db = NULL, write = FALSE, sync = NULL, metasync =  ...
-##     with_transaction(fun, db = NULL, write = FALSE)
-##   Databases:
-##     open_database(key = NULL, reversekey = FALSE, create = TRUE)
-##     drop_database(db, delete = TRUE)
-##   Management:
-##     sync(force = FALSE)
-##     copy(path, compact = FALSE)
-##     close()
-##     destroy()
-##     reader_list()
-##     reader_check()
-##   Helpers:
-##     get(key, missing_is_error = TRUE, as_raw = NULL, db = NULL)
-##     put(key, value, overwrite = TRUE, append = FALSE, db = NULL)
-##     del(key, db = NULL)
-##     exists(key, db = NULL)
-##     list(starts_with = NULL, as_raw = FALSE, size = NULL, db ...
-##     mget(key, as_raw = NULL, db = NULL)
-##     mput(key, value, overwrite = TRUE, append = FALSE, db =  ...
-##     mdel(key, db = NULL)</code></pre>
+<code class="sourceCode R"><span><span class="va">env</span> <span class="op">&lt;-</span> <span class="fu">thor</span><span class="fu">::</span><span class="fu"><a href="reference/mdb_env.html">mdb_env</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">env</span></span></code></pre></div>
+<pre><code><span><span class="co">## &lt;mdb_env&gt;</span></span>
+<span><span class="co">##   Informational:</span></span>
+<span><span class="co">##     path()</span></span>
+<span><span class="co">##     flags()</span></span>
+<span><span class="co">##     info()</span></span>
+<span><span class="co">##     stat()</span></span>
+<span><span class="co">##     maxkeysize()</span></span>
+<span><span class="co">##     maxreaders()</span></span>
+<span><span class="co">##   Transactions:</span></span>
+<span><span class="co">##     begin(db = NULL, write = FALSE, sync = NULL, metasync =  ...</span></span>
+<span><span class="co">##     with_transaction(fun, db = NULL, write = FALSE)</span></span>
+<span><span class="co">##   Databases:</span></span>
+<span><span class="co">##     open_database(key = NULL, reversekey = FALSE, create = TRUE)</span></span>
+<span><span class="co">##     drop_database(db, delete = TRUE)</span></span>
+<span><span class="co">##   Management:</span></span>
+<span><span class="co">##     sync(force = FALSE)</span></span>
+<span><span class="co">##     copy(path, compact = FALSE)</span></span>
+<span><span class="co">##     close()</span></span>
+<span><span class="co">##     destroy()</span></span>
+<span><span class="co">##     reader_list()</span></span>
+<span><span class="co">##     reader_check()</span></span>
+<span><span class="co">##   Helpers:</span></span>
+<span><span class="co">##     get(key, missing_is_error = TRUE, as_raw = NULL, db = NULL)</span></span>
+<span><span class="co">##     put(key, value, overwrite = TRUE, append = FALSE, db = NULL)</span></span>
+<span><span class="co">##     del(key, db = NULL)</span></span>
+<span><span class="co">##     exists(key, db = NULL)</span></span>
+<span><span class="co">##     list(starts_with = NULL, as_raw = FALSE, size = NULL, db ...</span></span>
+<span><span class="co">##     mget(key, as_raw = NULL, db = NULL)</span></span>
+<span><span class="co">##     mput(key, value, overwrite = TRUE, append = FALSE, db =  ...</span></span>
+<span><span class="co">##     mdel(key, db = NULL)</span></span></code></pre>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">put</span><span class="op">(</span><span class="st">"hello"</span>, <span class="st">"world"</span><span class="op">)</span></code></pre></div>
-<pre><code>## NULL</code></pre>
+<code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">put</span><span class="op">(</span><span class="st">"hello"</span>, <span class="st">"world"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## NULL</span></span></code></pre>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] TRUE</code></pre>
+<code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] TRUE</span></span></code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span> <span class="co"># world</span></code></pre></div>
-<pre><code>## [1] "world"</code></pre>
+<code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span> <span class="co"># world</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] "world"</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">env</span><span class="op">$</span><span class="fu">del</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] TRUE</code></pre>
+<code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">del</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] TRUE</span></span></code></pre>
 <p>LMDB is <em>transactional</em>, and <code>thor</code> exposes this like so:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">txn</span> <span class="op">&lt;-</span> <span class="va">env</span><span class="op">$</span><span class="fu">begin</span><span class="op">(</span>write <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">txn</span></code></pre></div>
-<pre><code>## &lt;mdb_txn&gt;
-##   Informational:
-##     id()
-##     stat()
-##   Finish:
-##     commit()
-##     abort(cache = TRUE)
-##   Cursors:
-##     cursor()
-##   Data:
-##     get(key, missing_is_error = TRUE, as_proxy = FALSE, as_r ...
-##     put(key, value, overwrite = TRUE, append = FALSE)
-##     del(key)
-##     exists(key)
-##     list(starts_with = NULL, as_raw = FALSE, size = NULL)
-##     mget(key, as_proxy = FALSE, as_raw = NULL)
-##     mput(key, value, overwrite = TRUE, append = FALSE)
-##     mdel(key)
-##     replace(key, value, as_raw = NULL)
-##     pop(key, as_raw = NULL)
-##   Compare:
-##     cmp(a, b)</code></pre>
+<code class="sourceCode R"><span><span class="va">txn</span> <span class="op">&lt;-</span> <span class="va">env</span><span class="op">$</span><span class="fu">begin</span><span class="op">(</span>write <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">txn</span></span></code></pre></div>
+<pre><code><span><span class="co">## &lt;mdb_txn&gt;</span></span>
+<span><span class="co">##   Informational:</span></span>
+<span><span class="co">##     id()</span></span>
+<span><span class="co">##     stat()</span></span>
+<span><span class="co">##   Finish:</span></span>
+<span><span class="co">##     commit()</span></span>
+<span><span class="co">##     abort(cache = TRUE)</span></span>
+<span><span class="co">##   Cursors:</span></span>
+<span><span class="co">##     cursor()</span></span>
+<span><span class="co">##   Data:</span></span>
+<span><span class="co">##     get(key, missing_is_error = TRUE, as_proxy = FALSE, as_r ...</span></span>
+<span><span class="co">##     put(key, value, overwrite = TRUE, append = FALSE)</span></span>
+<span><span class="co">##     del(key)</span></span>
+<span><span class="co">##     exists(key)</span></span>
+<span><span class="co">##     list(starts_with = NULL, as_raw = FALSE, size = NULL)</span></span>
+<span><span class="co">##     mget(key, as_proxy = FALSE, as_raw = NULL)</span></span>
+<span><span class="co">##     mput(key, value, overwrite = TRUE, append = FALSE)</span></span>
+<span><span class="co">##     mdel(key)</span></span>
+<span><span class="co">##     replace(key, value, as_raw = NULL)</span></span>
+<span><span class="co">##     pop(key, as_raw = NULL)</span></span>
+<span><span class="co">##   Compare:</span></span>
+<span><span class="co">##     cmp(a, b)</span></span></code></pre>
 <p>Only one write transaction is active at a given point in time. There can be an unlimited number of read transactions.</p>
-<pre><code>txn$put("key", "value")
-env$get("key", missing_is_error = FALSE) # NULL - not committed yet
-txn$commit()
-env$get("key") # new transactions see the value</code></pre>
+<pre><code><span><span class="va">txn</span><span class="op">$</span><span class="fu">put</span><span class="op">(</span><span class="st">"key"</span>, <span class="st">"value"</span><span class="op">)</span></span>
+<span><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"key"</span>, missing_is_error <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="co"># NULL - not committed yet</span></span>
+<span><span class="va">txn</span><span class="op">$</span><span class="fu">commit</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"key"</span><span class="op">)</span> <span class="co"># new transactions see the value</span></span></code></pre>
 <p>There is a cursor interface for advanced features (see the vignette). Both keys and values can be strings or binary value, the latter working well with <code>serialize</code>. For efficient use from R, <code>thor</code> extends the LMDB interface to implement bulk reads, writes and deletes (<code>mget</code>, <code>mput</code> and <code>mdel</code>).</p>
 </div>
-<div id="performance" class="section level2">
-<h2 class="hasAnchor">
-<a href="#performance" class="anchor"></a>Performance</h2>
-<p>lmdb is an extremely fast database, but this package may be much less fast than the underlying library. In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lmdb database (this is not R6’s fault and primarily caused by the cost of S3 method lookup for <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> on an object with a class attribute). The vectorised functions will help here (e.g., <code>mget</code>, <code>mput</code>), so prefer these where practical if speed is a concern.</p>
+<div class="section level2">
+<h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+</h2>
+<p>lmdb is an extremely fast database, but this package may be much less fast than the underlying library. In order to make the interface safe to use from R, there is quite a bit of error checking, and the length of time involved in calling methods in R6 objects is orders of magnitude slower than performing an action on an lmdb database (this is not R6’s fault and primarily caused by the cost of S3 method lookup for <code>$</code> on an object with a class attribute). The vectorised functions will help here (e.g., <code>mget</code>, <code>mput</code>), so prefer these where practical if speed is a concern.</p>
 </div>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p>Install from CRAN with</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"thor"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"thor"</span><span class="op">)</span></span></code></pre></div>
 <p>If you want to try the development version from github, you can install with</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"richfitz/thor"</span>, upgrade <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"richfitz/thor"</span>, upgrade <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="license" class="section level2">
-<h2 class="hasAnchor">
-<a href="#license" class="anchor"></a>License</h2>
-<p>MIT + file LICENSE © <a href="https://github.com/richfitz">Rich FitzJohn</a>. The package contains included code from lmdb which it itself under the “OpenLDAP Public License” - see <a href="inst/LICENSE.lmdb"><code>inst/LICENSE.lmdb</code></a> for details</p>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>MIT + file LICENSE © <a href="https://github.com/richfitz" class="external-link">Rich FitzJohn</a>. The package contains included code from lmdb which it itself under the “OpenLDAP Public License” - see <a href="inst/LICENSE.lmdb"><code>inst/LICENSE.lmdb</code></a> for details</p>
 </div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=thor">https://​cloud.r-project.org/​package=thor</a>
-</li>
-<li>Browse source code at <br><a href="https://github.com/richfitz/thor/">https://​github.com/​richfitz/​thor/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/richfitz/thor/issues">https://​github.com/​richfitz/​thor/​issues</a>
-</li>
+<li><a href="https://cloud.r-project.org/package=thor" class="external-link">View on CRAN</a></li>
+<li><a href="https://github.com/richfitz/thor/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/richfitz/thor/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing thor</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Rich FitzJohn <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Howard Chu <br><small class="roles"> Author, copyright holder </small>  </li>
 <li>Martin Hedenfalk <br><small class="roles"> Author, copyright holder </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.repostatus.org/"><img src="http://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
-<li><a href="https://github.com/richfitz/thor/actions"><img src="https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://codecov.io/github/richfitz/thor?branch=master"><img src="https://codecov.io/github/richfitz/thor/coverage.svg?branch=master" alt="codecov.io"></a></li>
-<li><a href="https://cran.r-project.org/package=thor"><img src="http://www.r-pkg.org/badges/version/thor"></a></li>
+<li><a href="https://www.repostatus.org/" class="external-link"><img src="http://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
+<li><a href="https://github.com/richfitz/thor/actions" class="external-link"><img src="https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://codecov.io/github/richfitz/thor?branch=master" class="external-link"><img src="https://codecov.io/github/richfitz/thor/coverage.svg?branch=master" alt="codecov.io"></a></li>
+<li><a href="https://cran.r-project.org/package=thor" class="external-link"><img src="http://www.r-pkg.org/badges/version/thor"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Rich FitzJohn, Howard Chu, Martin Hedenfalk.</p>
+  <p></p>
+<p>Developed by Rich FitzJohn, Howard Chu, Martin Hedenfalk.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -249,6 +255,8 @@ env$get("key") # new transactions see the value</code></pre>
 
   
 
+
+  
 
   </body>
 </html>
