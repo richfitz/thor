@@ -1,6 +1,6 @@
 Package: thor
 Title: Interface to 'LMDB'
-Version: 1.1.3
+Version: 1.1.4
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
     person("Howard", "Chu", role = c("aut", "cph")),
@@ -8,7 +8,7 @@ Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     person("Martin", "Hedenfalk", role = c("aut", "cph")),
     person("The OpenLDAP Foundation", role = "cph"))
 Description: Key-value store, implemented as a wrapper around 'LMDB';
-    the "lightning memory-mapped database" <https://symas.com/lmdb/>.
+    the "lightning memory-mapped database" <https://www.symas.com/lmdb>.
     'LMDB' is a transactional key value store that uses a memory map
     for efficient access.  This package wraps the entire 'LMDB'
     interface (except duplicated keys), and provides objects for
