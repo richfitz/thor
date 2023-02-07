@@ -37,7 +37,7 @@ check_all:
 	${RSCRIPT} -e "rcmdcheck::rcmdcheck(args = c('--as-cran', '--no-manual'))"
 
 clean:
-	rm -f src/*.o src/*.so src/*.dll
+	rm -f src/*.o src/*.so src/*.dll src/lmdb/*.o
 	rm -rf src/*.so.dSYM
 	rm -rf coverage.html lib
 
