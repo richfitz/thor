@@ -1757,8 +1757,7 @@ static void ESECT
 mdb_assert_fail(MDB_env *env, const char *expr_txt,
 	const char *func, const char *file, int line)
 {
-	char buf[400];
-	snprintf(buf, 400, "%.100s:%d: Assertion '%.200s' failed in %.40s()",
+	snprintf(buf, sizeof(buf), "%.100s:%d: Assertion '%.200s' failed in %.40s()",
                  file, line, expr_txt, func);
 	if (env->me_assert_func)
 		env->me_assert_func(env, buf);
@@ -1802,9 +1801,9 @@ mdb_dkey(MDB_val *key, char *buf)
 #if 1
 	buf[0] = '\0';
 	for (i=0; i<key->mv_size; i++)
-		ptr += snprintf(ptr, DKBUF_MAXKEYSIZE, "%02x", *c++);
+		ptr += snprintf(ptr, sizeof(ptr), "%02x", *c++);
 #else
-	snprintf(buf, DKBUF_MAXKEYSIZE, "%.*s", key->mv_size, key->mv_data);
+	snprintf(buf, sizeof(buf), "%.*s", key->mv_size, key->mv_data);
 #endif
 	return buf;
 }
@@ -10780,7 +10779,7 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
 	for (i=0; i<rdrs; i++) {
 		if (mr[i].mr_pid) {
 			txnid_t	txnid = mr[i].mr_txnid;
-			snprintf(buf, 64, txnid == (txnid_t)-1 ?
+			snprintf(buf, sizeof(buf), txnid == (txnid_t)-1 ?
 				"%10d %"Z"x -\n" : "%10d %"Z"x %"Yu"\n",
 				(int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
 			if (first) {
