@@ -1,5 +1,5 @@
 diff --git a/src/lmdb/mdb.c.orig b/src/lmdb/mdb.c
-index f5f99a5..e5d9995 100644
+index f5f99a5..ce5fab4 100644
 --- a/src/lmdb/mdb.c.orig
 +++ b/src/lmdb/mdb.c
 @@ -465,6 +465,8 @@ typedef pthread_mutex_t *mdb_mutexref_t;
@@ -223,12 +223,20 @@ index f5f99a5..e5d9995 100644
  }
  
  	/** Copy environment with compaction. */
-@@ -10926,7 +10779,7 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
+@@ -10926,9 +10779,13 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
  	for (i=0; i<rdrs; i++) {
  		if (mr[i].mr_pid) {
  			txnid_t	txnid = mr[i].mr_txnid;
 -			sprintf(buf, txnid == (txnid_t)-1 ?
-+			snprintf(buf, sizeof(buf), txnid == (txnid_t)-1 ?
- 				"%10d %"Z"x -\n" : "%10d %"Z"x %"Yu"\n",
- 				(int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
+-				"%10d %"Z"x -\n" : "%10d %"Z"x %"Yu"\n",
+-				(int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
++                        if (txnid == (txnid_t - 1)) {
++                          snprintf(buf, sizeof(buf), "%10d %"Z"x -\n",
++                                   (int)mr[i].mr_pid);
++                        } else {
++                          snprintf(buf, sizeof(buf), "%10d %"Z"x %"Yu"\n",
++                                   (int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
++                        }
  			if (first) {
+ 				first = 0;
+ 				rc = func("    pid     thread     txnid\n", ctx);
