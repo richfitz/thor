@@ -12,3 +12,6 @@ README.html
 coverage.html
 *.gcov
 lib
+*.o
+*.so
+*.dll

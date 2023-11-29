@@ -944,7 +944,8 @@ SEXP r_thor_mput(SEXP r_txn, SEXP r_dbi, SEXP r_key, SEXP r_value,
     len_key = sexp_to_mdb_vals(r_key, "key", &key),
     len_value = sexp_to_mdb_vals(r_value, "value", &value);
   if (len_key != len_value) {
-    Rf_error("Expected %d values but recieved %d", len_key, len_value);
+    Rf_error("Expected %d values but recieved %d",
+             (int)len_key, (int)len_value);
   }
 
   MDB_env *env = mdb_txn_env(txn);
