@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">thor</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.5</span>
       </span>
     </div>
 
@@ -73,7 +73,7 @@
                         <h4 data-toc-skip class="author">Rich
 FitzJohn</h4>
             
-            <h4 data-toc-skip class="date">2023-02-07</h4>
+            <h4 data-toc-skip class="date">2023-11-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/richfitz/thor/blob/HEAD/vignettes/thor.Rmd" class="external-link"><code>vignettes/thor.Rmd</code></a></small>
       <div class="hidden name"><code>thor.Rmd</code></div>
@@ -223,7 +223,7 @@ return things in that order.</p>
 string)</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">keys</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "58d2ab26954cfabd74d84197d526b33d"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "0c154592c88eb017d61e5dcb63a6e87e"</span></span></code></pre>
 <p>Delete a key with</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">del</span><span class="op">(</span><span class="va">keys</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
@@ -252,7 +252,7 @@ the state of the LMDB environment;</p>
 <p>The path that the data is stored in</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">env</span><span class="op">$</span><span class="fu">path</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpiHjhjJ/file1dcd2efd98bc"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/RtmpV54RmN/file1a18390f3884"</span></span></code></pre>
 <p>which will contain two files - the actual data and a lock file (see
 lmdb’s documentation for more on these).</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
