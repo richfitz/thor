@@ -1,6 +1,6 @@
 Package: thor
 Title: Interface to 'LMDB'
-Version: 1.1.5
+Version: 1.1.6
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
     email = "rich.fitzjohn@gmail.com"),
     person("Howard", "Chu", role = c("aut", "cph")),
