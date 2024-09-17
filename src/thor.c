@@ -2,12 +2,12 @@
 #include <errno.h>
 
 // These are symbols that we'll use here to avoid having to use
-// `install()` at every use (following R-exts).  This is relatively
+// `Rf_install()` at every use (following R-exts).  This is relatively
 // straightforward here because of the global string cache so there is
 // no GC to worry about.
 SEXP thor_size_name;
 void thor_init(void) {
-  thor_size_name = install("size");
+  thor_size_name = Rf_install("size");
 }
 
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened);
@@ -21,9 +21,9 @@ static void r_mdb_cursor_finalize(SEXP r_cursor);
 static void r_thor_val_proxy_finalize(SEXP r_proxy);
 
 SEXP r_mdb_version(void) {
-  SEXP ret = PROTECT(allocVector(VECSXP, 1));
-  setAttrib(ret, R_ClassSymbol, mkString("numeric_version"));
-  SET_VECTOR_ELT(ret, 0, allocVector(INTSXP, 3));
+  SEXP ret = PROTECT(Rf_allocVector(VECSXP, 1));
+  Rf_setAttrib(ret, R_ClassSymbol, Rf_mkString("numeric_version"));
+  SET_VECTOR_ELT(ret, 0, Rf_allocVector(INTSXP, 3));
   int *d = INTEGER(VECTOR_ELT(ret, 0));
 
   mdb_version(d, d + 1, d + 2);
@@ -71,35 +71,35 @@ SEXP r_mdb_env_get_flags(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   unsigned int flags;
   no_error(mdb_env_get_flags(env, &flags), "mdb_env_get_flags");
-  SEXP ret = PROTECT(allocVector(LGLSXP, 9));
-  SEXP nms = PROTECT(allocVector(STRSXP, 9));
+  SEXP ret = PROTECT(Rf_allocVector(LGLSXP, 9));
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, 9));
   int* val = INTEGER(ret);
   size_t i = 0;
 
   // val[i] = flag_to_bool(flags, MDB_FIXEDMAP, false);
-  // SET_STRING_ELT(nms, i++, mkChar("fixedmap"));
+  // SET_STRING_ELT(nms, i++, Rf_mkChar("fixedmap"));
   val[i] = flag_to_bool(flags, MDB_NOSUBDIR, true);
-  SET_STRING_ELT(nms, i++, mkChar("subdir"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("subdir"));
   val[i] = flag_to_bool(flags, MDB_RDONLY, false);
-  SET_STRING_ELT(nms, i++, mkChar("readonly"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("readonly"));
   val[i] = flag_to_bool(flags, MDB_WRITEMAP, false);
-  SET_STRING_ELT(nms, i++, mkChar("writemap"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("writemap"));
   val[i] = flag_to_bool(flags, MDB_NOMETASYNC, true);
-  SET_STRING_ELT(nms, i++, mkChar("metasync"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("metasync"));
   val[i] = flag_to_bool(flags, MDB_NOSYNC, true);
-  SET_STRING_ELT(nms, i++, mkChar("sync"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("sync"));
   val[i] = flag_to_bool(flags, MDB_MAPASYNC, false);
-  SET_STRING_ELT(nms, i++, mkChar("mapasync"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("mapasync"));
   // val[i] = flag_to_bool(flags, MDB_NOTLS, true);
-  // SET_STRING_ELT(nms, i++, mkChar("tls"));
+  // SET_STRING_ELT(nms, i++, Rf_mkChar("tls"));
   val[i] = flag_to_bool(flags, MDB_NOLOCK, true);
-  SET_STRING_ELT(nms, i++, mkChar("lock"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("lock"));
   val[i] = flag_to_bool(flags, MDB_NORDAHEAD, true);
-  SET_STRING_ELT(nms, i++, mkChar("rdahead"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("rdahead"));
   val[i] = flag_to_bool(flags, MDB_NOMEMINIT, true);
-  SET_STRING_ELT(nms, i++, mkChar("meminit"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("meminit"));
 
-  setAttrib(ret, R_NamesSymbol, nms);
+  Rf_setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
   return ret;
 }
@@ -125,22 +125,22 @@ SEXP r_mdb_env_info(SEXP r_env) {
   MDB_envinfo info;
   no_error(mdb_env_info(env, &info), "mdb_env_info");
 
-  SEXP ret = PROTECT(allocVector(REALSXP, 5));
-  SEXP nms = PROTECT(allocVector(STRSXP, 5));
+  SEXP ret = PROTECT(Rf_allocVector(REALSXP, 5));
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, 5));
   double *c_ret = REAL(ret);
 
   c_ret[0] = info.me_mapsize;
-  SET_STRING_ELT(nms, 0, mkChar("mapsize"));
+  SET_STRING_ELT(nms, 0, Rf_mkChar("mapsize"));
   c_ret[1] = info.me_last_pgno;
-  SET_STRING_ELT(nms, 1, mkChar("last_pgno"));
+  SET_STRING_ELT(nms, 1, Rf_mkChar("last_pgno"));
   c_ret[2] = info.me_last_txnid;
-  SET_STRING_ELT(nms, 2, mkChar("last_txnid"));
+  SET_STRING_ELT(nms, 2, Rf_mkChar("last_txnid"));
   c_ret[3] = info.me_maxreaders;
-  SET_STRING_ELT(nms, 3, mkChar("maxreaders"));
+  SET_STRING_ELT(nms, 3, Rf_mkChar("maxreaders"));
   c_ret[4] = info.me_numreaders;
-  SET_STRING_ELT(nms, 4, mkChar("numreaders"));
+  SET_STRING_ELT(nms, 4, Rf_mkChar("numreaders"));
 
-  setAttrib(ret, R_NamesSymbol, nms);
+  Rf_setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
   return ret;
 }
@@ -163,7 +163,7 @@ SEXP r_mdb_env_get_path(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   const char *path;
   no_error(mdb_env_get_path(env, &path), "mdb_env_get_path");
-  return mkString(path);
+  return Rf_mkString(path);
 }
 
 SEXP r_mdb_env_set_mapsize(SEXP r_env, SEXP r_size) {
@@ -184,7 +184,7 @@ SEXP r_mdb_env_get_maxreaders(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   unsigned int readers = 0;
   no_error(mdb_env_get_maxreaders(env, &readers), "mdb_env_get_maxreaders");
-  return ScalarInteger(readers);
+  return Rf_ScalarInteger(readers);
 }
 
 SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs) {
@@ -196,7 +196,7 @@ SEXP r_mdb_env_set_maxdbs(SEXP r_env, SEXP r_dbs) {
 
 SEXP r_mdb_env_get_maxkeysize(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
-  return ScalarInteger(mdb_env_get_maxkeysize(env));
+  return Rf_ScalarInteger(mdb_env_get_maxkeysize(env));
 }
 
 // Transactions:
@@ -220,7 +220,7 @@ SEXP r_mdb_txn_begin(SEXP r_env, SEXP r_parent,
 
 SEXP r_mdb_txn_id(SEXP r_txn) {
   MDB_txn * txn = r_mdb_get_txn(r_txn, true);
-  return ScalarInteger(mdb_txn_id(txn));
+  return Rf_ScalarInteger(mdb_txn_id(txn));
 }
 
 SEXP r_mdb_txn_commit(SEXP r_txn) {
@@ -280,15 +280,15 @@ SEXP r_mdb_dbi_flags(SEXP r_txn, SEXP r_dbi) {
   unsigned int flags = 0;
   no_error(mdb_dbi_flags(txn, dbi, &flags), "mdb_dbi_flags");
 
-  SEXP ret = PROTECT(allocVector(LGLSXP, 1));
-  SEXP nms = PROTECT(allocVector(STRSXP, 1));
+  SEXP ret = PROTECT(Rf_allocVector(LGLSXP, 1));
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, 1));
   int* val = INTEGER(ret);
   size_t i = 0;
 
   val[i] = flag_to_bool(flags, MDB_REVERSEKEY, false);
-  SET_STRING_ELT(nms, i++, mkChar("reversekey"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("reversekey"));
 
-  setAttrib(ret, R_NamesSymbol, nms);
+  Rf_setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
   return ret;
 }
@@ -344,7 +344,7 @@ SEXP r_mdb_del(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   value.mv_size = 0;
   value.mv_data = "";
   int rc = mdb_del(txn, dbi, &key, &value);
-  return ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
+  return Rf_ScalarLogical(no_error2(rc, MDB_NOTFOUND, "mdb_del"));
 }
 
 // --- cursors ---
@@ -375,7 +375,7 @@ SEXP r_mdb_cursor_get(SEXP r_cursor, SEXP r_cursor_op, SEXP r_key) {
 
   int rc = mdb_cursor_get(cursor, &key, &value, cursor_op);
 
-  SEXP ret = PROTECT(allocVector(VECSXP, 2));
+  SEXP ret = PROTECT(Rf_allocVector(VECSXP, 2));
 
   if (rc == MDB_SUCCESS) {
     const bool as_proxy = true;
@@ -399,7 +399,7 @@ SEXP r_mdb_cursor_put(SEXP r_cursor, SEXP r_key, SEXP r_value,
     sexp_to_flag(r_overwrite, MDB_NOOVERWRITE, "overwrite", true) |
     sexp_to_flag(r_append, MDB_APPEND, "append", false);
   int rc = mdb_cursor_put(cursor, &key, &value, flags);
-  return ScalarLogical(no_error2(rc, MDB_KEYEXIST, "mdb_cursor_put"));
+  return Rf_ScalarLogical(no_error2(rc, MDB_KEYEXIST, "mdb_cursor_put"));
 }
 
 SEXP r_mdb_cursor_del(SEXP r_cursor) {
@@ -415,7 +415,7 @@ SEXP r_mdb_cmp(SEXP r_txn, SEXP r_dbi, SEXP r_a, SEXP r_b) {
   MDB_val a, b;
   sexp_to_mdb_val(r_a, "a", &a);
   sexp_to_mdb_val(r_b, "b", &b);
-  return ScalarInteger(mdb_cmp(txn, dbi, &a, &b));
+  return Rf_ScalarInteger(mdb_cmp(txn, dbi, &a, &b));
 }
 
 struct reader_data {
@@ -425,7 +425,7 @@ struct reader_data {
 
 int mdb_reader_list_callback(const char *msg, void *ctx) {
   struct reader_data * data = (struct reader_data*) ctx;
-  SET_STRING_ELT(data->data, data->n, mkChar(msg));
+  SET_STRING_ELT(data->data, data->n, Rf_mkChar(msg));
   data->n++;
   return 0;
 }
@@ -436,7 +436,7 @@ SEXP r_mdb_reader_list(SEXP r_env) {
   no_error(mdb_env_info(env, &info), "mdb_env_info");
   int n = info.me_numreaders;
 
-  SEXP ret = PROTECT(allocVector(STRSXP, n + 1));
+  SEXP ret = PROTECT(Rf_allocVector(STRSXP, n + 1));
   struct reader_data data = {0, ret};
   mdb_reader_list(env, &mdb_reader_list_callback, &data);
 
@@ -448,7 +448,7 @@ SEXP r_mdb_reader_check(SEXP r_env) {
   MDB_env * env = r_mdb_get_env(r_env, true);
   int dead = 0;
   no_error(mdb_reader_check(env, &dead), "mdb_reader_check");
-  return ScalarInteger(dead);
+  return Rf_ScalarInteger(dead);
 }
 
 // --- wranglers ---
@@ -493,7 +493,7 @@ thor_val_proxy* r_proxy_addr(SEXP r_ptr) {
 static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
   SEXP ret = PROTECT(R_MakeExternalPtr(env, R_NilValue, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_env_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_env"));
+  Rf_setAttrib(ret, R_ClassSymbol, Rf_mkString("mdb_env"));
   UNPROTECT(1);
   return ret;
 }
@@ -501,7 +501,7 @@ static SEXP r_mdb_env_wrap(MDB_env *env, bool opened) {
 static SEXP r_mdb_txn_wrap(MDB_txn *txn) {
   SEXP ret = PROTECT(R_MakeExternalPtr(txn, R_NilValue, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_txn_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_txn"));
+  Rf_setAttrib(ret, R_ClassSymbol, Rf_mkString("mdb_txn"));
   UNPROTECT(1);
   return ret;
 }
@@ -515,12 +515,12 @@ static SEXP r_mdb_dbi_wrap(MDB_dbi dbi) {
   // - add the dbi to something in the txn so that when the
   //   transaction is *forceably* closed we can abort all
   //   connections - this is not done yet.
-  MDB_dbi * data = (MDB_dbi *)Calloc(1, MDB_dbi);
+  MDB_dbi * data = (MDB_dbi *)R_Calloc(1, MDB_dbi);
   *data = dbi;
 
   SEXP ret = PROTECT(R_MakeExternalPtr(data, R_NilValue, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_dbi_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_dbi"));
+  Rf_setAttrib(ret, R_ClassSymbol, Rf_mkString("mdb_dbi"));
   UNPROTECT(1);
   return ret;
 }
@@ -528,7 +528,7 @@ static SEXP r_mdb_dbi_wrap(MDB_dbi dbi) {
 static SEXP r_mdb_cursor_wrap(MDB_cursor *cursor) {
   SEXP ret = PROTECT(R_MakeExternalPtr(cursor, R_NilValue, R_NilValue));
   R_RegisterCFinalizer(ret, r_mdb_cursor_finalize);
-  setAttrib(ret, R_ClassSymbol, mkString("mdb_cursor"));
+  Rf_setAttrib(ret, R_ClassSymbol, Rf_mkString("mdb_cursor"));
   UNPROTECT(1);
   return ret;
 }
@@ -558,7 +558,7 @@ static void r_mdb_dbi_finalize(SEXP r_dbi) {
   // same as python interface which simply does not implement it.
   void * data = R_ExternalPtrAddr(r_dbi);
   if (data) {
-    Free(data);
+    R_Free(data);
     R_ClearExternalPtr(r_dbi);
   }
 }
@@ -574,7 +574,7 @@ static void r_mdb_cursor_finalize(SEXP r_cursor) {
 static void r_thor_val_proxy_finalize(SEXP r_proxy) {
   const thor_val_proxy *proxy = (thor_val_proxy*)R_ExternalPtrAddr(r_proxy);
   if (proxy != NULL) {
-    Free(proxy);
+    R_Free(proxy);
     R_ClearExternalPtr(r_proxy);
   }
 }
@@ -605,8 +605,8 @@ SEXP mdb_val_to_sexp_copy(MDB_val *x, return_as as_raw) {
 }
 
 SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
-  thor_val_proxy *ptr = (thor_val_proxy*) Calloc(1, thor_val_proxy);
-  SEXP resolved = PROTECT(allocVector(VECSXP, 2));
+  thor_val_proxy *ptr = (thor_val_proxy*) R_Calloc(1, thor_val_proxy);
+  SEXP resolved = PROTECT(Rf_allocVector(VECSXP, 2));
   SEXP ret = PROTECT(R_MakeExternalPtr(ptr, R_NilValue, resolved));
   R_RegisterCFinalizer(ret, r_thor_val_proxy_finalize);
 
@@ -617,7 +617,7 @@ SEXP mdb_val_to_sexp_proxy(MDB_val *x) {
   ptr->resolved[AS_RAW] = false;
 
   // Not sure about this one; I might need to come back here for it
-  setAttrib(ret, thor_size_name, ScalarInteger(x->mv_size));
+  Rf_setAttrib(ret, thor_size_name, Rf_ScalarInteger(x->mv_size));
 
   UNPROTECT(2);
   return ret;
@@ -660,9 +660,9 @@ SEXP r_mdb_proxy_head(SEXP r_proxy, SEXP r_n, SEXP r_as_raw) {
 SEXP r_mdb_proxy_is_raw(SEXP r_proxy) {
   thor_val_proxy *proxy = r_proxy_addr(r_proxy);
   if (proxy->data_contains_nul) {
-    return ScalarLogical(true);
+    return Rf_ScalarLogical(true);
   } else if (proxy->resolved[AS_STRING]) {
-    return ScalarLogical(false);
+    return Rf_ScalarLogical(false);
   } else {
     return R_NilValue;
   }
@@ -702,24 +702,24 @@ SEXP mdb_proxy_resolve(thor_val_proxy *proxy, SEXP r_proxy, return_as as_raw) {
 }
 
 SEXP mdb_stat_to_sexp(MDB_stat *stat) {
-  SEXP ret = PROTECT(allocVector(INTSXP, 6));
-  SEXP nms = PROTECT(allocVector(STRSXP, 6));
+  SEXP ret = PROTECT(Rf_allocVector(INTSXP, 6));
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, 6));
   int *c_ret = INTEGER(ret);
 
   c_ret[0] = stat->ms_psize;
-  SET_STRING_ELT(nms, 0, mkChar("psize"));
+  SET_STRING_ELT(nms, 0, Rf_mkChar("psize"));
   c_ret[1] = stat->ms_depth;
-  SET_STRING_ELT(nms, 1, mkChar("depth"));
+  SET_STRING_ELT(nms, 1, Rf_mkChar("depth"));
   c_ret[2] = stat->ms_branch_pages;
-  SET_STRING_ELT(nms, 2, mkChar("branch_pages"));
+  SET_STRING_ELT(nms, 2, Rf_mkChar("branch_pages"));
   c_ret[3] = stat->ms_leaf_pages;
-  SET_STRING_ELT(nms, 3, mkChar("leaf_pages"));
+  SET_STRING_ELT(nms, 3, Rf_mkChar("leaf_pages"));
   c_ret[4] = stat->ms_overflow_pages;
-  SET_STRING_ELT(nms, 4, mkChar("overflow_pages"));
+  SET_STRING_ELT(nms, 4, Rf_mkChar("overflow_pages"));
   c_ret[5] = stat->ms_entries;
-  SET_STRING_ELT(nms, 5, mkChar("entries"));
+  SET_STRING_ELT(nms, 5, Rf_mkChar("entries"));
 
-  setAttrib(ret, R_NamesSymbol, nms);
+  Rf_setAttrib(ret, R_NamesSymbol, nms);
   UNPROTECT(2);
   return ret;
 }
@@ -747,49 +747,49 @@ MDB_cursor_op sexp_to_cursor_op(SEXP r_cursor_op) {
 // --- cursor_op ---
 SEXP r_mdb_cursor_op(void) {
   int n = 19;
-  SEXP ret = PROTECT(allocVector(INTSXP, n));
-  SEXP nms = PROTECT(allocVector(STRSXP, n));
-  setAttrib(ret, R_NamesSymbol, nms);
+  SEXP ret = PROTECT(Rf_allocVector(INTSXP, n));
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, n));
+  Rf_setAttrib(ret, R_NamesSymbol, nms);
   int i = 0;
 
   INTEGER(ret)[i] = MDB_FIRST;
-  SET_STRING_ELT(nms, i++, mkChar("FIRST"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("FIRST"));
   INTEGER(ret)[i] = MDB_FIRST_DUP;
-  SET_STRING_ELT(nms, i++, mkChar("FIRST_DUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("FIRST_DUP"));
   INTEGER(ret)[i] = MDB_GET_BOTH;
-  SET_STRING_ELT(nms, i++, mkChar("GET_BOTH"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("GET_BOTH"));
   INTEGER(ret)[i] = MDB_GET_BOTH_RANGE;
-  SET_STRING_ELT(nms, i++, mkChar("GET_BOTH_RANGE"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("GET_BOTH_RANGE"));
   INTEGER(ret)[i] = MDB_GET_CURRENT;
-  SET_STRING_ELT(nms, i++, mkChar("GET_CURRENT"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("GET_CURRENT"));
   INTEGER(ret)[i] = MDB_GET_MULTIPLE;
-  SET_STRING_ELT(nms, i++, mkChar("GET_MULTIPLE"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("GET_MULTIPLE"));
   INTEGER(ret)[i] = MDB_LAST;
-  SET_STRING_ELT(nms, i++, mkChar("LAST"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("LAST"));
   INTEGER(ret)[i] = MDB_LAST_DUP;
-  SET_STRING_ELT(nms, i++, mkChar("LAST_DUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("LAST_DUP"));
   INTEGER(ret)[i] = MDB_NEXT;
-  SET_STRING_ELT(nms, i++, mkChar("NEXT"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("NEXT"));
   INTEGER(ret)[i] = MDB_NEXT_DUP;
-  SET_STRING_ELT(nms, i++, mkChar("NEXT_DUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("NEXT_DUP"));
   INTEGER(ret)[i] = MDB_NEXT_MULTIPLE;
-  SET_STRING_ELT(nms, i++, mkChar("NEXT_MULTIPLE"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("NEXT_MULTIPLE"));
   INTEGER(ret)[i] = MDB_NEXT_NODUP;
-  SET_STRING_ELT(nms, i++, mkChar("NEXT_NODUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("NEXT_NODUP"));
   INTEGER(ret)[i] = MDB_PREV;
-  SET_STRING_ELT(nms, i++, mkChar("PREV"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("PREV"));
   INTEGER(ret)[i] = MDB_PREV_DUP;
-  SET_STRING_ELT(nms, i++, mkChar("PREV_DUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("PREV_DUP"));
   INTEGER(ret)[i] = MDB_PREV_NODUP;
-  SET_STRING_ELT(nms, i++, mkChar("PREV_NODUP"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("PREV_NODUP"));
   INTEGER(ret)[i] = MDB_SET;
-  SET_STRING_ELT(nms, i++, mkChar("SET"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("SET"));
   INTEGER(ret)[i] = MDB_SET_KEY;
-  SET_STRING_ELT(nms, i++, mkChar("SET_KEY"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("SET_KEY"));
   INTEGER(ret)[i] = MDB_SET_RANGE;
-  SET_STRING_ELT(nms, i++, mkChar("SET_RANGE"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("SET_RANGE"));
   INTEGER(ret)[i] = MDB_PREV_MULTIPLE;
-  SET_STRING_ELT(nms, i++, mkChar("PREV_MULTIPLE"));
+  SET_STRING_ELT(nms, i++, Rf_mkChar("PREV_MULTIPLE"));
 
   UNPROTECT(2);
   return ret;
@@ -797,7 +797,7 @@ SEXP r_mdb_cursor_op(void) {
 
 SEXP r_mdb_dbi_id(SEXP r_dbi) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
-  return ScalarInteger((int) dbi);
+  return Rf_ScalarInteger((int) dbi);
 }
 
 // NOTE: because we do not in general know the size of the output I am
@@ -837,7 +837,7 @@ SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
 
   MDB_val key, value;
 
-  SEXP ret = PROTECT(allocVector(out_type, size));
+  SEXP ret = PROTECT(Rf_allocVector(out_type, size));
   SEXP acc = ret; // 'accumulator'
 
   size_t i = 0, n = 0;
@@ -852,8 +852,8 @@ SEXP r_thor_list(SEXP r_cursor, SEXP r_starts_with, SEXP r_as_raw,
 
   while (rc == MDB_SUCCESS) {
     if (i == size) {
-      SEXP tmp = PROTECT(allocVector(out_type, size));
-      setAttrib(acc, install("next"), tmp);
+      SEXP tmp = PROTECT(Rf_allocVector(out_type, size));
+      Rf_setAttrib(acc, Rf_install("next"), tmp);
       UNPROTECT(1);
       acc = tmp;
       i = 0;
@@ -890,7 +890,7 @@ SEXP r_thor_exists(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_dbi dbi = r_mdb_get_dbi(r_dbi);
   MDB_val *key, value;
   size_t len = sexp_to_mdb_vals(r_key, "key", &key);
-  SEXP ret = PROTECT(allocVector(LGLSXP, len));
+  SEXP ret = PROTECT(Rf_allocVector(LGLSXP, len));
   int * ret_data = INTEGER(ret);
   for (size_t i = 0; i < len; ++i) {
     int rc = mdb_get(txn, dbi, key + i, &value);
@@ -914,7 +914,7 @@ SEXP r_thor_mget(SEXP r_txn, SEXP r_dbi, SEXP r_key,
 
   // TODO: in theory we could return a character vector here where
   // as_raw == AS_STRING because that is totally type stable.
-  SEXP ret = PROTECT(allocVector(out_str ? STRSXP : VECSXP, len));
+  SEXP ret = PROTECT(Rf_allocVector(out_str ? STRSXP : VECSXP, len));
 
   for (size_t i = 0; i < len; ++i) {
     int rc = mdb_get(txn, dbi, key + i, &value);
@@ -978,7 +978,7 @@ SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
   MDB_env *env = mdb_txn_env(txn);
   MDB_txn *txn_sub;
 
-  SEXP ret = PROTECT(allocVector(LGLSXP, len_key));
+  SEXP ret = PROTECT(Rf_allocVector(LGLSXP, len_key));
   int * ret_data = INTEGER(ret);
 
   // No R api calls here; this must not throw:
@@ -1002,18 +1002,18 @@ SEXP r_thor_mdel(SEXP r_txn, SEXP r_dbi, SEXP r_key) {
 }
 
 size_t sexp_to_mdb_vals(SEXP r_x, const char *name, MDB_val **x_ptr) {
-  const size_t len = TYPEOF(r_x) == RAWSXP ? 1 : (size_t)length(r_x);
+  const size_t len = TYPEOF(r_x) == RAWSXP ? 1 : (size_t)Rf_length(r_x);
 
   *x_ptr = (MDB_val*)R_alloc(len, sizeof(MDB_val));
   MDB_val *x = *x_ptr;
 
   if (TYPEOF(r_x) == RAWSXP) {
-    x[0].mv_size = length(r_x);
+    x[0].mv_size = Rf_length(r_x);
     x[0].mv_data = RAW(r_x);
   } else if (TYPEOF(r_x) == STRSXP) {
     for (size_t i = 0; i < len; ++i) {
       SEXP el = STRING_ELT(r_x, i);
-      x[i].mv_size = length(el);
+      x[i].mv_size = Rf_length(el);
       x[i].mv_data = (void *) CHAR(el);
     }
   } else if (TYPEOF(r_x) == VECSXP) {
