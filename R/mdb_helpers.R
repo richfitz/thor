@@ -28,7 +28,7 @@ invalidate_dependencies <- function(x) {
 }
 
 format_thor <- function(x) {
-  exclude <- c("initialize", "finalize", "format")
+  exclude <- c("initialize", "format")
   method_names <- setdiff(ls(x, pattern = "^[^.]"), exclude)
   methods <- vapply(method_names, function(i) capture_args(x[[i]], i),
                     character(1), USE.NAMES = FALSE)

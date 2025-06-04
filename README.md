@@ -2,9 +2,8 @@
 
 <!-- badges: start -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/)
-[![R-CMD-check](https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg)](https://github.com/richfitz/thor/actions)
-[![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://app.codecov.io/github/richfitz/thor?branch=master)
-[![](http://www.r-pkg.org/badges/version/thor)](https://cran.r-project.org/package=thor)
+[![R-CMD-check](https://github.com/richfitz/thor/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/richfitz/thor/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/richfitz/thor/graph/badge.svg)](https://app.codecov.io/gh/richfitz/thor)
 <!-- badges: end -->
 
 
@@ -20,7 +19,7 @@ The package comes with a vignette that describes the main features of the packag
 Everything starts by creating an environment (which lives at a point in the file system), and then using methods of the environment object to interact with the database
 
 
-```r
+``` r
 env <- thor::mdb_env(tempfile())
 env
 ```
@@ -60,7 +59,7 @@ env
 
 
 
-```r
+``` r
 env$put("hello", "world")
 ```
 
@@ -68,7 +67,7 @@ env$put("hello", "world")
 ## NULL
 ```
 
-```r
+``` r
 env$exists("hello")
 ```
 
@@ -76,7 +75,7 @@ env$exists("hello")
 ## [1] TRUE
 ```
 
-```r
+``` r
 env$get("hello") # world
 ```
 
@@ -84,7 +83,7 @@ env$get("hello") # world
 ## [1] "world"
 ```
 
-```r
+``` r
 env$del("hello")
 ```
 
@@ -95,7 +94,7 @@ env$del("hello")
 LMDB is _transactional_, and `thor` exposes this like so:
 
 
-```r
+``` r
 txn <- env$begin(write = TRUE)
 txn
 ```

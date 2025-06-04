@@ -74,10 +74,6 @@ R6_mdb_cursor <- R6::R6Class(
       txn$.deps$add(self)
     },
 
-    finalize = function() {
-      self$.invalidate()
-    },
-
     format = function() {
       format_thor(self)
     },
@@ -197,5 +193,10 @@ R6_mdb_cursor <- R6::R6Class(
     get = function(key, as_proxy = FALSE, as_raw = NULL) {
       self$move_to(key)
       self$value(as_proxy, as_raw)
+    }
+  ),
+  private = list(
+    finalize = function() {
+      self$.invalidate()
     }
   ))

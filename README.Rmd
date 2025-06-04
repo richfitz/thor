@@ -2,9 +2,8 @@
 
 <!-- badges: start -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/)
-[![R-CMD-check](https://github.com/richfitz/thor/workflows/R-CMD-check/badge.svg)](https://github.com/richfitz/thor/actions)
-[![codecov.io](https://codecov.io/github/richfitz/thor/coverage.svg?branch=master)](https://app.codecov.io/github/richfitz/thor?branch=master)
-[![](http://www.r-pkg.org/badges/version/thor)](https://cran.r-project.org/package=thor)
+[![R-CMD-check](https://github.com/richfitz/thor/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/richfitz/thor/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/richfitz/thor/graph/badge.svg)](https://app.codecov.io/gh/richfitz/thor)
 <!-- badges: end -->
 
 ```{r, echo = FALSE, results = "hide"}
