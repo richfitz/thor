@@ -1,5 +1,5 @@
 # -*-makefile-*-
-PKG_CFLAGS = -Ilmdb
+PKG_CFLAGS = -Ilmdb -DMDB_INDX_SIZE=27
 PKG_LIBS = -lntdll
 OBJECTS = \
    lmdb/mdb.o \
