@@ -994,7 +994,7 @@ typedef struct MDB_page {
 		} pb;
 		uint32_t	pb_pages;	/**< number of overflow pages */
 	} mp_pb;
-	indx_t		mp_ptrs[1];		/**< dynamic size */
+	indx_t		mp_ptrs[MDB_INDX_SIZE];		/**< dynamic size */
 } MDB_page;
 
 	/** Size of the page header, excluding dynamic data at the end */
@@ -1757,6 +1757,7 @@ static void ESECT
 mdb_assert_fail(MDB_env *env, const char *expr_txt,
 	const char *func, const char *file, int line)
 {
+	char buf[400];
 	snprintf(buf, sizeof(buf), "%.100s:%d: Assertion '%.200s' failed in %.40s()",
                  file, line, expr_txt, func);
 	if (env->me_assert_func)

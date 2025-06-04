@@ -1,5 +1,5 @@
 diff --git a/src/lmdb/mdb.c.orig b/src/lmdb/mdb.c
-index f5f99a5..e5d9995 100644
+index f5f99a5..f282f62 100644
 --- a/src/lmdb/mdb.c.orig
 +++ b/src/lmdb/mdb.c
 @@ -465,6 +465,8 @@ typedef pthread_mutex_t *mdb_mutexref_t;
@@ -11,6 +11,15 @@ index f5f99a5..e5d9995 100644
  #define	Z	MDB_FMT_Z	/**< printf/scanf format modifier for size_t */
  #define	Yu	MDB_PRIy(u)	/**< printf format for #mdb_size_t */
  #define	Yd	MDB_PRIy(d)	/**< printf format for 'signed #mdb_size_t' */
+@@ -992,7 +994,7 @@ typedef struct MDB_page {
+ 		} pb;
+ 		uint32_t	pb_pages;	/**< number of overflow pages */
+ 	} mp_pb;
+-	indx_t		mp_ptrs[1];		/**< dynamic size */
++	indx_t		mp_ptrs[MDB_INDX_SIZE];		/**< dynamic size */
+ } MDB_page;
+ 
+ 	/** Size of the page header, excluding dynamic data at the end */
 @@ -1075,7 +1077,7 @@ typedef struct MDB_node {
  /** @} */
  	unsigned short	mn_flags;		/**< @ref mdb_node */
@@ -29,11 +38,10 @@ index f5f99a5..e5d9995 100644
  	return ptr;
  #else
  	return strerror(err);
-@@ -1755,9 +1757,8 @@ static void ESECT
- mdb_assert_fail(MDB_env *env, const char *expr_txt,
+@@ -1756,8 +1758,8 @@ mdb_assert_fail(MDB_env *env, const char *expr_txt,
  	const char *func, const char *file, int line)
  {
--	char buf[400];
+ 	char buf[400];
 -	sprintf(buf, "%.100s:%d: Assertion '%.200s' failed in %.40s()",
 -		file, line, expr_txt, func);
 +	snprintf(buf, sizeof(buf), "%.100s:%d: Assertion '%.200s' failed in %.40s()",
@@ -41,7 +49,7 @@ index f5f99a5..e5d9995 100644
  	if (env->me_assert_func)
  		env->me_assert_func(env, buf);
  	fprintf(stderr, "%s\n", buf);
-@@ -1800,9 +1801,9 @@ mdb_dkey(MDB_val *key, char *buf)
+@@ -1800,9 +1802,9 @@ mdb_dkey(MDB_val *key, char *buf)
  #if 1
  	buf[0] = '\0';
  	for (i=0; i<key->mv_size; i++)
@@ -53,7 +61,7 @@ index f5f99a5..e5d9995 100644
  #endif
  	return buf;
  }
-@@ -7598,7 +7599,7 @@ more:
+@@ -7598,7 +7600,7 @@ more:
  						offset *= 4; /* space for 4 more */
  						break;
  					}
@@ -62,7 +70,7 @@ index f5f99a5..e5d9995 100644
  				case MDB_CURRENT:
  					fp->mp_flags |= P_DIRTY;
  					COPY_PGNO(fp->mp_pgno, mp->mp_pgno);
-@@ -9980,157 +9981,9 @@ mdb_env_cthr_toggle(mdb_copy *my, int adjust)
+@@ -9980,157 +9982,9 @@ mdb_env_cthr_toggle(mdb_copy *my, int adjust)
  static int ESECT
  mdb_env_cwalk(mdb_copy *my, pgno_t *pg, int flags)
  {
@@ -223,7 +231,7 @@ index f5f99a5..e5d9995 100644
  }
  
  	/** Copy environment with compaction. */
-@@ -10926,7 +10779,7 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
+@@ -10926,7 +10780,7 @@ mdb_reader_list(MDB_env *env, MDB_msg_func *func, void *ctx)
  	for (i=0; i<rdrs; i++) {
  		if (mr[i].mr_pid) {
  			txnid_t	txnid = mr[i].mr_txnid;
