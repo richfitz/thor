@@ -109,12 +109,6 @@ R6_mdb_txn <- R6::R6Class(
       self$abort(FALSE)
     },
 
-    finalize = function() {
-      if (!is.null(self$.ptr)) {
-        self$abort()
-      }
-    },
-
     format = function() {
       format_thor(self)
     },
@@ -228,5 +222,12 @@ R6_mdb_txn <- R6::R6Class(
 
     cmp = function(a, b) {
       mdb_cmp(self$.ptr, self$.db$.ptr, a, b)
+    }
+  ),
+  private = list(
+    finalize = function() {
+      if (!is.null(self$.ptr)) {
+        self$abort()
+      }
     }
   ))

@@ -335,10 +335,6 @@ R6_mdb_env <- R6::R6Class(
       ptr
     },
 
-    finalize = function() {
-      self$close()
-    },
-
     format = function() {
       format_thor(self)
     },
@@ -534,5 +530,10 @@ R6_mdb_env <- R6::R6Class(
         on.exit(mdb_cursor_close(cur_ptr))
         thor_list(cur_ptr, starts_with, as_raw, size)
       })
+    }
+  ),
+  private = list(
+    finalize = function() {
+      self$close()
     }
   ))
