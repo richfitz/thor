@@ -25,3 +25,4 @@
 ^\.github$
 ^\.covrignore$
 ^src/lmdb/mdb\.c\.orig$
+^_pkgdown\.yml$

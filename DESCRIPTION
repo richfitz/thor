@@ -14,7 +14,7 @@ Description: Key-value store, implemented as a wrapper around 'LMDB';
     interface (except duplicated keys), and provides objects for
     transactions and cursors.
 License: MIT + file LICENSE
-URL: https://github.com/richfitz/thor
+URL: https://github.com/richfitz/thor, https://richfitz.github.io/thor/
 BugReports: https://github.com/richfitz/thor/issues
 Imports:
     R6,
