@@ -887,7 +887,7 @@ typedef struct MDB_txninfo {
 		char pad[(MNAME_LEN+CACHELINE-1) & ~(CACHELINE-1)];
 	} mt2;
 #endif
-	MDB_reader	mti_readers[1];
+	MDB_reader	mti_readers[];
 } MDB_txninfo;
 
 	/** Lockfile format signature: version, features and field layout */
@@ -994,7 +994,7 @@ typedef struct MDB_page {
 		} pb;
 		uint32_t	pb_pages;	/**< number of overflow pages */
 	} mp_pb;
-	indx_t		mp_ptrs[1];		/**< dynamic size */
+	indx_t		mp_ptrs[];		/**< dynamic size */
 } MDB_page;
 
 	/** Size of the page header, excluding dynamic data at the end */
@@ -1077,7 +1077,7 @@ typedef struct MDB_node {
 /** @} */
 	unsigned short	mn_flags;		/**< @ref mdb_node */
 	unsigned short	mn_ksize;		/**< key size */
-	char		mn_data[sizeof(pgno_t)];			/**< key and data are appended here */
+	char		mn_data[];			/**< key and data are appended here */
 } MDB_node;
 
 	/** Size of the node header, excluding dynamic data at the end */
@@ -1757,6 +1757,7 @@ static void ESECT
 mdb_assert_fail(MDB_env *env, const char *expr_txt,
 	const char *func, const char *file, int line)
 {
+	char buf[400];
 	snprintf(buf, sizeof(buf), "%.100s:%d: Assertion '%.200s' failed in %.40s()",
                  file, line, expr_txt, func);
 	if (env->me_assert_func)
