@@ -1,5 +1,5 @@
 # -*-makefile-*-
-PKG_CFLAGS = -Ilmdb -DMDB_INDX_SIZE=27
+PKG_CFLAGS = -Ilmdb
 
 # There are two ways of achiving this; one is to simply list:
 

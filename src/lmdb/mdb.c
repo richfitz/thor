@@ -887,7 +887,7 @@ typedef struct MDB_txninfo {
 		char pad[(MNAME_LEN+CACHELINE-1) & ~(CACHELINE-1)];
 	} mt2;
 #endif
-	MDB_reader	mti_readers[1];
+	MDB_reader	mti_readers[];
 } MDB_txninfo;
 
 	/** Lockfile format signature: version, features and field layout */
@@ -994,7 +994,7 @@ typedef struct MDB_page {
 		} pb;
 		uint32_t	pb_pages;	/**< number of overflow pages */
 	} mp_pb;
-	indx_t		mp_ptrs[MDB_INDX_SIZE];		/**< dynamic size */
+	indx_t		mp_ptrs[];		/**< dynamic size */
 } MDB_page;
 
 	/** Size of the page header, excluding dynamic data at the end */

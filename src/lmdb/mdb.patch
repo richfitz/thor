@@ -1,5 +1,5 @@
 diff --git a/src/lmdb/mdb.c.orig b/src/lmdb/mdb.c
-index f5f99a5..f282f62 100644
+index f5f99a5..4ee4940 100644
 --- a/src/lmdb/mdb.c.orig
 +++ b/src/lmdb/mdb.c
 @@ -465,6 +465,8 @@ typedef pthread_mutex_t *mdb_mutexref_t;
@@ -11,12 +11,21 @@ index f5f99a5..f282f62 100644
  #define	Z	MDB_FMT_Z	/**< printf/scanf format modifier for size_t */
  #define	Yu	MDB_PRIy(u)	/**< printf format for #mdb_size_t */
  #define	Yd	MDB_PRIy(d)	/**< printf format for 'signed #mdb_size_t' */
+@@ -885,7 +887,7 @@ typedef struct MDB_txninfo {
+ 		char pad[(MNAME_LEN+CACHELINE-1) & ~(CACHELINE-1)];
+ 	} mt2;
+ #endif
+-	MDB_reader	mti_readers[1];
++	MDB_reader	mti_readers[];
+ } MDB_txninfo;
+ 
+ 	/** Lockfile format signature: version, features and field layout */
 @@ -992,7 +994,7 @@ typedef struct MDB_page {
  		} pb;
  		uint32_t	pb_pages;	/**< number of overflow pages */
  	} mp_pb;
 -	indx_t		mp_ptrs[1];		/**< dynamic size */
-+	indx_t		mp_ptrs[MDB_INDX_SIZE];		/**< dynamic size */
++	indx_t		mp_ptrs[];		/**< dynamic size */
  } MDB_page;
  
  	/** Size of the page header, excluding dynamic data at the end */
