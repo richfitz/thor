@@ -1,5 +1,5 @@
 diff --git a/src/lmdb/mdb.c.orig b/src/lmdb/mdb.c
-index f5f99a5..4ee4940 100644
+index f5f99a5..743a971 100644
 --- a/src/lmdb/mdb.c.orig
 +++ b/src/lmdb/mdb.c
 @@ -465,6 +465,8 @@ typedef pthread_mutex_t *mdb_mutexref_t;
@@ -34,7 +34,7 @@ index f5f99a5..4ee4940 100644
  	unsigned short	mn_flags;		/**< @ref mdb_node */
  	unsigned short	mn_ksize;		/**< key size */
 -	char		mn_data[1];			/**< key and data are appended here */
-+	char		mn_data[sizeof(pgno_t)];			/**< key and data are appended here */
++	char		mn_data[];			/**< key and data are appended here */
  } MDB_node;
  
  	/** Size of the node header, excluding dynamic data at the end */
