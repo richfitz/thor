@@ -1,3 +1,7 @@
+## 1.2.0
+
+* Maintenance release to CRAN, fixing undefined behaviour reported by, and with a fix supplied by, Prof Brian Ripley at CRAN (#28)
+
 ## 1.1.0
 
 * Bug fix release fixing several QA problems (#10, #13)
